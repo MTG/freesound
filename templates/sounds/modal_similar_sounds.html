@@ -22,7 +22,7 @@
                 {% endfor %}
                 <div class="v-spacing-top-5 w-100 between middle">
                     <div>
-                        {% if show_similarity_space_selector%}
+                        {% if show_similarity_space_selector %}
                         <span class="text-light-grey">Similarity space: </span>
                         <select id="similarity-space-select" data-current-page="{{ current_page }}">
                             {% for space_name, space_display_name in similarity_spaces_names %}
@@ -32,7 +32,7 @@
                         {% endif %}
                     </div>
                     <div>
-                        {% bw_paginator paginator page current_page request "" -1 %}
+                        {% bw_paginator page request %}
                     </div>
                     <div>
                         <a href="{% url 'sounds-search' %}?st={{ sound.id }}&ss={{ similarity_space }}" class="btn-primary">See more results...</a>

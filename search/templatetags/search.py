@@ -158,7 +158,7 @@ def display_facet_beta(context, facet_name, facet_title=None):
 
 
 @register.inclusion_tag("search/search_option.html", takes_context=True)
-def display_search_option(context, option_name, widget=None):
+def display_search_option(context, option_name, *, widget=None):
     sqp = context["sqp"]
     option = sqp.options[option_name]
     if widget is None:
@@ -170,4 +170,10 @@ def display_search_option(context, option_name, widget=None):
             search_query_processor_options.SearchOptionChoice: "select",
         }.get(type(option), "text")
     label = option.label if option.label else option_name.capitalize().replace("_", " ")
-    return {"option": option, "option_name": option_name, "label": label, "widget": widget}
+    return {
+        "option": option,
+        "option_name": option_name,
+        "label": label,
+        "widget": widget,
+        "help_text": option.help_text,
+    }

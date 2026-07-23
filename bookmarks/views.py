@@ -22,7 +22,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Exists, OuterRef
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -30,6 +30,13 @@ from django.urls import reverse
 from bookmarks.forms import BookmarkCategoryForm, BookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
+from utils.download_limit import (
+    DownloadType,
+    count_download_and_set_sentinel,
+    download_limit_reached_response,
+    new_download_blocked,
+    user_download_limit_reached,
+)
 from utils.downloads import download_sounds
 from utils.pagination import paginate
 from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
@@ -59,6 +66,7 @@ def bookmarks(request, category_id=None):
     page_sounds = Sound.objects.ordered_ids([bookmark.sound_id for bookmark in paginator["page"].object_list])
     tvars.update(paginator)
     tvars["page_bookmarks_and_sound_objects"] = zip(paginator["page"].object_list, page_sounds)
+    tvars["download_limit_reached"] = user_download_limit_reached(request)
     return render(request, "bookmarks/bookmarks.html", tvars)
 
 
@@ -83,6 +91,11 @@ def bookmarks_for_user(request, username, category_id=None):
 def delete_bookmark_category(request, category_id):
     if request.method == "POST":
         category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
+        # Remove only the bookmarks that would become duplicates after the category disappears.
+        uncategorized_exists = Bookmark.objects.filter(
+            user=request.user, category__isnull=True, sound_id=OuterRef("sound_id")
+        )
+        Bookmark.objects.filter(category=category, user=request.user).filter(Exists(uncategorized_exists)).delete()
         msg = f"""Removed bookmark category "{category.name}"."""
         category.delete()
         messages.add_message(request, messages.WARNING, msg)
@@ -103,9 +116,11 @@ def download_bookmark_category(request, category_id):
     sounds_list = Sound.objects.filter(
         id__in=bookmarked_sounds, processing_state="OK", moderation_state="OK"
     ).select_related("user", "license")
+    if new_download_blocked(request, DownloadType.BOOKMARK_CATEGORY, category.id):
+        return download_limit_reached_response(request)
+    count_download_and_set_sentinel(request, DownloadType.BOOKMARK_CATEGORY, category.id)
     licenses_url = reverse("category-licenses", args=[category_id])
     licenses_content = category.get_attribution(sound_qs=sounds_list)
-    # NOTE: unlike pack downloads, here we are not doing any cache check to avoid consecutive downloads
     return download_sounds(licenses_url, licenses_content, sounds_list, category.download_filename)
 
 

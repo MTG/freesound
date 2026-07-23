@@ -33,7 +33,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
 from django.core.cache import cache, caches
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import resolve, reverse
@@ -52,6 +52,7 @@ from sounds.forms import FlagForm, PackEditForm, SoundEditAndDescribeForm
 from sounds.models import (
     DeletedSound,
     Download,
+    License,
     Pack,
     PackDownload,
     PackDownloadSound,
@@ -62,6 +63,14 @@ from sounds.models import (
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from utils.cache import invalidate_user_template_caches
+from utils.cdn import generate_cdn_download_url
+from utils.download_limit import (
+    DownloadType,
+    count_download_and_set_sentinel,
+    download_limit_reached_response,
+    new_download_blocked,
+    user_download_limit_reached,
+)
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.mail import send_mail_template, send_mail_template_to_support
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
@@ -83,13 +92,12 @@ from utils.sound_upload import (
     get_processing_before_describe_sound_base_url,
     get_samplerate_from_processing_before_describe_files,
 )
-from utils.text import remove_control_chars
+from utils.text import remove_control_chars, replace_hyperlinks_with_placeholder
 from utils.username import get_parameter_user_or_404, redirect_if_old_username
 
 web_logger = logging.getLogger("web")
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")
-cache_cdn_map = caches["cdn_map"]
 
 
 def get_n_weeks_back_datetime(n_weeks):
@@ -253,28 +261,29 @@ def sound(request, username, sound_id):
     if request.method == "POST":
         form = CommentForm(request, request.POST)
         if request.user.is_authenticated:
-            if request.user.profile.is_blocked_for_spam_reports():
-                messages.add_message(
-                    request,
-                    messages.INFO,
-                    "You're not allowed to post the comment because your "
-                    "account has been temporarily blocked after multiple spam "
-                    "reports",
-                )
-            else:
-                if form.is_valid():
-                    comment_text = form.cleaned_data["comment"]
+            if form.is_valid():
+                comment_text = form.cleaned_data["comment"]
+                if not request.user.profile.can_comment_sound(comment_text):
+                    messages.add_message(
+                        request,
+                        messages.INFO,
+                        "You're not allowed to comment on this sound",
+                    )
+                else:
                     sound.add_comment(request.user, comment_text)
                     sound.invalidate_template_caches()
                     if request.user != sound.user:
                         send_mail_template(
                             settings.EMAIL_SUBJECT_NEW_COMMENT,
                             "emails/email_new_comment.txt",
-                            {"sound": sound, "user": request.user, "comment": comment_text},
+                            {
+                                "sound": sound,
+                                "user": request.user,
+                                "comment": replace_hyperlinks_with_placeholder(comment_text),
+                            },
                             user_to=sound.user,
                             email_type_preference_check="new_comment",
                         )
-
                     return HttpResponseRedirect(sound.get_absolute_url())
     else:
         form = CommentForm(request)
@@ -293,6 +302,7 @@ def sound(request, username, sound_id):
         "is_explicit": is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         "sizes": settings.IFRAME_PLAYER_SIZE,
         "min_num_ratings": settings.MIN_NUMBER_RATINGS,
+        "download_limit_reached": user_download_limit_reached(request),
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, "sounds/sound.html", tvars)
@@ -337,6 +347,12 @@ def after_download_modal(request):
         return HttpResponse()
 
 
+@login_required
+def download_limit_modal(request):
+    """modal shown when a user reaches the daily download limit."""
+    return render(request, "molecules/modal_download_limit.html", {"message": settings.DOWNLOAD_LIMIT_MESSAGE})
+
+
 @redirect_if_old_username
 @transaction.atomic()
 def sound_download(request, username, sound_id):
@@ -346,27 +362,18 @@ def sound_download(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    if "range" not in request.headers:
-        """
-        Download managers and some browsers use the range header to download files in multiple parts. We have observed
-        that all clients first make a GET with no range header (to get the file length) and then make multiple other
-        requests. We ignore all requests that have range header because we assume that a first query has already been
-        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the
-        cache for 5 minutes.
-        """
-        cache_key = "sdwn_%s_%d" % (sound_id, request.user.id)
-        if cache.get(cache_key, None) is None:
-            Download.objects.create(user=request.user, sound=sound, license_id=sound.license_id)
-            sound.invalidate_template_caches()
-            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/sound in 5 minutes
+    if new_download_blocked(request, DownloadType.SOUND, sound_id):
+        return download_limit_reached_response(request)
+    if count_download_and_set_sentinel(request, DownloadType.SOUND, sound_id):
+        # True only for a new download, not a continuation of one already started
+        # (e.g. a multi-part Range request, or a repeated click within the window),
+        # so we record only one Download row per download.
+        Download.objects.create(user=request.user, sound=sound, license_id=sound.license_id)
+        sound.invalidate_template_caches()
 
     if settings.USE_CDN_FOR_DOWNLOADS:
-        cdn_filename = cache_cdn_map.get(str(sound_id), None)
-        if cdn_filename is not None:
-            # If USE_CDN_FOR_DOWNLOADS option is on and we find an URL for that sound in the CDN, then we redirect to that one
-            cdn_url = settings.CDN_DOWNLOADS_TEMPLATE_URL.format(
-                int(sound_id) // 1000, cdn_filename, sound.friendly_filename()
-            )
+        cdn_url = generate_cdn_download_url(sound)
+        if cdn_url is not None:
             return HttpResponseRedirect(cdn_url)
 
     return sendfile(*prepare_sendfile_arguments_for_sound_download(sound))
@@ -381,22 +388,16 @@ def pack_download(request, username, pack_id):
     if pack.user.username.lower() != username.lower():
         raise Http404
 
-    if "range" not in request.headers:
-        """
-        Download managers and some browsers use the range header to download files in multiple parts. We have observed
-        that all clients first make a GET with no range header (to get the file length) and then make multiple other
-        requests. We ignore all requests that have range header because we assume that a first query has already been
-        made. We additionally guard against users clicking on download multiple times by storing a sentinel in the
-        cache for 5 minutes.
-        """
-        cache_key = "pdwn_%s_%d" % (pack_id, request.user.id)
-        if cache.get(cache_key, None) is None:
-            pd = PackDownload.objects.create(user=request.user, pack=pack)
-            pds = []
-            for sound in pack.sounds.all():
-                pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
-            PackDownloadSound.objects.bulk_create(pds)
-            cache.set(cache_key, True, 60 * 5)  # Don't save downloads for the same user/pack in the next 5 minutes
+    if new_download_blocked(request, DownloadType.PACK, pack_id):
+        return download_limit_reached_response(request)
+    if count_download_and_set_sentinel(request, DownloadType.PACK, pack_id):
+        # Create a PackDownload only if it's a new download, not if it's a continuation
+        # of an existing download (Range request, or double-click)
+        pd = PackDownload.objects.create(user=request.user, pack=pack)
+        pds = []
+        for sound in pack.sounds.all():
+            pds.append(PackDownloadSound(sound=sound, license_id=sound.license_id, pack_download=pd))
+        PackDownloadSound.objects.bulk_create(pds)
 
     sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related("user", "license")
     licenses_url = reverse("pack-licenses", args=[username, pack_id])
@@ -423,9 +424,7 @@ def sound_edit(request, username, sound_id):
     session_key_prefix = request.GET.get(
         "session", str(uuid.uuid4())[0:8]
     )  # Get existing session key if we are already in an edit session or create a new one
-    request.session[f"{session_key_prefix}-edit_sounds"] = [
-        sound
-    ]  # Add the list of sounds to edit in the session object
+    request.session[f"{session_key_prefix}-edit_sounds"] = [sound.id]
     request.session[f"{session_key_prefix}-len_original_edit_sounds"] = 1
     return edit_and_describe_sounds_helper(request, session_key_prefix=session_key_prefix)
 
@@ -446,9 +445,8 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
     def update_sound_tickets(sound, text):
         tickets = Ticket.objects.filter(sound_id=sound.id).exclude(status=TICKET_STATUS_CLOSED)
         for ticket in tickets:
-            tc = TicketComment(sender=request.user, ticket=ticket, moderator_only=False, text=text)
-            tc.save()
-            ticket.send_notification_emails(ticket.NOTIFICATION_UPDATED, ticket.MODERATOR_ONLY)
+            tc = TicketComment.objects.create(sender=request.user, ticket=ticket, moderator_only=False, text=text)
+            ticket.send_notification_email_moderator(ticket.NOTIFICATION_UPDATED_MIN)
 
     def create_sounds(request, forms):
         # Create actual Sound objects, trigger processing of sounds and of affected packs
@@ -490,7 +488,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 sound = create_sound(user, sound_fields, process=False)
                 sound_sources = form.cleaned_data["sources"]
                 if sound_sources:
-                    sound.set_sources(sound_sources)
+                    sound.change_sources_and_propagate(sound_sources)
                 sounds_to_process.append(sound)
                 if user.profile.is_whitelisted:
                     messages.add_message(
@@ -580,7 +578,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
         sound_sources = data["sources"]
         if sound_sources != sound.get_sound_sources_as_set():
-            sound.set_sources(sound_sources)
+            sound.change_sources_and_propagate(sound_sources)
 
         if category_has_changed:
             # Some descriptors in the consolidated analysis change depending on the bst category, so we need to
@@ -599,10 +597,17 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         for pack_to_process in packs_to_process:
             pack_to_process.process()
 
-    files = request.session.get(
-        f"{session_key_prefix}-describe_sounds", None
-    )  # List of File objects of sounds to describe
-    sounds = request.session.get(f"{session_key_prefix}-edit_sounds", None)  # List of Sound objects to edit
+    files = request.session.get(f"{session_key_prefix}-describe_sounds", None)
+    sound_ids = request.session.get(f"{session_key_prefix}-edit_sounds", None)
+    # Back-compat shim for sessions written before the switch to JSON-safe values
+    # (pickled File / Sound instances). Remove once SESSION_SERIALIZER is flipped to
+    # JSONSerializer in the follow-up PR.
+    if files and not isinstance(files[0], dict):
+        files = [{"name": f.name, "full_path": f.full_path} for f in files]
+    if sound_ids and not isinstance(sound_ids[0], int):
+        sound_ids = [s.id for s in sound_ids]
+    # Preserve today's `is None` vs `== []` distinction: empty list ≠ missing key.
+    sounds = list(Sound.objects.ordered_ids(sound_ids)) if sound_ids is not None else None
     if (describing and files is None) or (not describing and sounds is None):
         # Expecting either a list of sounds or audio files to describe, got none. Redirect to main manage sounds page.
         return HttpResponseRedirect(reverse("accounts-manage-sounds", args=["published"]))
@@ -621,17 +626,20 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
         (len_original_describe_edit_sounds - len(all_remaining_sounds_to_edit_or_describe)) / forms_per_round + 1
     )
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
-    preselected_license = request.session.get(
-        f"{session_key_prefix}-describe_license", False
-    )  # Pre-selected from the license selection page when describing multiple sounds
-    preselected_pack = request.session.get(
-        f"{session_key_prefix}-describe_pack", False
-    )  # Pre-selected from the pack selection page when describing multiple sounds
+    preselected_license_id = request.session.get(f"{session_key_prefix}-describe_license", False)
+    preselected_pack_id = request.session.get(f"{session_key_prefix}-describe_pack", False)
+    # Back-compat shim (bool is a subclass of int, so the int check covers False/True too).
+    if preselected_license_id and not isinstance(preselected_license_id, int):
+        preselected_license_id = preselected_license_id.id
+    if preselected_pack_id and not isinstance(preselected_pack_id, int):
+        preselected_pack_id = preselected_pack_id.id
+    preselected_license = License.objects.filter(id=preselected_license_id).first() if preselected_license_id else False
+    preselected_pack = Pack.objects.filter(id=preselected_pack_id).first() if preselected_pack_id else False
 
     for count, element in enumerate(sounds_to_edit_or_describe):
         prefix = str(count)
         if describing:
-            audio_file_path = element.full_path
+            audio_file_path = element["full_path"]
             duration = get_duration_from_processing_before_describe_files(audio_file_path)
             if duration > 0.0:
                 processing_before_describe_base_url = get_processing_before_describe_sound_base_url(audio_file_path)
@@ -654,7 +662,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
             form = SoundEditAndDescribeForm(
                 request.POST,
                 prefix=prefix,
-                file_full_path=element.full_path if describing else None,
+                file_full_path=element["full_path"] if describing else None,
                 explicit_disable=element.is_explicit if not describing else False,
                 hide_old_license_versions="3.0" not in element.license.deed_url if not describing else True,
                 user_packs=Pack.objects.filter(user=request.user if describing else element.user).exclude(
@@ -683,7 +691,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 form.cleaned_data["sources"]
             )  # Add sources ids to list so sources sound selector can be initialized
             if describing:
-                form.audio_filename = element.name
+                form.audio_filename = element["name"]
             else:
                 form.sound_id = element.id
         else:
@@ -703,7 +711,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
                 )
             else:
                 sound_sources_ids = []
-                initial = dict(name=os.path.splitext(element.name)[0])
+                initial = dict(name=os.path.splitext(element["name"])[0])
                 if preselected_license:
                     initial["license"] = preselected_license
                 if preselected_pack:
@@ -719,7 +727,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
             )
             form.sound_sources_ids = sound_sources_ids
             if describing:
-                form.audio_filename = element.name
+                form.audio_filename = element["name"]
             else:
                 form.sound_id = element.id
             forms.append(form)
@@ -761,8 +769,13 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
             else:
                 return HttpResponseRedirect(reverse("accounts-describe-sounds") + f"?session={session_key_prefix}")
         else:
-            # Remove sounds successfully described from session data
-            request.session[f"{session_key_prefix}-edit_sounds"] = sounds[forms_per_round:]
+            # Remove sounds successfully edited from session data.
+            # CRITICAL: derive remaining ids from the *refetched* sounds list, not from
+            # the raw sound_ids. Sound.objects.ordered_ids drops deleted ids, so
+            # len(sounds) ≤ len(sound_ids); slicing sound_ids[forms_per_round:] would
+            # re-present sounds already processed in this round whenever any earlier id
+            # had been deleted — silent duplicate edits.
+            request.session[f"{session_key_prefix}-edit_sounds"] = [s.id for s in sounds[forms_per_round:]]
 
             # If user was only editing one sound and has finished, clear session and redirect to the sound page
             if len(forms) == 1 and len_original_describe_edit_sounds == 1:
@@ -789,7 +802,6 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
 
 @login_required
-@transaction.atomic()
 def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
@@ -803,12 +815,20 @@ def pack_edit(request, username, pack_id):
     if request.method == "POST":
         form = PackEditForm(request.POST, instance=pack, label_suffix="")
         if form.is_valid():
-            form.save()
-            pack.sounds.all().update(is_index_dirty=True)
-            redirect_to = request.GET.get("next", pack.get_absolute_url())
-            return HttpResponseRedirect(redirect_to)
+            try:
+                with transaction.atomic():
+                    form.save()
+                    pack.sounds.all().update(is_index_dirty=True)
+            except IntegrityError:
+                form.add_error("name", "A pack with this name already exists.")
+            else:
+                redirect_to = request.GET.get("next", pack.get_absolute_url())
+                return HttpResponseRedirect(redirect_to)
     else:
         form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds), label_suffix="")
+        current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
+        form.pack_sound_objects = current_sounds
+    if request.method == "POST":
         current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
         form.pack_sound_objects = current_sounds
     tvars = {
@@ -915,12 +935,26 @@ def similar(request, username, sound_id):
     if sound.user.username.lower() != username.lower():
         raise Http404
 
-    num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
-    similarity_space = request.GET.get("similarity_space", settings.SIMILARITY_SPACE_DEFAULT)
-    if similarity_space not in settings.SIMILARITY_SPACES_NAMES:
-        similarity_space = settings.SIMILARITY_SPACE_DEFAULT
+    sound_available_similarity_spaces = sound.sim_vectors.values_list("similarity_space_name", flat=True)
+    if not sound_available_similarity_spaces:
+        # If sound is not ready for similarity, early return
+        tvars = {
+            "sound": sound,
+            "paginator": paginate(request, [], settings.NUM_SIMILAR_SOUNDS_PER_PAGE),
+        }
+        return render(request, "sounds/modal_similar_sounds.html", tvars)
+
+    requested_similarity_space = request.GET.get("similarity_space", settings.SIMILARITY_SPACE_DEFAULT)
+    if requested_similarity_space not in settings.SIMILARITY_SPACES_NAMES:
+        requested_similarity_space = settings.SIMILARITY_SPACE_DEFAULT
+
+    if requested_similarity_space in sound_available_similarity_spaces:
+        similarity_space = requested_similarity_space
+    else:
+        similarity_space = sound_available_similarity_spaces[0]
 
     # Get similar sounds from solr
+    num_similar_sounds = settings.NUM_SIMILAR_SOUNDS_PER_PAGE * settings.NUM_SIMILAR_SOUNDS_PAGES
     try:
         results = get_search_engine().search_sounds(
             similar_to=sound.id, similar_to_similarity_space=similarity_space, num_sounds=num_similar_sounds
@@ -943,6 +977,7 @@ def similar(request, username, sound_id):
         "similarity_spaces_names": [
             (sim_space_name, sim_space_options.get("display_name", sim_space_name))
             for sim_space_name, sim_space_options in settings.SIMILARITY_SPACES.items()
+            if sim_space_name in sound_available_similarity_spaces
         ],
     }
     tvars.update(paginator)
@@ -983,6 +1018,7 @@ def pack(request, username, pack_id):
         "pack_sounds": pack_sounds,
         "is_following": is_following,
         "geotags_in_pack_serialized": geotags_in_pack_serialized,
+        "download_limit_reached": user_download_limit_reached(request),
     }
     return render(request, "sounds/pack.html", tvars)
 
@@ -1262,3 +1298,24 @@ def pack_downloaders(request, username, pack_id):
     tvars = {"username": username, "pack": pack, "download_list": download_list}
     tvars.update(pagination)
     return render(request, "sounds/modal_downloaders.html", tvars)
+
+
+def broad_sound_taxonomy_info_page(request):
+    # Note: the colors below are currently hard-coded here, but in the future they should be
+    # added to the CSV file that defines the taxonomy and loaded from there.
+    taxonomy_node_colors = {
+        "m": "rgb(228,34,30)",
+        "is": "rgb(249,164,48)",
+        "sp": "rgb(39,161,132)",
+        "fx": "rgb(20,107,173)",
+        "ss": "rgb(50,167,40)",
+    }
+    taxonomy = settings.BROAD_SOUND_TAXONOMY
+    for key, node in taxonomy.items():
+        if key in taxonomy_node_colors:
+            node["color"] = taxonomy_node_colors[key]
+    tvars = {
+        "bst": taxonomy,
+        "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
+    }
+    return render(request, "sounds/broad_sound_taxonomy_info_page.html", tvars)

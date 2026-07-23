@@ -29,7 +29,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from django_object_actions import DjangoObjectActions
+from django_object_actions import DjangoObjectActions, action
 
 from accounts.forms import username_taken_by_other_user
 from accounts.models import (
@@ -190,7 +190,7 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
             del actions["delete_selected"]
         return actions
 
-    @admin.action(description="Delete the user but keep the sounds available")
+    @action(description="Delete the user but keep the sounds available", label="Delete user only")
     def delete_preserve_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -221,13 +221,10 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
 
         user_info = obj.profile.get_info_before_delete_user(include_sounds=False, include_other_related_objects=False)
 
-        tvars = {"users_to_delete": [], "type": "delete_preserve_sounds"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "delete_preserve_sounds"}
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 
-    delete_preserve_sounds.label = "Delete user only"
-
-    @admin.action(description="Delete the user and the sounds")
+    @action(description="Delete the user and the sounds", label="Delete user and sounds")
     def delete_include_sounds(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -264,14 +261,11 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         }
         user_info["deleted_objects_details"]["model_count"] = list(dict(model_count).items())
 
-        tvars = {"users_to_delete": [], "type": "delete_include_sounds"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "delete_include_sounds"}
 
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 
-    delete_include_sounds.label = "Delete user and sounds"
-
-    @admin.action(description="Delete the user and the sounds, mark deleted user as spammer")
+    @action(description="Delete the user and the sounds, mark deleted user as spammer", label="Delete as spammer")
     def delete_spammer(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -306,14 +300,11 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         }
         user_info["deleted_objects_details"]["model_count"] = list(dict(model_count).items())
 
-        tvars = {"users_to_delete": [], "type": "delete_spammer"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "delete_spammer"}
 
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 
-    delete_spammer.label = "Delete as spammer"
-
-    @admin.action(description="Completely delete user from db")
+    @action(description="Completely delete user from db", label="Full delete")
     def full_delete(self, request, obj):
         username = obj.username
         if request.method == "POST":
@@ -348,14 +339,11 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         }
         user_info["deleted_objects_details"]["model_count"] = list(dict(model_count).items())
 
-        tvars = {"users_to_delete": [], "type": "full_delete"}
-        tvars["users_to_delete"].append(user_info)
+        tvars = {"users_to_delete": [user_info], "type": "full_delete"}
 
         return render(request, "accounts/admin_delete_confirmation.html", tvars)
 
-    full_delete.label = "Full delete"
-
-    @admin.action(description="Clear all user flags for of spam reports and akismet")
+    @action(description="Clear all user flags for of spam reports and akismet", label="Clear spam flags")
     def clear_spam_flags(self, request, obj):
         num_akismet, _ = obj.akismetspam_set.all().delete()
         num_reports, _ = obj.flags.all().delete()
@@ -367,19 +355,13 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
         )
         return HttpResponseRedirect(reverse("admin:auth_user_change", args=[obj.id]))
 
-    clear_spam_flags.label = "Clear spam flags"
-
-    @admin.action(description="Open user on site")
+    @action(description="Open user on site", label="View on site")
     def view_on_site_action(self, request, obj):
         return HttpResponseRedirect(reverse("account", args=[obj.username]))
 
-    view_on_site_action.label = "View on site"
-
-    @admin.action(description="Edit profile in admin")
+    @action(description="Edit profile in admin", label="Edit profile in admin")
     def edit_profile_admin(self, request, obj):
         return HttpResponseRedirect(reverse("admin:accounts_profile_change", args=[obj.profile.id]))
-
-    edit_profile_admin.label = "Edit profile in admin"
 
     # NOTE: in the line below we removed the 'full_delete' option as ideally we should never need to use it. In for
     # some unexpected reason we happen to need it, we can call the .delete() method on a user object using the terminal.

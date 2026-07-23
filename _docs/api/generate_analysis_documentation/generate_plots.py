@@ -1,23 +1,20 @@
 from __future__ import print_function  
 
+import argparse
 import csv 
 import json
 import os
 import re
+from collections import Counter
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from matplotlib.ticker import FuncFormatter
 import seaborn as sns
+import numpy as np
 
-DATA_FOLDER = "../descriptors"  # json files for each descriptor extracted from DB
+
+DATA_FOLDER = "audio_descriptors_values"  # json files for each descriptor extracted from DB
 OUT_FOLDER = "../source/_static/descriptors"
-
-with open("descriptors.csv", "r", newline="") as f:
-    reader = csv.reader(f)
-    next(reader)
-    descriptor_names = [row[0] for row in reader]
-
-print("Descriptors found:", len(descriptor_names))
 
 def sort_key(s):
     ''' Sort string labels, and fix note order. '''
@@ -28,9 +25,17 @@ def sort_key(s):
     else:
         return (float('inf'), s.lower(), False)
     
-def plot_histogram(data, label, out_folder):
+def plot_histogram(data, label, out_folder, remove_outliers=True):
     sns.set_theme(style="whitegrid", context="talk", palette="pastel")
     plt.figure(figsize=(8,5))
+
+    if remove_outliers and all(isinstance(x, (int, float)) for x in data) and not set(data).issubset({0, 1}):
+        q1 = np.percentile(data, 5)
+        q3 = np.percentile(data, 95)
+        iqr = q3 - q1
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
+        data = [x for x in data if lower_bound <= x <= upper_bound]
 
     len_vals = len(set(data))
     bins = 100 if len_vals > 100 else len_vals
@@ -39,7 +44,8 @@ def plot_histogram(data, label, out_folder):
         if set(data).issubset({0, 1}):  # Boolean data
             sns.countplot(
                 x=data,
-                color=sns.color_palette("Set2")[0]
+                color=sns.color_palette("Set2")[0],
+                stat="percent"
             )
             plt.xticks(ticks=[0, 1], labels=["no (0)", "yes (1)"])
         else:
@@ -49,6 +55,7 @@ def plot_histogram(data, label, out_folder):
                 kde=True,
                 color=sns.color_palette("Set2")[0],
                 discrete=False,
+                stat="percent"
             )
         
     else:  # Categorical/string data
@@ -56,12 +63,15 @@ def plot_histogram(data, label, out_folder):
             plt.figure(figsize=(15,5))
             plt.xticks(rotation=60) 
         if len_vals > 100: 
-            data = data.value_counts().nlargest(20).index
+            # Keep only the 20 most frequent categories while preserving counts.
+            top_labels = {label for label, _ in Counter(data).most_common(20)}
+            data = [value for value in data if value in top_labels]
         sorted_data = sorted(set(data), key=sort_key)
         sns.countplot(
             x=data,
             color=sns.color_palette("Set2")[0],
-            order=sorted_data
+            order=sorted_data,
+            stat="percent"
         )
         
     def thousands_formatter(x, pos):
@@ -69,13 +79,13 @@ def plot_histogram(data, label, out_folder):
             return f'{int(x/1000)}k'
         return int(x)
     plt.gca().ticklabel_format(style='plain', axis='y')
-    plt.gca().yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+    #plt.gca().yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
 
     plt.xticks(fontsize=10)
     plt.yticks(fontsize=10)
     plt.title(label, fontsize=11)
     plt.xlabel("Value", fontsize=10)
-    plt.ylabel("Frequency (sound count)", fontsize=10)
+    plt.ylabel("Frequency (%)", fontsize=10)
     plt.grid(True, linestyle='--', alpha=0.2)
     plt.tight_layout()
     
@@ -83,45 +93,67 @@ def plot_histogram(data, label, out_folder):
     plt.close()
 
 
-# Plot all descriptors
-for descriptor_name in descriptor_names: 
-    json_path = os.path.join(DATA_FOLDER, f"{descriptor_name}.json")
-    if not os.path.isfile(json_path):
-        print(f"File not found: {json_path}, skipping")
-        continue
+if __name__ == "__main__":
 
-    with open(json_path, "r") as f:
-        values = json.load(f)
-    values = [v for v in values if v is not None]
-    print(f"Processing {descriptor_name} ..")
+    parser = argparse.ArgumentParser(
+        description="Generate descriptor plots from JSON value dumps."
+    )
+    parser.add_argument(
+        "--only",
+        default="",
+        help="Process only descriptors whose name contains this string"
+    )
+    parser.add_argument(
+        "--exclude",
+        default="",
+        help="Skip descriptors whose name contains this string"
+    )
+    args = parser.parse_args()
 
-    if not values:
-        print(f"Skipping {descriptor_name} (empty)")
-        continue
+    with open("descriptors.csv", "r", newline="") as f:
+        reader = csv.reader(f)
+        next(reader)
+        descriptor_names = [row[0] for row in reader]
 
-    first_val = values[0]
+    print("Descriptors found:", len(descriptor_names))
 
-    # Single-value number descriptor (integer and/or float, boolean)
-    if isinstance(first_val, (int, float, str)):
-        plot_histogram(values, descriptor_name, OUT_FOLDER)
+    if args.only:
+        descriptor_names = [d for d in descriptor_names if args.only in d]
+    if args.exclude:
+        descriptor_names = [d for d in descriptor_names if args.exclude not in d]
 
-    # Vector descriptor with numbers or strings
-    elif isinstance(first_val, (list, tuple)):
-        if len({len(v) for v in values}) != 1:  # skip varying-length ones
-            print(f"Skipping {descriptor_name}: varying-length descriptor")
+    print("Descriptors selected after filters:", len(descriptor_names))
+
+    # Plot all descriptors
+    for descriptor_name in descriptor_names: 
+        json_path = os.path.join(DATA_FOLDER, f"{descriptor_name}.json")
+        if not os.path.isfile(json_path):
+            print(f"File not found: {json_path}, skipping")
             continue
 
-        for i in range(len(first_val)):
-            pool = [v[i] for v in values if len(v) > i]
-            label = f"{descriptor_name}_{i}"
-            print(f"\tDim. {i}")
-            plot_histogram(pool, label, OUT_FOLDER)
+        with open(json_path, "r") as f:
+            values = json.load(f)
+        values = [v for v in values if v is not None]
+        print(f"Processing {descriptor_name} ..")
 
+        if not values:
+            print(f"Skipping {descriptor_name} (empty)")
+            continue
 
-# # find ranges
-# numeric_ranges = {}
-# for name, values in data.items():
-#     first_val = values[0]
-#     if isinstance(first_val, (int, float)):
-#         min_val, max_val = min(values), max(values)
-#         numeric_ranges[name] = (min_val, max_val)  # save range
+        first_val = values[0]
+
+        # Single-value number descriptor (integer and/or float, boolean)
+        if isinstance(first_val, (int, float, str)):
+            plot_histogram(values, descriptor_name, OUT_FOLDER)
+
+        # Vector descriptor with numbers or strings
+        elif isinstance(first_val, (list, tuple)):
+            if len({len(v) for v in values}) != 1:  # skip varying-length ones
+                print(f"Skipping {descriptor_name}: varying-length descriptor")
+                continue
+
+            for i in range(len(first_val)):
+                pool = [v[i] for v in values if len(v) > i]
+                label = f"{descriptor_name}-{i}"
+                print(f"\tDim. {i}")
+                plot_histogram(pool, label, OUT_FOLDER)

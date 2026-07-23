@@ -11,9 +11,10 @@ _docs/api/descriptors/
 
 # BW frontend
 .cache
+.parcel-cache
 node_modules
 freesound/static/bw-frontend/dist/
+freesound/static/bw-frontend/dist-dark/
 bw_static/
 npm-debug.log
-color-theme.scss
-dist-dark
+audio_descriptors_values

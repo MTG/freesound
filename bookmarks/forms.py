@@ -44,8 +44,8 @@ class BookmarkCategoryForm(forms.ModelForm):
 
 
 class BookmarkForm(forms.Form):
-    category = forms.ChoiceField(label=False, choices=[], required=False)
-    new_category_name = forms.CharField(label=False, help_text=None, max_length=128, required=False)
+    category = forms.ChoiceField(label=None, choices=[], required=False)
+    new_category_name = forms.CharField(label=None, max_length=128, required=False)
     use_last_category = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     user_bookmark_categories = None
 
@@ -79,10 +79,9 @@ class BookmarkForm(forms.Form):
                 pass
             elif self.cleaned_data["category"] == self.NEW_CATEGORY_CHOICE_VALUE:
                 if self.cleaned_data["new_category_name"] != "":
-                    category = BookmarkCategory(
+                    category = BookmarkCategory.objects.create(
                         user=self.user_saving_bookmark, name=self.cleaned_data["new_category_name"]
                     )
-                    category.save()
                     category_to_use = category
             else:
                 category_to_use = BookmarkCategory.objects.get(id=self.cleaned_data["category"])

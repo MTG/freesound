@@ -1,6 +1,39 @@
 {
-  "extends": ["airbnb-base", "prettier"],
+  "root": true,
+  "extends": ["eslint:recommended", "plugin:import/recommended", "prettier"],
   "env": {
-    "browser": true
-  }
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module"
+  },
+  "globals": {
+    "$": "readonly",
+    "Highcharts": "readonly",
+    "MapboxGeocoder": "readonly",
+    "d3": "readonly",
+    "mapboxgl": "readonly"
+  },
+  "rules": {
+    "semi": ["error", "always"],
+    "no-unused-vars": [
+      "warn",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "ignoreRestSiblings": true }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["freesound/static/bw-frontend/src/pages/**/*.js"],
+      "env": {
+        "jquery": true
+      },
+      "rules": {
+        "block-scoped-var": "off",
+        "no-redeclare": "off",
+        "no-undef": "off"
+      }
+    }
+  ]
 }

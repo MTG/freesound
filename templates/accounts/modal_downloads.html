@@ -32,9 +32,9 @@
                 {% endfor %}
                 <div class="v-spacing-top-5">
                     {% if type_sounds %}
-                    {% bw_paginator paginator page current_page request "sounds" %}
+                    {% bw_paginator page request anchor="sounds" %}
                     {% else %}
-                    {% bw_paginator paginator page current_page request "packs" %}    
+                    {% bw_paginator page request anchor="packs" %}    
                     {% endif %}
                 </div>   
         {% else %}

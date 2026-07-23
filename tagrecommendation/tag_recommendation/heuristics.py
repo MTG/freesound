@@ -18,8 +18,6 @@
 #     See AUTHORS file.
 #
 
-from __future__ import absolute_import
-
 from .tag_recommendation_utils import *
 
 heuristics = {

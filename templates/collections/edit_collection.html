@@ -1,8 +1,7 @@
 {% extends "simple_page.html" %}
 {% load static %}
-{% load util %}
 {% load bw_templatetags %}
-{% load sounds_selector %}
+{% load display_sound %}
 {% load users_selector %}
 
 {% block title %}Edit collection - {{ collection.name }}{% endblock %}
@@ -17,7 +16,7 @@
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ collection.name }}</h2>
-        <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
+        <form id="collection-form" class="bw-form disable-on-submit do-not-submit-on-enter" method="post" novalidate>{% csrf_token %}
             {% if collection.is_default_collection %}
             <div class="v-spacing-2 text-blue">
                 {% bw_icon "notification" %}This is your <i>default collection</i>. You cannot change its name, description or public/private status.
@@ -47,36 +46,66 @@
                     {% if form.maintainers.errors %}
                         <div>{{form.maintainers.errors}}</div>
                     {% endif %}
-                {% users_selector form.collection_maintainers_objects%}
+                {% users_selector form.collection_maintainers_objects %}
                 <div class="between v-spacing-top-4">
-                    <button class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{% url 'add-maintainers-modal' collection.id%}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">Add maintainers</button>
-                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
+                    <button type="button" class="btn-inverse" {% if collection.is_default_collection %}disabled="disabled" {% endif %} data-toggle="add-maintainers-modal" data-selected-maintainers-hidden-input-id="{{form.maintainers.id_for_label}}" data-modal-url="{{ collection.add_maintainers_modal_url }}?ajax=1" data-reload-on-success="false" title="Add maintainers" aria-label="Add maintainers">{% bw_icon 'plus' %}Add maintainers</button>
+                    <button type="button" class="btn-inverse">{% bw_icon 'trash' %}Remove selected maintainers from collection</button>
                 </div>
             </div>
-            <div class="v-spacing-5">
-                {{ form.collection_sounds }}
-                <label>Sounds in collection (<span id="element-count">{{ form.collection_sound_objects|length }}</span>)</label>
-                <div> {{form.collection_sounds.errors}}</div>
-                {% sounds_selector form.collection_sound_objects max_sounds=max_sounds_per_collection%}
-                <div class="between v-spacing-top-4">
-                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.collection_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-collection' collection.id %}">{% bw_icon 'plus' %}Add sounds</button>
-                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from collection</button>
+            <div class="v-spacing-4">
+                {# Initial sound IDs are derived from sounds-data JSON in JS #}
+                {{ form.added_sounds }}
+                {{ form.removed_sounds }}
+                {{ form.featured_sounds }}
+                {% if form.featured_sounds.errors %}
+                    <div class="text-red">{{ form.featured_sounds.errors }}</div>
+                {% endif %}
+                    <div class="between middle no-gutters">
+                        <div class="no-wrap">
+                            <label>Sounds in collection (<span id="element-count">0</span>)</label>
+                            <span class="text-light-grey h-spacing-left-1"><span id="featured-count">0</span>/{{ page_config.max_featured }} featured</span>
+                        </div>
+                    </div>
+                    <div class="between middle no-gutters v-spacing-top-4">
+                        <div class="input-wrapper w-100" style="max-width: 250px;">
+                            <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" value="{{ current_search|default:'' }}">
+                        </div>
+                        <div class="no-wrap browse__search-overview-sorter" id="sort-container">
+                            <label class="text-light-grey d-none d-md-inline">Sort by:</label>
+                            <select id="sort-select">
+                                {% for key, option in sort_options.items %}
+                                    <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.0 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                <div>{{form.added_sounds.errors}}</div>
+                <div id="sounds-section" data-render-cards-url="{{ render_cards_url }}">
+                    <div id="sounds-grid"></div>
+                    <div id="sounds-pagination" class="v-spacing-top-3"></div>
+                </div>
+                <div class="v-spacing-top-4">
+                    <button type="button" class="btn-inverse" data-toggle="add-sounds-modal" data-modal-url="{{ collection.add_sounds_modal_url }}">{% bw_icon 'plus' %}Add sounds</button>
                 </div>
                 <div class="between v-spacing-top-5">
-                    <span class="helptext" style="display:none" ><i>{{form.collection_sounds.help_text|safe}}</i></span>
+                    <span class="helptext" style="display:none" ><i>{{form.added_sounds.help_text|safe}}</i></span>
                 </div>
             </div>
-            {% if is_owner or is_maintainer%}
+            {% if is_owner or is_maintainer %}
                 <button class="btn-primary w-100">Save collection</button>
             {% endif %}
         </form>
-        {% if is_owner%}
-            <button class="btn-secondary w-100 v-spacing-top-3" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{% url "delete-collection" collection.id %}">Delete Collection</button>
+        {% if is_owner %}
+        <div class="v-spacing-top-3">
+            <button class="btn-secondary w-100" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this collection?" data-modal-confirmation-help-text="Note that all sounds inside this collection will also be removed" data-modal-confirmation-url="{{ collection.delete_url }}">Delete collection</button>
+        </div>
         {% endif %}
     </div>
 </div>
+{{ sounds_data|json_script:"sounds-data" }}
+{{ page_config|json_script:"page-config" }}
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/collectionEdit.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/collectionEdit.js' %}"></script>
 {% endblock %}

@@ -26,7 +26,7 @@
             </div>
         {% endfor %}
         <div class="v-spacing-top-5">
-            {% bw_paginator paginator page current_page request "" -1 %}
+            {% bw_paginator page request %}
         </div>
 
     {% elif follow_page == 'following' %}
@@ -44,7 +44,7 @@
             </div>
         {% endfor %}
         <div class="v-spacing-top-5">
-            {% bw_paginator paginator page current_page request "" -1 %}
+            {% bw_paginator page request %}
         </div>
 
     {% elif follow_page == 'tags' %}
@@ -57,7 +57,7 @@
                     {% if follow_tag_item.get_split_tags|length > 1 %}
                         <a href="{% url 'tags' follow_tag_item.get_slash_tags %}"  class="no-hover btn-inverse text-black font-weight-normal border-grey-light text-center no-border-radius padding-1 no-text-wrap h-spacing-1 line-height-fs-3 no-letter-spacing opacity-050 tag-container v-spacing-top-1">
                             {% for tag in follow_tag_item.get_split_tags %}
-                                {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1">·</span>{%endif%}
+                                {{ tag }}{% if not forloop.last %}<span class="h-spacing-left-1 h-spacing-1">·</span>{% endif %}
                             {% endfor %}
                         </a> 
                     {% else %}
@@ -79,7 +79,7 @@
             </div>
         {% endfor %}
         <div class="v-spacing-top-5">
-            {% bw_paginator paginator page current_page request "" -1 %}
+            {% bw_paginator page request %}
         </div>
     {% endif %}
 </div>

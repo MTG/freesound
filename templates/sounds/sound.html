@@ -7,7 +7,7 @@
 {% load ratings %}
 {% load absurl %}
 {% load flag_user %}
-{% load sound_signature%}
+{% load sound_signature %}
 {% load display_sound %}
 {% load display_user %}
 {% load bw_templatetags %}
@@ -73,7 +73,7 @@
                                         {% bw_icon 'similar' %}
                                     </button>
                                     {% endif %}
-                                    {% if enable_collections%}
+                                    {% if enable_collections %}
                                     <span class="h-spacing-left-1"></span>
                                     <button title="Add this sound to a collection" aria-label="Add this sound to a collection" class="btn-neutral" data-toggle="collection-modal" data-modal-content-url="{% url 'add-sound-to-collection' sound.id %}">
                                         {% bw_icon 'bookmark' %}
@@ -88,17 +88,17 @@
                             </div>
                         </div>
 
-                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound False %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text }}</span></div>
+                        <div class="middle v-spacing-top-2">{% bw_sound_stars sound allow_rating=False %}<span class="bw-rating__count text-grey h-spacing-left-1">{{ sound.get_ratings_count_text }}</span></div>
 
                         <div class="middle bw-sound-page__user v-spacing-top-5">
                             <div class="h-spacing-1">
-                                {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username 40 %}
+                                {% bw_user_avatar sound.user.profile.locations.avatar.M.url sound.user.username size=40 %}
                             </div>
                             <div class="h-spacing-left-1 ellipsis">
                                 <a href="{% url 'account' sound.user.username %}">{{ sound.user.username | truncate_string:15 }}</a>
                                 <p class="text-grey">{{ sound.created|date:"F jS, Y" }}</p>
                             </div>
-                            {% if sound.user != request.user  %}
+                            {% if sound.user != request.user %}
                                 <div class="h-spacing-left-3">
                                     {% if is_following %}
                                         <a class="no-hover btn-secondary" href="{% url 'unfollow-user' sound.user.username %}?next={{ next_path }}">Unfollow</a>
@@ -151,7 +151,7 @@
                             </div>
                             <div class="v-spacing-top-3">
                                 {% for tag in sound.tags.all %}
-                                    {% bw_tag tag.name 1 "h-spacing-1" %}
+                                    {% bw_tag tag.name size=1 class_name="h-spacing-1" %}
                                 {% endfor %}
                             </div>
                             <div class="divider-light v-spacing-top-4"></div>
@@ -220,7 +220,7 @@
                                             <div style="display: flex; justify-content: space-between;">
                                                 {% display_user_comment comment.user comment.created %}
                                                 <div class="text-right v-spacing-top-1">
-                                                    {%  flag_user "SC" comment.user.username comment.id "" comment.user.profile.num_sounds %}
+                                                    {% flag_user "SC" comment.user.username comment.id text="" user_sounds=comment.user.profile.num_sounds %}
                                                     {% if perms.comments.delete_comment or sound.user == request.user or comment.user == request.user %}
                                                         <a class="cursor-pointer" data-toggle="confirmation-modal" data-modal-confirmation-title="Are you sure you want to delete this comment?" data-modal-confirmation-url="{% url 'comment-delete' comment.id %}?next={{request.path}}&page={{current_page}}" title="Delete comment">{% bw_icon 'trash' %} Delete</a>
                                                     {% endif %}
@@ -234,7 +234,7 @@
                                     {% endfor %}
 
                                     <div>
-                                        {% bw_paginator paginator page current_page request "comments" %}
+                                        {% bw_paginator page request anchor="comments" %}
                                     </div>
 
                                 {% else %}
@@ -279,7 +279,7 @@
                             <div class="v-spacing-top-5">
                                 <p class="text-center text-26 font-weight-bold">Your rating:</p>
                                 <div class="center text-20">
-                                    {% bw_sound_stars sound True True True %}
+                                    {% bw_sound_stars sound allow_rating=True use_request_user_rating=True show_added_rating_on_save=True %}
                                 </div>
                             </div>
                         {% endif %}
@@ -287,7 +287,11 @@
                         <div class="v-spacing-top-5 v-padding-bottom-5 {% if sound.user == request.user %}v-spacing-top-5{% endif %}">
                             {% if sound.moderation_state == 'OK' and sound.processing_state == 'OK' %}
                                 {% if request.user.is_authenticated %}
+                                    {% if download_limit_reached %}
+                                    <a class="no-hover btn-primary display-inline-block w-100 text-center opacity-050" href="javascript:void(0);" data-toggle="modal-default" data-modal-content-url="{% url 'download-limit-modal' %}?ajax=1">Download sound</a>
+                                    {% else %}
                                     <a class="no-hover btn-primary display-inline-block w-100 text-center sound-download-button" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}" data-show-after-download-modal-url="{% url "after-download-modal" %}">Download sound</a>
+                                    {% endif %}
                                 {% else %}
                                     <a class="no-hover btn-primary display-inline-block w-100 text-center" href="{% url 'sound-download' sound.user.username sound.id %}{{ sound.friendly_filename }}">Login to download</a>
                                 {% endif %}
@@ -367,5 +371,5 @@
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/sound.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/sound.js' %}"></script>
 {% endblock %}

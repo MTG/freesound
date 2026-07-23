@@ -7,6 +7,9 @@
 <div class="col-12">
     <div class="text-center">
         <h4 class="v-spacing-5">Join Freesound</h4>
+        {% if rate_limit_error %}
+        <ul class="errorlist"><li>{{ rate_limit_error }}</li></ul>
+        {% endif %}
         <form id="registerModalForm" class="disable-on-submit bw-form bw-form-less-spacing" method="post" action="{% url 'accounts-registration-modal' %}?in_modal=1" data-check-username-url="{% url 'check_username' %}" novalidate>{% csrf_token %}
             {{ registration_form.as_p }}
             <button type="submit" class="btn-primary v-spacing-top-4">Join</button>

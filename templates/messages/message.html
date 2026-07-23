@@ -16,7 +16,7 @@
                     <div class="text-light-grey font-weight-normal text-20 v-spacing-3">Message from:</div>
                     <div class="row middle">
                         <div class="col-3 col-lg-4">
-                            {% bw_user_avatar message.user_from.profile.locations.avatar.L.url message.user_from.username 70 %}
+                            {% bw_user_avatar message.user_from.profile.locations.avatar.L.url message.user_from.username size=70 %}
                         </div>
                         <div class="col-8">
                             <h6 class="ellipsis"><a href="{% url "account" message.user_from.username %}">{{ message.user_from.username }}</a></h6>
@@ -28,7 +28,7 @@
                     <div class="text-light-grey font-weight-normal text-20 v-spacing-3">Message to:</div>
                     <div class="row middle">
                         <div class="col-3 col-lg-4">
-                            {% bw_user_avatar message.user_to.profile.locations.avatar.L.url message.user_to.username 70 %}
+                            {% bw_user_avatar message.user_to.profile.locations.avatar.L.url message.user_to.username size=70 %}
                         </div>
                         <div class="col-8">
                             <h6 class="ellipsis"><a href="{% url "account" message.user_to.username %}">{{ message.user_to.username }}</a></h6>
@@ -44,12 +44,33 @@
                 <div>
                     {{ message.body.body|smileys|safe|linebreaks|strip_unnecessary_br }}
                 </div>
-                <div class="right">{% flag_user "PM" message.user_from.username message.id "" message.user_from.profile.num_sounds %}</div> 
+                <div class="right">{% flag_user "PM" message.user_from.username message.id text="" user_sounds=message.user_from.profile.num_sounds %}</div> 
             </div>
         </div>            
         <div class="col-12">
             <div class="v-spacing-top-5 text-center">
                 <a class="btn-primary no-hover" href="{% url "message-reply" message.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Reply</a>
+                {% if not hide_archive_unarchive %}
+                <form method="post" action="{% url "messages-change-state" %}" class="display-inline-block">{% csrf_token %}
+                    <input type="hidden" name="choice" value="a">
+                    <input type="hidden" name="ids" value="{{ message.id }}">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" 
+                        title="{% if message.is_archived %}Unarchive{% else %}Archive{% endif %} message" 
+                        class="h-spacing-left-2 btn-inverse no-hover">
+                        {% if message.is_archived %}{% bw_icon "box-remove" %}Unarchive{% else %}{% bw_icon "box-add" %}Archive{% endif %}
+                    </button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url "messages-change-state" %}" class="display-inline-block">{% csrf_token %}
+                    <input type="hidden" name="choice" value="d">
+                    <input type="hidden" name="ids" value="{{ message.id }}">
+                    <button type="submit" 
+                        title="Delete message" 
+                        class="h-spacing-left-2 btn-inverse no-hover">
+                        {% bw_icon "trash" %}Delete
+                    </button>
+                </form>
             </div>
         </div> 
     </div>

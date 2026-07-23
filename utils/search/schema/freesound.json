@@ -246,6 +246,12 @@
       "stored": false
     },
     {
+      "name": "gen_ai_preference",
+      "type": "string",
+      "indexed": true,
+      "stored": false
+    },
+    {
       "name": "is_remix",
       "type": "boolean",
       "indexed": true,
@@ -283,13 +289,6 @@
     },
     {
       "name": "pack_grouping",
-      "type": "string",
-      "indexed": true,
-      "stored": true,
-      "required": false
-    },
-    {
-      "name": "pack_grouping_child",
       "type": "string",
       "indexed": true,
       "stored": true,
@@ -531,6 +530,12 @@
       "dest": [
         "type_facet"
       ]
+    }
+  ],
+  "requestHandlers": [
+    {
+      "name": "/select_similarity",
+      "class": "solr.SearchHandler"
     }
   ]
 }

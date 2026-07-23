@@ -21,6 +21,8 @@
 
 from django import template
 
+from utils.text import clean_html
+
 register = template.Library()
 
 
@@ -32,3 +34,10 @@ def display_message(context, message):
         "hide_archive_unarchive": context.get("hide_archive_unarchive", False),
         "list_type": context["list_type"],
     }
+
+
+@register.filter(name="message_preview_text")
+def message_preview_text(value):
+    if not value:
+        return ""
+    return clean_html(value, ok_tags=[], ok_attributes={})

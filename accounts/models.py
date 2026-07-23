@@ -21,6 +21,7 @@
 import datetime
 import os
 import random
+import typing
 from urllib.parse import quote
 
 from django.conf import settings
@@ -39,7 +40,7 @@ from django.utils import timezone
 from django.utils.encoding import smart_str
 from psycopg.errors import ForeignKeyViolation
 
-import tickets.models
+import tickets
 from apiv2.models import ApiV2Client
 from bookmarks.models import Bookmark
 from comments.models import Comment
@@ -52,6 +53,10 @@ from sounds.models import BulkUploadProgress, Download, License, Pack, PackDownl
 from utils.locations import locations_decorator
 from utils.mail import transform_unique_email
 from utils.search import SearchEngineException, get_search_engine
+from utils.text import text_may_be_spam
+
+if typing.TYPE_CHECKING:
+    import tickets.views
 
 
 class ResetEmailRequest(models.Model):
@@ -99,6 +104,7 @@ class ProfileManager(models.Manager):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
+    user_id: int
     about = models.TextField(null=True, blank=True, default=None)
     home_page = models.URLField(null=True, blank=True, default=None)
     signature = models.TextField(max_length=256, null=True, blank=True)
@@ -427,6 +433,17 @@ class Profile(models.Model):
 
         return True, ""
 
+    def can_comment_sound(self, comment_text):
+        if self.is_trustworthy():
+            return True
+        user_antiguity_in_site = (timezone.now() - self.user.date_joined).days
+        suspicious_text = text_may_be_spam(comment_text)
+        if suspicious_text and user_antiguity_in_site < settings.MIN_DAYS_FOR_COMMENTING_WITH_LINKS:
+            return False
+        if self.is_blocked_for_spam_reports():
+            return False
+        return True
+
     def can_do_bulk_upload(self):
         """
         Returns True if the corresponding User is allowed to use the bulk upload feature. This will happen if one of
@@ -625,9 +642,8 @@ class Profile(models.Model):
             self.save()
 
     def get_last_latlong(self):
-        lasts_sound_geotagged = Sound.objects.filter(user=self.user).exclude(geotag=None).order_by("-created")
-        if lasts_sound_geotagged.count():
-            last_sound = lasts_sound_geotagged[0]
+        last_sound = Sound.objects.filter(user=self.user).exclude(geotag=None).order_by("-created").first()
+        if last_sound:
             return last_sound.geotag.lat, last_sound.geotag.lon, last_sound.geotag.zoom
         return None
 
@@ -658,7 +674,7 @@ class Profile(models.Model):
     @property
     def num_packs(self):
         # Return the number of packs for which at least one sound has been published
-        return Sound.public.filter(user_id=self.user_id).exclude(pack=None).order_by("pack_id").distinct("pack").count()
+        return Sound.public.filter(user=self.user).exclude(pack=None).order_by("pack_id").distinct("pack").count()
 
     def get_stats_for_profile_page(self):
         # Return a dictionary of user statistics to show on the user profile page
@@ -679,6 +695,40 @@ class Profile(models.Model):
         stats_from_db.update(stats_from_cache)
         return stats_from_db
 
+    def get_gen_ai_preference(self, default_if_not_set=True, category_code=None):
+        """
+        Returns the user's generative AI preference.
+        If no preference is set, returns the default preference if default_if_not_set is True, otherwise None.
+        If "category_code" argument is specified, this method will consider if there should be any preference overrides
+        because of that.
+        """
+        try:
+            preference_object = self.user.ai_preference
+            if (
+                category_code is not None
+                and preference_object.opt_out_speech is True
+                and category_code in settings.AI_OPT_OUT_SPEECH_TAXONOMY_CODES
+            ):
+                return settings.AI_PREF_NO_GEN_AI
+            return preference_object.preference
+        except AIPreference.DoesNotExist:
+            # If no preference is set, return the default one
+            if default_if_not_set:
+                return settings.DEFAULT_AI_PREFERENCE
+            return None
+
+    def set_gen_ai_preference(self, preference_value, opt_out_speech):
+        preference, _ = AIPreference.objects.update_or_create(user=self.user, defaults={"preference": preference_value})
+        if opt_out_speech != preference.opt_out_speech:
+            preference.opt_out_speech = opt_out_speech
+            preference.save()
+
+    def get_gen_ai_preference_opt_out_speech(self):
+        try:
+            return self.user.ai_preference.opt_out_speech
+        except AIPreference.DoesNotExist:
+            return settings.DEFAULT_OPT_OUT_SPEECH
+
     class Meta:
         ordering = ("-user__date_joined",)
         permissions = (("can_beta_test", "Show beta features to that user."),)
@@ -689,6 +739,41 @@ class GdprAcceptance(models.Model):
     # Automatically add the date because the presence of this field means that
     # the user accepted the terms
     date_accepted = models.DateTimeField(auto_now_add=True)
+
+
+class AIPreference(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ai_preference")
+    date_updated = models.DateTimeField(auto_now=True)
+
+    AI_PREFERENCE_CHOICES_AND_EXPLANATION = [
+        {
+            "code": settings.AI_PREF_NO_ADDITIONAL_PREFERENCES,
+            "label": "No additional preferences",
+            "explanation": """No additional statement, your sounds remain subject to the Creative Commons license terms selected for them. 
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+        {
+            "code": settings.AI_PREF_OPEN_MODELS,
+            "label": "Open Source Models only",
+            "explanation": """In addition to the Creative Commons license terms, you express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models and made freely available to the public</b>.
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+        {
+            "code": settings.AI_PREF_OPEN_NONCOMMERCIAL_MODELS,
+            "label": "Non-Commercial Open Source Models only",
+            "explanation": """In addition to the Creative Commons license terms, you express a preference for your sounds to be used for the purpose of training Gen AI models <b>only when the trained models are released as Open Source Models, made freely available to the public, and not trained in a commercial setting nor used for commercial purposes</b>. 
+            <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+        {
+            "code": settings.AI_PREF_NO_GEN_AI,
+            "label": "No generative AI",
+            "explanation": """You express a preference that your sounds not be used for the purpose of training Gen AI models. <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Read here for more details</a>.""",
+        },
+    ]
+
+    AI_PREFERENCE_CHOICES = [(item["code"], item["label"]) for item in AI_PREFERENCE_CHOICES_AND_EXPLANATION]
+    preference = models.CharField(choices=AI_PREFERENCE_CHOICES, default=settings.DEFAULT_AI_PREFERENCE)
+    opt_out_speech = models.BooleanField(default=settings.DEFAULT_OPT_OUT_SPEECH)
 
 
 class UserFlag(models.Model):

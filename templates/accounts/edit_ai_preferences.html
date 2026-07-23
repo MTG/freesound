@@ -1,0 +1,66 @@
+{% extends "accounts/account_settings_base.html" %}
+
+{% load static %}
+{% load filter_img %}
+{% load bw_templatetags %}
+{% load util %}
+
+{% block title %}Gen AI preferences{% endblock %}
+
+{% block main_content %}
+
+    <h1>Generative AI preferences</h1>
+
+    <div class="v-spacing-top-4 w-100 v-spacing-5">
+        <form method="post" action="." class="bw-form w-100">{% csrf_token %}
+            <p>
+                This section allows you to set your preferences regarding the <b>use of your uploaded sounds for the purpose of training generative Artificial Intelligence (Gen AI) models.</b>
+            </p>
+            <p>
+                The use of sounds for Gen AI training depends on your chosen <a href="{% url "wiki-page" "faq" %}#licenses">Creative Commons license terms</a> and how those terms are interpreted and applied. 
+                You can add <b>a statement to express your preferences for the specific case of training Gen AI models</b>, however there is no guarantee that these will have any legal effect.
+                Please, select one of the options below:
+            </p>
+            <div class="v-spacing-top-4">
+                {% if form.ai_sound_usage_preference.errors %}
+                    <div class="v-spacing-2">{{ form.ai_sound_usage_preference.errors }}</div>
+                {% endif %}
+                <div class="row">
+                    {% for ai_option in form.ai_options_and_texts %}
+                    <div class="col-md-12 v-spacing-5">
+                        <label class="bw-radio-label">
+                            <div class="row no-gutters h-spacing-left-1">
+                                <div class="col-2 col-lg-1 middle center">
+                                    <input class="bw-radio" type="radio" id="id_ai_sound_usage_preference_{{ ai_option.code }}" value="{{ ai_option.code }}" name="ai_sound_usage_preference" title="{{ ai_option.label }}" {% if form.ai_sound_usage_preference.value == ai_option.code %}checked{% endif %}>
+                                </div>
+                                <div class="col-10 col-lg-10">
+                                    <h5>{{ ai_option.label }}</h5>
+                                    <div class="text-grey v-spacing-top-1">{{ ai_option.explanation|safe }}</div>
+                                </div> 
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div>
+                    Complementarily to the options above, you can make an extra statement to <b>opt-out from Gen AI model training for the particular case of voice recordings</b>.
+                    This option is designed to express a preference against the use of such sounds for training models that may generate speech that could be misused to impersonate real people.
+                    Mark the checkbox below to enable this option:
+                </div>
+                <div class="v-spacing-top-2">                    
+                    {{ form.opt_out_speech.errors }}
+                    <label for="{{ form.opt_out_speech.id_for_label }}">{{ form.opt_out_speech.label }}</label> 
+                    {{ form.opt_out_speech }}
+                </div>
+            </div>
+            <div class="v-spacing-top-4">
+                For more details about Generative AI preferences, including the way in which such preferences are treated, please read the 
+                <a href="/help/faq/#can-my-sounds-be-used-to-train-generative-artificial-intelligence-gen-ai-models">Usage of my sounds for training generative AI models</a> help section.
+            </div>
+            <button class="btn-primary w-100 v-spacing-top-5">Update Gen AI preferences</button>
+        </form>
+
+    </div>
+
+{% endblock %}

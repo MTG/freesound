@@ -13,8 +13,8 @@
         {% endif %}
         <div class="v-spacing-3 overflow-hidden {% if is_explicit and player_size != 'moderation' %}blur{% endif %}" aria-label="Sound {{ sound.original_filename }} by {{ sound.username }}">
             {% include "sounds/player.html" %}
-            {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
             {% if show_rate_widget %}<div class="display-none bw-player__rate__widget">{% bw_sound_stars sound %}</div>{% endif %}
+            {% cache 43200 bw_display_sound sound.id player_size is_authenticated %}
             <div class="between line-height-percentage-150 v-spacing-top-1">
                 <h5 class="ellipsis">
                     <a class="bw-link--black" href="{% url 'sound' sound.username sound.id %}" title="{{ sound.original_filename }}">{{ sound.original_filename }}</a>
@@ -39,7 +39,7 @@
             {% else %}
                 <div id="collapsable-sound-info-{{ sound.id }}-{{ random_number }}" class="v-spacing-top-1 collapsable-block">
                     {% comment %}When showing information for moderation pages we put the full description and also the tags in a collapsable element{% endcomment %}
-                    {% for tag in sound.tag_array%}
+                    {% for tag in sound.tag_array %}
                         {% bw_tag tag %}
                     {% endfor %}
                     {% if sound.bst_category is not None %}
@@ -63,7 +63,7 @@
             {% endif %}
             {% endcache %}
         </div>
-        {% if is_explicit and player_size == 'moderation'%}
+        {% if is_explicit and player_size == 'moderation' %}
         <div class="v-spacing-top-1 v-spacing-3">
             <div class="text-grey">
                 {% bw_icon "notification" %} Marked as explicit
@@ -134,7 +134,7 @@
                     <div class="row no-gutters">
                         <div class="col-12 col-lg-12 middle">
                             <div class="h-spacing-1">
-                                {% bw_user_avatar user_profile_locations.avatar.S.url sound.username 32 %}
+                                {% bw_user_avatar user_profile_locations.avatar.S.url sound.username size=32 %}
                             </div>
                             <a href="{% url 'account' sound.username %}">{{ sound.username | truncate_string:15 }}</a>
                             <div class="text-light-grey h-spacing-left-1 d-none d-lg-block no-text-wrap">{{ sound.created|date:"F jS, Y" }}</div>
@@ -169,7 +169,7 @@
                             <span class="bw-icon-comments"></span> {{ sound.num_comments|formatnumber }}
                         </a>
                     </div>
-                    <div class="h-spacing-left-2" title="License: {{ sound.license_name }}">
+                    <div class="h-spacing-left-2" title="License: {{ sound.license.name }}">
                         <span class="bw-icon-{{ sound.license_bw_icon_name }}"></span>
                     </div>
                 </div>

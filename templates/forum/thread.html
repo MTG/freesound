@@ -44,7 +44,7 @@
     <div class="v-spacing-top-4">
         {% for post in page.object_list %}
             <a name="post{{ post.id }}"></a>
-            {% display_post post forloop.counter post_counter_offset False True True %}
+            {% display_post post forloop_counter=forloop.counter post_number_offset=post_counter_offset %}
             {% if not forloop.last %}
                 <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
             {% endif %}
@@ -54,6 +54,6 @@
         <a class="btn-primary no-hover" href="{% url "forums-reply" forum.name_slug thread.id %}"><i class="text-16 padding-right-1 bw-icon-reply" ></i>Post reply</a>
     </div>
     <div class="v-spacing-top-4">
-        {% bw_paginator paginator page current_page request "thread" %}
+        {% bw_paginator page request anchor="thread" %}
     </div>
 {% endblock %}

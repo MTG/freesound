@@ -18,14 +18,17 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import logging
 
 from django.conf import settings
 from django.db.models.query import RawQuerySet
 
-import sounds
+import sounds.models
 import utils.search
-from utils.search import SearchEngineException, SearchResultsPaginator, get_search_engine
+from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search import SearchEngineException, SearchResults, get_search_engine
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
@@ -56,35 +59,34 @@ def parse_weights_parameter(weights_param):
         return None
 
 
-def perform_search_engine_query(query_params):
+def perform_search_engine_query(query_params: dict) -> tuple[SearchResults, PreSlicedCountProvidedPaginator]:
     """Perform a query in the search engine given some query parameters and get the paginated results
 
     This util function performs the query to the search engine and returns needed parameters to continue with the view.
     The main reason to have this util function is to facilitate mocking in unit tests for this view.
 
     Args:
-        query_params (dict): query parameters dictionary with parameters following the specification of search_sounds
+        query_params: query parameters dictionary with parameters following the specification of search_sounds
             function from utils.search.SearchEngine.
 
     Returns:
-        utils.search.SearchResults: search results object with query results from the search engine
-        utils.search.SearchResultsPaginator: paginator object for the selected page according to query_params
+        the search results and a paginator for the selected page according to query_params.
     """
     results = get_search_engine().search_sounds(**query_params)
-    paginator = SearchResultsPaginator(results, query_params["num_sounds"])
+    paginator = PreSlicedCountProvidedPaginator(results.docs, query_params["num_sounds"], results.num_found)
 
     return results, paginator
 
 
 def add_sounds_to_search_engine(
-    sound_objects: list["sounds.models.Sound"], update=False, include_similarity_vectors=False, solr_collection_url=None
-):
+    sound_objects: list[sounds.models.Sound], update=False, include_similarity_vectors=False, solr_collection_url=None
+) -> int:
     """Add the Sounds from the queryset to the search engine
 
     Args:
         sound_objects: list (or queryset) of Sound objects to index
     Returns:
-        int: number of sounds added to the index
+        number of sounds added to the index
     """
     if isinstance(sound_objects, RawQuerySet):
         num_sounds = len(list(sound_objects))
@@ -104,14 +106,14 @@ def add_sounds_to_search_engine(
 
 
 def send_update_similarity_vectors_in_search_engine(
-    sound_objects: list["sounds.models.Sound"], solr_collection_url=None
-):
+    sound_objects: list[sounds.models.Sound], solr_collection_url=None
+) -> int:
     """Update the similarity vectors for the Sounds from the queryset in the search engine
 
     Args:
         sound_objects: list (or queryset) of Sound objects to index
     Returns:
-        int: number of sounds added to the index
+        number of sounds added to the index
     """
     if isinstance(sound_objects, RawQuerySet):
         num_sounds = len(list(sound_objects))
@@ -128,11 +130,11 @@ def send_update_similarity_vectors_in_search_engine(
         return 0
 
 
-def delete_sounds_from_search_engine(sound_ids, solr_collection_url=None):
+def delete_sounds_from_search_engine(sound_ids: list[int], solr_collection_url=None):
     """Delete sounds from the search engine
 
     Args:
-        sound_ids (list[int]): IDs of the sounds to delete
+        sound_ids: IDs of the sounds to delete
     """
     console_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
     search_logger.info(f"Deleting {len(sound_ids)} sounds from search engine")
@@ -154,14 +156,14 @@ def delete_all_sounds_from_search_engine(solr_collection_url=None):
         search_logger.info(f"Could not delete sounds: {str(e)}")
 
 
-def get_all_sound_ids_from_search_engine(page_size=2000, solr_collection_url=None):
+def get_all_sound_ids_from_search_engine(solr_collection_url=None) -> list[int]:
     """Retrieves the list of all sound IDs currently indexed in the search engine
 
     Args:
         page_size: number of sound IDs to retrieve per search engine query
 
     Returns:
-        list[int]: list of sound IDs indexed in the search engine
+        list of sound IDs indexed in the search engine
     """
     console_logger.info("Getting all sound ids from search engine")
     search_engine = get_search_engine(sounds_index_url=solr_collection_url)
@@ -170,6 +172,30 @@ def get_all_sound_ids_from_search_engine(page_size=2000, solr_collection_url=Non
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve all sound IDs from search engine: {str(e)}")
     return []
+
+
+def get_all_sim_vector_sound_ids_from_search_engine(solr_collection_url=None) -> dict[str, list[int]]:
+    """Retrieves the list of all sound IDs with similarity vectors for all similarity spaces currently
+    indexed in the search engine
+
+    Args:
+        page_size: number of sound IDs to retrieve per search engine query
+
+    Returns:
+        list of sound IDs with per similarity space indexed in the search engine
+    """
+    console_logger.info("Getting all sound ids with similarity vectors from search engine")
+    search_engine = get_search_engine(sounds_index_url=solr_collection_url)
+    sim_vector_sound_ids = {}
+    try:
+        sim_vector_document_ids = search_engine.get_all_sim_vector_document_ids_per_similarity_space()
+        for key, document_ids in sim_vector_document_ids.items():
+            sim_vector_sound_ids[key] = list(set([int(doc_id.split("/")[0]) for doc_id in document_ids]))
+    except SearchEngineException as e:
+        search_logger.info(
+            f"Could not retrieve all sound IDs with similarity vectors for similarity space from search engine: {str(e)}"
+        )
+    return sim_vector_sound_ids
 
 
 def get_random_sound_id_from_search_engine(solr_collection_url=None):
@@ -183,21 +209,24 @@ def get_random_sound_id_from_search_engine(solr_collection_url=None):
 
 
 def get_sound_similarity_vectors_from_search_engine_query(
-    query_params, similarity_space=settings.SIMILARITY_SPACE_DEFAULT, current_page=None, num_sounds=None
-):
+    query_params: dict,
+    similarity_space: str = settings.SIMILARITY_SPACE_DEFAULT,
+    current_page: int | None = None,
+    num_sounds: int | None = None,
+) -> dict:
     """Gets the similarity vectors for the first "num_results" sounds for the given query.
 
     Args:
-        query_params (dict): query parameters dictionary with parameters following the specification of search_sounds
+        query_params: query parameters dictionary with parameters following the specification of search_sounds
             function from utils.search.SearchEngine.
-        similarity_space (str): name of the similarity space from which to get the vector
-        current_page (int): page number of the results to retrieve similarity vectors for. If None, the current page
+        similarity_space: name of the similarity space from which to get the vector
+        current_page: page number of the results to retrieve similarity vectors for. If None, the current page
             from query_params will be used.
-        num_sounds (int): number of sounds to retrieve similarity vectors for. If None, the number of sounds
+        num_sounds: number of sounds to retrieve similarity vectors for. If None, the number of sounds
             in the query_params will be used.
 
     Returns:
-        dict: dictionary with sound IDs as keys and similarity vectors as values
+        dictionary with sound IDs as keys and similarity vectors as values
     """
     # Update query params to get similarity vectors of the first
     config_options = settings.SIMILARITY_SPACES[similarity_space]
@@ -236,18 +265,20 @@ def get_sound_similarity_vectors_from_search_engine_query(
     return similarity_vectors_map
 
 
-def get_sound_ids_from_search_engine_query(query_params, current_page=None, num_sounds=None):
+def get_sound_ids_from_search_engine_query(
+    query_params: dict, current_page: int | None = None, num_sounds: int | None = None
+) -> list[int]:
     """Performs Solr query and returns results as a list of sound ids.
 
     Args:
-        query_params (dict): contains the query parameters to replicate the user query.
-        current_page (int): page number of the results to retrieve IDs for. If None, the current page
+        query_params: contains the query parameters to replicate the user query.
+        current_page: page number of the results to retrieve IDs for. If None, the current page
             from query_params will be used.
-        num_sounds (int): number of sounds to retrieve IDs for. If None, the number of sounds
+        num_sounds: number of sounds to retrieve IDs for. If None, the number of sounds
             in the query_params will be used.
 
-    Returns
-        List[int]: list containing the ids of the retrieved sounds (for the current_page or num_sounds).
+    Returns:
+        list containing the ids of the retrieved sounds (for the current_page or num_sounds).
     """
     # We set include_facets to False in order to reduce the amount of data that search engine will return.
     query_params.update(

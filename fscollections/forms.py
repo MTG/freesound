@@ -18,53 +18,58 @@
 #     See AUTHORS file.
 #
 
-import re
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.forms import Textarea, TextInput
 
 from fscollections.models import Collection, CollectionSound
 from sounds.models import Sound
 
 
-class SelectCollectionOrNewCollectionForm(forms.Form):
-    """This form unfolds all the available collections for the user in a modal and allows to select one.
-    So far it is only used to add one sound to a collection interacting from the sound player (as previously done
-    in Bookmarks). Available collections are those where the user is either the owner or a maintainer, with a number
-    of sounds lower than MAX_SOUNDS_PER_COLLECTION and still do not contain the selected sound. New collections can be
-    created with a custom name, or with the default name for the personal collection's name (Bookmark), if the user has
-    not created any collection yet.
+class CommaSeparatedIdField(forms.CharField):
+    """CharField that coerces a comma-separated string of ints into a set (or list)."""
 
-    Args:
-        forms (Form): django Form class.
+    def __init__(self, *args, as_list=False, **kwargs):
+        self._as_list = as_list
+        super().__init__(*args, **kwargs)
 
-    Raises:
-        forms.ValidationError: sound does not exist.
-        forms.ValidationError: collection.num_sounds exceeds settings.MAX_SOUNDS_PER_COLLECTION.
-        forms.ValidationError: user is not owner nor maintainer so lacks permission to edit the collection.
-        forms.ValidationError: sound already exists in collection.
-        forms.ValidationError: collection does not exist.
-        forms.ValidationError: new collection name already exists in user's collection.
-        forms.ValidationError: new collection name is empty
-        forms.ValidationError: invalid selected category value
+    def clean(self, value):
+        value = super().clean(value)
+        if not value:
+            return [] if self._as_list else set()
+        if self._as_list:
+            seen = set()
+            ids = []
+            for i in value.replace(" ", "").split(","):
+                if i.isdigit() and int(i) not in seen:
+                    seen.add(int(i))
+                    ids.append(int(i))
+            return ids
+        return {int(i) for i in value.replace(" ", "").split(",") if i.isdigit()}
 
-    Returns:
-        save: returns the selected collection object to be used
+
+class SelectCollectionForm(forms.Form):
+    """Pick one of the user's collections (or their default "My bookmarks") to add a sound to.
+
+    Selectable collections are those the user owns or maintains that are not full and do not
+    already contain the sound. Creating a brand-new collection is handled separately by
+    CreateCollectionForm / the create-collection view.
+
+    ``save()`` adds the sound to the chosen collection and returns a
+    ``(collection, featured_skipped)`` tuple.
     """
 
-    collection = forms.ChoiceField(label=False, choices=[], required=True)
-
-    new_collection_name = forms.CharField(label=False, help_text=None, max_length=128, required=False)
+    collection = forms.ChoiceField(label=None, choices=[], required=True)
 
     use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
+
+    mark_as_featured = forms.BooleanField(label=False, required=False, initial=False)
     user_collections = None
     user_available_collections = None
-    user_full_collections = None
 
     BOOKMARK_COLLECTION_CHOICE_VALUE = "-1"
-    NEW_COLLECTION_CHOICE_VALUE = "0"
 
     def __init__(self, *args, **kwargs):
         self.user_collections = kwargs.pop("user_collections", False)
@@ -83,63 +88,46 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
 
         display_bookmark_collection = True
         try:
-            # if the user already has a Bookmarks Collection, the default BOOKMARK COLLECTION CHOICE VALUE must be the ID of this collection
             default_collection = Collection.objects.get(user=self.user_saving_sound, is_default_collection=True)
             self.BOOKMARK_COLLECTION_CHOICE_VALUE = default_collection.id
             if CollectionSound.objects.filter(sound=self.sound_id, collection=default_collection).exists():
-                # if the Bookmarks Collection already contains the sound, don't display it as an option
+                display_bookmark_collection = False
+            elif default_collection.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
                 display_bookmark_collection = False
         except Collection.DoesNotExist:
             pass
 
         super().__init__(*args, **kwargs)
         self.fields["collection"].choices = (
-            ([(self.BOOKMARK_COLLECTION_CHOICE_VALUE, "My bookmarks")] if display_bookmark_collection else [])
-            + [(self.NEW_COLLECTION_CHOICE_VALUE, "Create a new collection...")]
-            + (
-                [(collection.id, collection.name) for collection in self.user_available_collections]
-                if self.user_available_collections
-                else []
-            )
+            [(self.BOOKMARK_COLLECTION_CHOICE_VALUE, "My bookmarks")] if display_bookmark_collection else []
+        ) + (
+            [(collection.id, collection.name) for collection in self.user_available_collections]
+            if self.user_available_collections
+            else []
         )
 
-        self.fields["new_collection_name"].widget.attrs["placeholder"] = "Write a description for the new collection"
-        self.fields["collection"].widget.attrs = {
-            "data-grey-items": f"{self.BOOKMARK_COLLECTION_CHOICE_VALUE},{self.NEW_COLLECTION_CHOICE_VALUE}"
-        }
+        self.fields["collection"].widget.attrs = {"data-grey-items": f"{self.BOOKMARK_COLLECTION_CHOICE_VALUE}"}
 
     def save(self, *args, **kwargs):
-        collection_to_use = None
+        """Add the sound to the chosen collection. Returns a (collection, featured_skipped) tuple."""
         sound = Sound.objects.get(id=self.sound_id)
 
-        if not self.cleaned_data["use_last_collection"]:
-            if self.cleaned_data["collection"] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
-                collection_to_use, _ = Collection.objects.get_or_create(
-                    name="My bookmarks", user=self.user_saving_sound, is_default_collection=True
-                )
-                # TODO: what happens if user has more than one is_default_collection? Shouldn't happen but this needs a RESTRICTION
-            elif self.cleaned_data["collection"] == self.NEW_COLLECTION_CHOICE_VALUE:
-                if self.cleaned_data["new_collection_name"] != "":
-                    collection = Collection.objects.create(
-                        user=self.user_saving_sound, name=self.cleaned_data["new_collection_name"]
-                    )
-                    collection_to_use = collection
-            else:
-                collection_to_use = Collection.objects.get(id=self.cleaned_data["collection"])
+        if self.cleaned_data["use_last_collection"]:
+            collection_to_use = Collection.objects.filter(user=self.user_saving_sound).order_by("-created").first()
+        elif self.cleaned_data["collection"] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
+            collection_to_use, _ = Collection.objects.get_or_create(
+                name="My bookmarks", user=self.user_saving_sound, is_default_collection=True
+            )
         else:
-            try:
-                last_user_collection = Collection.objects.filter(user=self.user_saving_sound).order_by("-created")[0]
-                collection_to_use = last_user_collection
-            except IndexError:
-                pass
+            collection_to_use = Collection.objects.get(id=self.cleaned_data["collection"])
 
-        maintainers_list = list(collection_to_use.maintainers.all().values_list("id", flat=True))
-        if self.user_saving_sound == collection_to_use.user:
-            collection, _ = Collection.objects.get_or_create(name=collection_to_use.name, id=collection_to_use.id)
-        elif self.user_saving_sound.id in maintainers_list:
-            collection, _ = Collection.objects.get_or_create(name=collection_to_use.name, id=collection_to_use.id)
-        CollectionSound.objects.create(user=self.user_saving_sound, collection=collection, sound=sound, status="OK")
-        return collection
+        if collection_to_use is None:
+            raise forms.ValidationError("Could not determine which collection to use.")
+
+        featured_skipped = collection_to_use.add_sound(
+            sound, self.user_saving_sound, feature=self.cleaned_data.get("mark_as_featured")
+        )
+        return collection_to_use, featured_skipped
 
     def clean(self):
         clean_data = super().clean()
@@ -147,40 +135,36 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
             sound = Sound.objects.get(id=self.sound_id, moderation_state="OK")
         except Sound.DoesNotExist:
             raise forms.ValidationError("Unexpected errors occured while handling the sound.")
-        # existing collection selected
         try:
-            if clean_data["collection"] != "0" and clean_data["new_collection_name"] == "":
-                if clean_data["collection"] == "-1":
-                    pass
-                else:
-                    try:
-                        collection = Collection.objects.get(id=clean_data["collection"])
-
-                        if collection.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
-                            raise forms.ValidationError(
-                                f"The chosen collection has reached the maximum number of sounds allowed ({settings.MAX_SOUNDS_PER_COLLECTION})"
-                            )
-
-                        maintainers_list = list(collection.maintainers.all().values_list("id", flat=True))
-                        if (
-                            self.user_saving_sound.id not in maintainers_list
-                            and self.user_saving_sound != collection.user
-                        ):
-                            raise forms.ValidationError("You do not have permission to edit this collection.")
-
-                        collection_sounds = Sound.objects.filter(collections=collection)
-                        if sound in collection_sounds:
-                            raise forms.ValidationError("This sound already exists in this collection")
-
-                    except Collection.DoesNotExist:
-                        raise forms.ValidationError("This collection does not exist.")
-            elif clean_data["new_collection_name"] != "":
-                if Collection.objects.filter(
-                    user=self.user_saving_sound, name=clean_data["new_collection_name"]
-                ).exists():
-                    raise forms.ValidationError("You already have a collection with this name.")
+            if clean_data["collection"] == "-1":
+                default_col = Collection.objects.filter(user=self.user_saving_sound, is_default_collection=True).first()
+                if default_col is not None:
+                    if default_col.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
+                        raise forms.ValidationError(
+                            f'"My bookmarks" has reached the maximum number of sounds allowed'
+                            f" ({settings.MAX_SOUNDS_PER_COLLECTION})."
+                        )
+                    if CollectionSound.objects.filter(collection=default_col, sound=sound).exists():
+                        raise forms.ValidationError("This sound already exists in your bookmarks collection.")
             else:
-                raise forms.ValidationError("Please introduce a valid name for the collection.")
+                try:
+                    collection = Collection.objects.get(id=clean_data["collection"])
+
+                    if collection.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
+                        raise forms.ValidationError(
+                            f"The chosen collection has reached the maximum number of sounds allowed ({settings.MAX_SOUNDS_PER_COLLECTION})"
+                        )
+
+                    if not collection.user_is_owner_or_maintainer(self.user_saving_sound):
+                        raise forms.ValidationError("You do not have permission to edit this collection.")
+
+                    # Check the through model directly: pending/refused sounds also occupy
+                    # the unique (sound, collection) slot
+                    if CollectionSound.objects.filter(collection=collection, sound=sound).exists():
+                        raise forms.ValidationError("This sound already exists in this collection")
+
+                except Collection.DoesNotExist:
+                    raise forms.ValidationError("This collection does not exist.")
 
         except KeyError:
             raise forms.ValidationError("The chosen collection is not valid.")
@@ -188,14 +172,24 @@ class SelectCollectionOrNewCollectionForm(forms.Form):
 
 
 class CollectionEditForm(forms.ModelForm):
-    collection_sounds = forms.CharField(
-        min_length=1,
-        widget=forms.widgets.HiddenInput(attrs={"id": "collection_sounds", "name": "collection_sounds"}),
+    added_sounds = CommaSeparatedIdField(
+        widget=forms.widgets.HiddenInput(attrs={"id": "added_sound_ids"}),
         required=False,
     )
 
-    maintainers = forms.CharField(
+    removed_sounds = CommaSeparatedIdField(
+        widget=forms.widgets.HiddenInput(attrs={"id": "removed_sound_ids"}),
+        required=False,
+    )
+
+    maintainers = CommaSeparatedIdField(
         min_length=1, widget=forms.widgets.HiddenInput(attrs={"id": "maintainers"}), required=False
+    )
+
+    featured_sounds = CommaSeparatedIdField(
+        as_list=True,
+        widget=forms.widgets.HiddenInput(attrs={"id": "featured_sounds", "name": "featured_sounds"}),
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -204,7 +198,7 @@ class CollectionEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["public"].label = "Visibility"
 
-        self.fields["collection_sounds"].help_text = (
+        self.fields["added_sounds"].help_text = (
             f"You have reached the maximum number of sounds available for a collection ({settings.MAX_SOUNDS_PER_COLLECTION}). "
             "In order to add new sounds, first remove some of the current ones."
         )
@@ -218,87 +212,116 @@ class CollectionEditForm(forms.ModelForm):
             for field in self.fields:
                 self.fields[field].disabled = True
 
+    def clean_name(self):
+        return self.cleaned_data["name"].strip()
+
     def clean(self):
         cleaned_data = super().clean()
         if not self.is_owner and not self.is_maintainer:
             self.add_error(
                 field=None, error=forms.ValidationError("You don't have permissions to edit this collection")
             )
-        else:
-            if cleaned_data["name"] != self.instance.name:
-                if Collection.objects.filter(user=self.instance.user, name=cleaned_data["name"]).exists():
-                    self.add_error("name", forms.ValidationError("You already have a collection with this name"))
-                elif cleaned_data["name"].lower() == "my bookmarks":
-                    self.add_error(
-                        "name",
-                        forms.ValidationError(
-                            "This collection name is reserved for your personal default collection. Please choose another one."
-                        ),
-                    )
-        collection_sounds = self.cleaned_data.get("collection_sounds").split(",")
-        if len(collection_sounds) > settings.MAX_SOUNDS_PER_COLLECTION:
+            return cleaned_data
+
+        if cleaned_data["name"] != self.instance.name:
+            if Collection.objects.filter(user=self.instance.user, name=cleaned_data["name"]).exists():
+                self.add_error("name", forms.ValidationError("You already have a collection with this name"))
+            elif cleaned_data["name"].lower() == "my bookmarks":
+                self.add_error(
+                    "name",
+                    forms.ValidationError(
+                        "This collection name is reserved for your personal default collection. Please choose another one."
+                    ),
+                )
+
+        featured = cleaned_data.get("featured_sounds", [])
+        if len(featured) > settings.MAX_FEATURED_SOUNDS_PER_COLLECTION:
             self.add_error(
-                "collection_sounds",
+                "featured_sounds",
+                forms.ValidationError(
+                    f"You can only feature up to {settings.MAX_FEATURED_SOUNDS_PER_COLLECTION} sounds per collection."
+                ),
+            )
+
+        added = cleaned_data.get("added_sounds", set())
+        removed = cleaned_data.get("removed_sounds", set())
+        current_sound_ids = set(
+            CollectionSound.objects.filter(collection=self.instance).values_list("sound_id", flat=True)
+        )
+
+        valid_added_ids = set(Sound.objects.filter(id__in=added).values_list("id", flat=True))
+        invalid_added_ids = added - valid_added_ids
+        if invalid_added_ids:
+            self.add_error("added_sounds", forms.ValidationError("Some sounds to add are invalid."))
+            added = valid_added_ids
+            cleaned_data["added_sounds"] = added
+
+        effective_removed = removed & current_sound_ids
+        effective_added = added - current_sound_ids
+        net_count = len(current_sound_ids) - len(effective_removed) + len(effective_added)
+        if net_count > settings.MAX_SOUNDS_PER_COLLECTION:
+            self.add_error(
+                "added_sounds",
                 forms.ValidationError(
                     f"You have exceeded the maximum number of sounds for a collection ({settings.MAX_SOUNDS_PER_COLLECTION})."
                 ),
             )
-            cleaned_data["collection_sounds"] = collection_sounds[: self.instance.num_sounds]
         return cleaned_data
 
-    def clean_ids_field(self, field):
-        # this function cleans the sounds and maintainers fields which store temporary changes on the edit URL
-        new_field = re.sub("[^0-9,]", "", self.cleaned_data[field])
-        new_field = re.sub(",+", ",", new_field)
-        new_field = re.sub("^,+", "", new_field)
-        new_field = re.sub(",+$", "", new_field)
-        if len(new_field) > 0:
-            new_field = {int(usr) for usr in new_field.split(",")}
-        else:
-            new_field = set()
-        return new_field
-
-    def save(self, user_adding_sound):
-        """This method is used to apply the temporary changes from the edit URL to the DB.
-        Useful for maintainers and sounds, where several objects are added to the Collection attrs.
-        This way, the server side does not change until the Save Collection button is clicked.
+    def save(self, user_adding_sound, **kwargs):
+        """Apply the pending delta (added/removed sounds and featured list) to the DB.
 
         Args:
             user_adding_sound (User): the user modifying the collection
 
         Returns:
-            collection (Collection): the saved collection with proper modficiations
+            collection (Collection): the saved collection
         """
-        collection = super().save(commit=False)
-        new_sounds = self.clean_ids_field("collection_sounds")
-        current_sounds = list(Sound.objects.filter(collections=collection).values_list("id", flat=True))
-        for snd in new_sounds:
-            if snd not in current_sounds:
-                sound = Sound.objects.get(id=snd)
-                CollectionSound.objects.create(user=user_adding_sound, sound=sound, collection=collection, status="OK")
+        with transaction.atomic():
+            collection = super().save(commit=False)
+            sounds_to_add = self.cleaned_data["added_sounds"]
+            sounds_to_remove = self.cleaned_data["removed_sounds"]
 
-            else:
-                current_sounds.remove(snd)
+            if sounds_to_add:
+                CollectionSound.objects.bulk_create(
+                    [
+                        CollectionSound(user=user_adding_sound, sound_id=snd, collection=collection, status="OK")
+                        for snd in sounds_to_add
+                    ],
+                    ignore_conflicts=True,
+                )
 
-        sounds = Sound.objects.filter(id__in=current_sounds)
-        CollectionSound.objects.filter(collection=collection, sound__in=sounds).delete()
+            if sounds_to_remove:
+                CollectionSound.objects.filter(collection=collection, sound_id__in=sounds_to_remove).delete()
 
-        new_maintainers = set(self.clean_ids_field("maintainers"))
-        # if the owner of the collection has been added as a maintainer, discard it
-        if collection.user.id in new_maintainers:
-            new_maintainers.remove(collection.user.id)
-        current_maintainers = list(self.instance.maintainers.values_list("id", flat=True))
-        for usr in new_maintainers:
-            if usr not in current_maintainers:
-                maintainer = User.objects.get(id=usr)
-                collection.maintainers.add(maintainer)
-            else:
-                current_maintainers.remove(usr)
-        for usr in current_maintainers:
-            maintainer = User.objects.get(id=usr)
-            collection.maintainers.remove(maintainer)
-        collection.save()
-        return collection
+            new_maintainers = self.cleaned_data["maintainers"]
+            new_maintainers.discard(collection.user.id)
+            current_maintainers = set(collection.maintainers.values_list("id", flat=True))
+            if new_maintainers != current_maintainers:
+                collection.maintainers.set(new_maintainers)
+
+            featured_ids = self.cleaned_data["featured_sounds"]
+            final_sound_ids = set(
+                CollectionSound.objects.filter(collection=collection).values_list("sound_id", flat=True)
+            )
+            collection.featured_sound_ids = [sid for sid in featured_ids if sid in final_sound_ids][
+                : settings.MAX_FEATURED_SOUNDS_PER_COLLECTION
+            ]
+
+            collection.save()
+
+            # Flag sounds for Solr reindexing. bulk_create() above does not fire the post_save
+            # signal that marks added sounds dirty, and a rename rewrites the Solr collection
+            # field ("<id>_<name>") of every member, so flag the affected set explicitly.
+            # Only public collections are indexed, so toggling public/private adds or removes every
+            # member from the search index too.
+            sounds_to_reindex = set(sounds_to_add) | set(sounds_to_remove)
+            if "name" in self.changed_data or "public" in self.changed_data:
+                sounds_to_reindex |= final_sound_ids
+            if sounds_to_reindex:
+                Sound.objects.filter(id__in=sounds_to_reindex).update(is_index_dirty=True)
+
+            return collection
 
     class Meta:
         model = Collection
@@ -311,13 +334,10 @@ class CollectionEditForm(forms.ModelForm):
 
 
 class CollectionEditFormAsMaintainer(CollectionEditForm):
-    class Meta(CollectionEditForm.Meta):
-        fields = CollectionEditForm.Meta.fields + ["collection_sounds"] + ["maintainers"]
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields:
-            if field != "collection_sounds":
+            if field not in ("added_sounds", "removed_sounds", "featured_sounds"):
                 self.fields[field].disabled = True
 
     def clean(self):
@@ -327,8 +347,7 @@ class CollectionEditFormAsMaintainer(CollectionEditForm):
         # and if any change in these is found, an error is raised. To prevent changes in "maintainers" even though it is included
         # in the form but disabled (to allow the user to view but not to modify the field), the original collection maintainers
         # are retrieved from DB to ensure no changes are applied to this attribute.
-        collection_maintainers = list(self.instance.maintainers.values_list("id", flat=True))
-        cleaned_data["maintainers"] = (",").join(str(x) for x in collection_maintainers)
+        cleaned_data["maintainers"] = set(self.instance.maintainers.values_list("id", flat=True))
         for field in CollectionEditForm.Meta.fields:
             if cleaned_data[field] != getattr(self.instance, field):
                 self.add_error(field, forms.ValidationError("You don't have permissions to edit this field"))
@@ -340,20 +359,20 @@ class CreateCollectionForm(forms.ModelForm):
 
     class Meta:
         model = Collection
-        fields = ("name", "description")
+        fields = ("name", "description", "public")
         widgets = {
             "name": TextInput(),
             "description": Textarea(attrs={"rows": 5, "cols": 50}),
+            "public": forms.RadioSelect(choices=[(True, "Public"), (False, "Private")], attrs={"class": "bw-radio"}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        self.fields["name"].label = False
         self.fields["name"].widget.attrs["placeholder"] = "Fill in the name for the new collection"
         self.fields["name"].widget.attrs["autocomplete"] = "off"
-        self.fields["description"].label = False
         self.fields["description"].widget.attrs["placeholder"] = "Write a description for the new collection"
+        self.fields["public"].label = "Visibility"
 
     def clean(self):
         if Collection.objects.filter(user=self.user, name=self.cleaned_data["name"]).exists():
@@ -369,8 +388,7 @@ class MaintainerForm(forms.Form):
                 "autocomplete": "off",
             }
         ),
-        label=False,
-        help_text=None,
+        label=None,
         max_length=128,
         required=False,
     )
@@ -382,12 +400,12 @@ class MaintainerForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean(self):
-        new_maintainers = self.cleaned_data["maintainer"].split(",").replace(" ", "")
+        new_maintainers = [u.strip() for u in self.cleaned_data["maintainer"].split(",") if u.strip()]
         for username in new_maintainers:
             try:
                 new_maintainer = User.objects.get(username=username)
                 if new_maintainer in self.collection.maintainers.all():
                     raise forms.ValidationError("The user is already a maintainer")
-                return super().clean()
             except User.DoesNotExist:
                 raise forms.ValidationError("The user does not exist")
+        return super().clean()

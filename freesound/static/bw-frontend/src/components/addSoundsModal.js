@@ -1,118 +1,254 @@
-import {dismissModal, handleGenericModal} from "../components/modal"
-import {initializeObjectSelector, updateObjectSelectorDataProperties} from '../components/objectSelector'
-import {serializedIdListToIntList, combineIdsLists} from "../utils/data"
+import { dismissModal, handleGenericModal } from '../components/modal';
+import {
+  initializeObjectSelector,
+  updateObjectSelectorDataProperties,
+} from '../components/objectSelector';
+import { serializedIdListToIntList, combineIdsLists } from '../utils/data';
 
-const handleAddSoundsModal = (modalId, modalUrl, selectedSoundsDestinationElement, onSoundsSelectedCallback) => {
-    handleGenericModal(modalUrl, (modalContainer) => {        
-        const inputElement = modalContainer.getElementsByTagName('input')[0];
-        inputElement.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                const baseUrl = modalUrl.split('?')[0];
-                const soundIdsToExclude = combineIdsLists(serializedIdListToIntList(selectedSoundsDestinationElement.dataset.selectedIds), serializedIdListToIntList(selectedSoundsDestinationElement.dataset.unselectedIds)).join(',');
-                handleAddSoundsModal(modalId, `${baseUrl}?q=${inputElement.value}&exclude=${soundIdsToExclude}`, selectedSoundsDestinationElement, onSoundsSelectedCallback);
-            }
-        });
+// Read the sidecar fields off a server-rendered card so the dynamic flow can
+// push freshly-added sounds into the editor's store. ``date_added`` is the
+// client-side timestamp; the server stamps its own when the form is saved.
+const extractSoundFromCard = card => {
+  const player = card.querySelector('.bw-player');
+  if (!player) return null;
+  const d = player.dataset;
+  return {
+    id: parseInt(d.soundId, 10),
+    name: d.title || '',
+    username: d.username || '',
+    duration: parseFloat(d.duration) || 0,
+    date_added: new Date().toISOString(),
+  };
+};
 
-        const objectSelectorElement = modalContainer.getElementsByClassName('bw-object-selector-container')[0];
-        initializeObjectSelector(objectSelectorElement, (element) => {
-            addSelectedSoundsButton.disabled = element.dataset.selectedIds == ""
-        });
+const prepareAddSoundsModalAndFields = container => {
+  const addSoundsButtons = [
+    ...container.querySelectorAll(`[data-toggle^="add-sounds-modal"]`),
+  ];
+  addSoundsButtons.forEach(addSoundsButton => {
+    const removeSoundsButton = addSoundsButton.nextElementSibling;
+    removeSoundsButton.disabled = true;
 
-        const addSelectedSoundsButton = modalContainer.getElementsByTagName('button')[0];
-        addSelectedSoundsButton.disabled = true;
-        addSelectedSoundsButton.addEventListener('click', evt => {
-            const selectableSoundElements = [...modalContainer.getElementsByClassName('bw-selectable-object')];
-            selectableSoundElements.forEach( element => {
-                const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
-                if (checkbox.checked) {
-                    const clonedCheckbox = checkbox.cloneNode();  // Cloning the node will remove the event listeners which refer to the "old" sound selector
-                    delete(clonedCheckbox.dataset.initialized); // This will force re-initialize the element when added to the new sounds selector
-                    clonedCheckbox.checked = false;
-                    checkbox.parentNode.replaceChild(clonedCheckbox, checkbox);
-                    element.classList.remove('selected');
-                    selectedSoundsDestinationElement.appendChild(element.parentNode);
-                }
-            });
-            onSoundsSelectedCallback(objectSelectorElement.dataset.selectedIds);
-            dismissModal(modalId);
-        });
-    }, undefined, true, true);
-}
-
-const prepareAddSoundsModalAndFields = (container) => {
-    const addSoundsButtons = [...container.querySelectorAll(`[data-toggle^="add-sounds-modal"]`)];
-    addSoundsButtons.forEach(addSoundsButton => {
-        const removeSoundsButton = addSoundsButton.nextElementSibling;
-        removeSoundsButton.disabled = true;
-
-        const selectedSoundsDestinationElement = addSoundsButton.parentNode.parentNode.querySelector('.bw-object-selector-container[data-type="sounds"]');
-        initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
-            removeSoundsButton.disabled = element.dataset.selectedIds == ""
-        });
-
-        const soundsInput = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('input')[0];
-        if(soundsInput.disabled){
-            addSoundsButton.disabled = true
-            const checkboxes = selectedSoundsDestinationElement.querySelectorAll('span.bw-checkbox-container');
-            checkboxes.forEach(checkbox => {
-                checkbox.remove()
-            })
-        }
-
-        const soundsLabel = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName('label')[0];
-        const itemCountElementInLabel = soundsLabel === null ? null : soundsLabel.querySelector('#element-count');
-        
-        const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
-        const maxSoundsHelpText = selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName('helptext')[0]
-        if(maxSounds !== "None"){
-            if (soundsInput.value.split(',').length >= maxSounds){
-                addSoundsButton.disabled = true
-                maxSoundsHelpText.style.display = 'block';
-            }
-        }
-
-        removeSoundsButton.addEventListener('click', (evt) => {
-            evt.preventDefault();
-            const soundCheckboxes = selectedSoundsDestinationElement.querySelectorAll('input.bw-checkbox');
-            soundCheckboxes.forEach(checkbox => {
-                if (checkbox.checked) {
-                    checkbox.closest('.bw-selectable-object').parentNode.remove();
-                }
-            });
-            updateObjectSelectorDataProperties(selectedSoundsDestinationElement);
-            const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
-            selectedSoundsHiddenInput.value = selectedSoundsDestinationElement.dataset.unselectedIds;
-            if(maxSounds !== "None" && selectedSoundsHiddenInput.value.split(',').length < maxSounds){
-                addSoundsButton.disabled = false;
-                maxSoundsHelpText.style.display = 'none';
-            }
-            if (itemCountElementInLabel){
-                itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
-            removeSoundsButton.disabled = true;
-        });
-
-        addSoundsButton.addEventListener('click', (evt) => {
-            evt.preventDefault();
-            handleAddSoundsModal('addSoundsModal', addSoundsButton.dataset.modalUrl, selectedSoundsDestinationElement, (selectedSoundIds) => {
-                const selectedSoundsHiddenInput = document.getElementById(addSoundsButton.dataset.selectedSoundsHiddenInputId);
-                const currentSoundIds = serializedIdListToIntList(selectedSoundsHiddenInput.value);
-                const newSoundIds = serializedIdListToIntList(selectedSoundIds);
-                const combinedIds = combineIdsLists(currentSoundIds, newSoundIds);
-                selectedSoundsHiddenInput.value = combinedIds.join(',');
-                if(maxSounds !== "None" && selectedSoundsHiddenInput.value.split(',').length >= maxSounds){
-                    addSoundsButton.disabled = true;
-                    maxSoundsHelpText.style.display = 'block';
-                }
-                if (itemCountElementInLabel){
-                    itemCountElementInLabel.innerHTML = selectedSoundsDestinationElement.children.length}
-                initializeObjectSelector(selectedSoundsDestinationElement, (element) => {
-                    removeSoundsButton.disabled = element.dataset.selectedIds == ""
-                });
-            });
-            
-        }); 
+    const selectedSoundsDestinationElement =
+      addSoundsButton.parentNode.parentNode.querySelector(
+        '.bw-object-selector-container[data-type="sounds"]'
+      );
+    initializeObjectSelector(selectedSoundsDestinationElement, element => {
+      removeSoundsButton.disabled = element.dataset.selectedIds == '';
     });
-}
 
-export {prepareAddSoundsModalAndFields};
+    const soundsInput =
+      selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName(
+        'input'
+      )[0];
+    if (soundsInput.disabled) {
+      addSoundsButton.disabled = true;
+      const checkboxes = selectedSoundsDestinationElement.querySelectorAll(
+        'span.bw-checkbox-container'
+      );
+      checkboxes.forEach(checkbox => {
+        checkbox.remove();
+      });
+    }
+
+    const soundsLabel =
+      selectedSoundsDestinationElement.parentNode.parentNode.getElementsByTagName(
+        'label'
+      )[0];
+    const itemCountElementInLabel =
+      soundsLabel === (null || undefined)
+        ? null
+        : soundsLabel.querySelector('#element-count');
+
+    const maxSounds = selectedSoundsDestinationElement.dataset.maxElements;
+    const maxSoundsHelpText =
+      selectedSoundsDestinationElement.parentNode.parentNode.getElementsByClassName(
+        'helptext'
+      )[0];
+    if (maxSounds !== 'None') {
+      if (soundsInput.value.split(',').length >= maxSounds) {
+        addSoundsButton.disabled = true;
+        maxSoundsHelpText.style.display = 'block';
+      }
+    }
+
+    removeSoundsButton.addEventListener('click', evt => {
+      evt.preventDefault();
+      const soundCheckboxes =
+        selectedSoundsDestinationElement.querySelectorAll('input.bw-checkbox');
+      soundCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+          checkbox.closest('.bw-selectable-object').parentNode.remove();
+        }
+      });
+      updateObjectSelectorDataProperties(selectedSoundsDestinationElement);
+      const selectedSoundsHiddenInput = document.getElementById(
+        addSoundsButton.dataset.selectedSoundsHiddenInputId
+      );
+      selectedSoundsHiddenInput.value =
+        selectedSoundsDestinationElement.dataset.unselectedIds;
+      if (
+        maxSounds !== 'None' &&
+        selectedSoundsHiddenInput.value.split(',').length < maxSounds
+      ) {
+        addSoundsButton.disabled = false;
+        maxSoundsHelpText.style.display = 'none';
+      }
+      if (itemCountElementInLabel) {
+        itemCountElementInLabel.innerHTML =
+          selectedSoundsDestinationElement.children.length;
+      }
+      removeSoundsButton.disabled = true;
+    });
+
+    addSoundsButton.addEventListener('click', evt => {
+      evt.preventDefault();
+      const getExcludeIds = () =>
+        combineIdsLists(
+          serializedIdListToIntList(
+            selectedSoundsDestinationElement.dataset.selectedIds
+          ),
+          serializedIdListToIntList(
+            selectedSoundsDestinationElement.dataset.unselectedIds
+          )
+        ).join(',');
+      openAddSoundsModal(
+        'addSoundsModal',
+        addSoundsButton.dataset.modalUrl,
+        addSoundsButton.dataset.modalUrl,
+        getExcludeIds,
+        modalContainer => {
+          const objectSelectorElement = modalContainer.getElementsByClassName(
+            'bw-object-selector-container'
+          )[0];
+          const selectableSoundElements = [
+            ...modalContainer.getElementsByClassName('bw-selectable-object'),
+          ];
+          selectableSoundElements.forEach(element => {
+            const checkbox = element.querySelectorAll('input.bw-checkbox')[0];
+            if (checkbox.checked) {
+              const clonedCheckbox = checkbox.cloneNode();
+              delete clonedCheckbox.dataset.initialized;
+              clonedCheckbox.checked = false;
+              checkbox.parentNode.replaceChild(clonedCheckbox, checkbox);
+              element.classList.remove('selected');
+              selectedSoundsDestinationElement.appendChild(element.parentNode);
+            }
+          });
+          const selectedSoundsHiddenInput = document.getElementById(
+            addSoundsButton.dataset.selectedSoundsHiddenInputId
+          );
+          const currentSoundIds = serializedIdListToIntList(
+            selectedSoundsHiddenInput.value
+          );
+          const newSoundIds = serializedIdListToIntList(
+            objectSelectorElement.dataset.selectedIds
+          );
+          const combinedIds = combineIdsLists(currentSoundIds, newSoundIds);
+          selectedSoundsHiddenInput.value = combinedIds.join(',');
+          if (
+            maxSounds !== 'None' &&
+            selectedSoundsHiddenInput.value.split(',').length >= maxSounds
+          ) {
+            addSoundsButton.disabled = true;
+            maxSoundsHelpText.style.display = 'block';
+          }
+          if (itemCountElementInLabel) {
+            itemCountElementInLabel.innerHTML =
+              selectedSoundsDestinationElement.children.length;
+          }
+          initializeObjectSelector(
+            selectedSoundsDestinationElement,
+            element => {
+              removeSoundsButton.disabled = element.dataset.selectedIds == '';
+            }
+          );
+        }
+      );
+    });
+  });
+};
+
+const openAddSoundsModal = (
+  modalId,
+  modalUrl,
+  url,
+  getExcludeIds,
+  onSoundsConfirmed
+) => {
+  handleGenericModal(
+    url,
+    modalContainer => {
+      const inputElement = modalContainer.getElementsByTagName('input')[0];
+      inputElement.addEventListener('keypress', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const baseUrl = modalUrl.split('?')[0];
+          const excludeIds = getExcludeIds();
+          openAddSoundsModal(
+            modalId,
+            modalUrl,
+            `${baseUrl}?q=${inputElement.value}&exclude=${excludeIds}`,
+            getExcludeIds,
+            onSoundsConfirmed
+          );
+        }
+      });
+
+      const objectSelectorElement = modalContainer.getElementsByClassName(
+        'bw-object-selector-container'
+      )[0];
+      const addSelectedSoundsButton =
+        modalContainer.getElementsByTagName('button')[0];
+      addSelectedSoundsButton.disabled = true;
+      initializeObjectSelector(objectSelectorElement, element => {
+        addSelectedSoundsButton.disabled = element.dataset.selectedIds == '';
+      });
+
+      addSelectedSoundsButton.addEventListener('click', () => {
+        onSoundsConfirmed(modalContainer);
+        dismissModal(modalId);
+      });
+    },
+    undefined,
+    true,
+    true
+  );
+};
+
+const prepareAddSoundsModalDynamic = (
+  container,
+  getExcludeIds,
+  onSoundsConfirmed
+) => {
+  const addSoundsButton = container.querySelector(
+    '[data-toggle="add-sounds-modal"]'
+  );
+  if (!addSoundsButton) return;
+
+  const onConfirmed = modalContainer => {
+    const sounds = [
+      ...modalContainer.querySelectorAll('.bw-selectable-object'),
+    ].reduce((acc, element) => {
+      const checkbox = element.querySelector('input.bw-checkbox');
+      if (checkbox && checkbox.checked) {
+        acc.push(extractSoundFromCard(element));
+      }
+      return acc;
+    }, []);
+    onSoundsConfirmed(sounds);
+  };
+
+  addSoundsButton.addEventListener('click', evt => {
+    evt.preventDefault();
+    openAddSoundsModal(
+      'addSoundsModal',
+      addSoundsButton.dataset.modalUrl,
+      addSoundsButton.dataset.modalUrl,
+      getExcludeIds,
+      onConfirmed
+    );
+  });
+};
+
+export { prepareAddSoundsModalAndFields, prepareAddSoundsModalDynamic };

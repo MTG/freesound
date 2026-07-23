@@ -53,20 +53,19 @@
         </div>
     {% else %}
         <div class="v-spacing-top-4">
-            {% for post in posts  %}
-                {% display_post post 0 0 True False False results.highlighting %}
-                {% if not forloop.last %}
-                    <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
-                {% endif %}
-            {% empty %}
-                <div class="v-spacing-7 v-spacing-top-6 w-100 text-center">
-                    <h5>No results... &#128543</h5>
-                    <p class="text-grey v-spacing-2">Please try another query</p>
-                </div>
-            {% endfor %}
+            {% if posts %}
+                {% for post in posts %}
+                    {% display_post post show_post_location=True show_action_icons=False show_report_actions=False results_highlighted=results.highlighting %}
+                    {% if not forloop.last %}
+                        <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                {% include "search/_no_results.html" %}
+            {% endif %}
         </div>
         <div class="v-spacing-top-5">
-            {% bw_paginator paginator page current_page request "" -1 %}
+            {% bw_paginator page request %}
         </div>
     {% endif %}
 

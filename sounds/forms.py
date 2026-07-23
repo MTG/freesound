@@ -59,7 +59,7 @@ class RemixForm(forms.Form):
 
     def save(self):
         new_sources = self.cleaned_data["sources"]
-        self.sound.set_sources(new_sources)
+        self.sound.change_sources_and_propagate(new_sources)
 
 
 class PackChoiceField(forms.ModelChoiceField):
@@ -216,16 +216,15 @@ class LicenseForm(forms.Form):
 
 class FlagForm(forms.Form):
     email = forms.EmailField(
-        label=False,
+        label=None,
         required=True,
-        help_text=False,
         error_messages={
             "required": "Required, please enter your email address.",
             "invalid": "Your email address appears to be invalid, please check if it's correct.",
         },
     )
-    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label=False)
-    reason = forms.CharField(widget=forms.Textarea, label=False)
+    reason_type = forms.ChoiceField(choices=Flag.REASON_TYPE_CHOICES, required=True, label=None)
+    reason = forms.CharField(widget=forms.Textarea, label=None)
     recaptcha = ReCaptchaField(label="")
 
     def __init__(self, *args, **kwargs):
@@ -275,7 +274,7 @@ class SoundEditAndDescribeForm(forms.Form):
     bst_category = forms.ChoiceField(
         choices=settings.BST_SUBCATEGORY_CHOICES,
         help_text="Choose the most appropriate <i>Category</i> and <i>Subcategory</i> for the sound. "
-        'These categories come from the <a class="bw-link--grey" href="/help/faq/#the-broad-sound-taxonomy">Broad Sound Taxonomy</a>, '
+        'These categories come from the <a class="bw-link--grey" href="/help/broad-sound-taxonomy">Broad Sound Taxonomy</a>, '
         "and are used to improve Freesound search capabilities.",
         error_messages={"invalid_choice": "Please select a valid category and a subcategory."},
         required=True,

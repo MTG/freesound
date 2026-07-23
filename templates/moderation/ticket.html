@@ -26,7 +26,7 @@
                     <span class="h-spacing-1">·</span><a class="bw-link--grey" data-toggle="user-annotations-modal" data-modal-content-url="{% url "tickets-user-annotations" ticket.sender.id %}?ajax=1" href="javascript:void(0);">Mod annotations (<span class="annotation-counter-{{ ticket.sender.id }}">{{ num_mod_annotations }}</span>)</a>
                     {% endif %}
                     {% else %}
-                    anonymous
+                    User deleted
                     {% endif %}
                 </td></tr>
                 <tr><td class="text-grey">Created on</td><td>{{ ticket.created }} ({{ ticket.created|timesince }} ago)</td></tr>
@@ -52,7 +52,7 @@
                         {% if message.sender %} <a href="{% url "account" message.sender.username %}">{{ message.sender.username }}</a> {% else %} Anonymous {% endif %}<span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><span class="text-grey">{{ message.created }}</span>
                         {% if message.moderator_only %}<span title="This message is only visible to other moderators" class="text-blue">{% bw_icon 'notification' 'rotate180' %}</span>{% endif %}
                     </div>
-                    <div class="{% if message.moderator_only %}text-blue{%endif%}">{{ message.text|safe|linebreaksbr }}</div>
+                    <div class="{% if message.moderator_only %}text-blue{% endif %}">{{ message.text|safe|linebreaksbr }}</div>
                 </div>
                 {% endif %}
             {% endfor %}
@@ -124,4 +124,3 @@
     </div>
 </div>
 {% endblock %}
-

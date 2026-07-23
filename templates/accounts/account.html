@@ -15,31 +15,31 @@
     <div class="container">
         <div class="row navbar-space-filler v-spacing-top-6 v-spacing-2 bw-profile__hero">
             <div>
-                {% bw_user_avatar user.profile.locations.avatar.XL.url user.username 100 %}
+                {% bw_user_avatar user.profile.locations.avatar.XL.url user.username size=100 %}
             </div>
             <div class="bw-profile__username v-spacing-top-2 {% if user.profile.is_anonymized_user %}v-spacing-3{% endif %}">
                 <h1>{{ user.username }}</h1>
             </div>
             {% if not user.profile.is_anonymized_user %}
-            <div class="v-spacing-top-4 v-spacing-4 middle padding-left-2 padding-right-2">
+            <div class="v-spacing-top-4 v-spacing-2 middle padding-left-2 padding-right-2 center wrap">
                 {% if home %}
                     {% if user.profile.num_sounds %}    
-                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
-                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt"  data-toggle="modal-default" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt v-spacing-2" href="{% url 'accounts-manage-sounds' 'published' %}">Manage sounds</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt v-spacing-2"  data-toggle="modal-default" data-modal-content-url="{% url "comments-for-user" user.username %}?ajax=1" data-modal-activation-param="comments" href="javascript:void(0);" title="See all comments on your sounds">Comments</a>
                     {% else %}
-                    <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'accounts-upload' %}">Upload a sound</a>
+                    <a class="no-hover text-center btn-inverse btn-profile-adapt v-spacing-2" href="{% url 'accounts-upload' %}">Upload a sound</a>
                     {% endif %}
-                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url 'accounts-edit' %}">Account settings</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt v-spacing-2" href="{% url 'accounts-edit' %}">Account settings</a>
                 {% else %}
                     {% if show_unfollow_button %}
-                        <a class="no-hover text-center btn-secondary" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
+                        <a class="no-hover text-center btn-secondary v-spacing-2" href="{% url 'unfollow-user' user.username %}?next={{ next_path }}">Unfollow</a>
                     {% else %}
-                        <a class="no-hover text-center btn-inverse btn-profile-adapt" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
+                        <a class="no-hover text-center btn-inverse btn-profile-adapt v-spacing-2" href="{% url 'follow-user' user.username %}?next={{ next_path }}">Follow</a>
                     {% endif %}
-                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt" href="{% url "messages-new" user.username %}">Message</a>
+                    <a class="no-hover text-center btn-inverse h-spacing-left-2 btn-profile-adapt v-spacing-2" href="{% url "messages-new" user.username %}">Message</a>
                 {% endif %}
                 {% if perms.tickets.can_moderate or request.user.is_staff %}
-                    <div class="dropdown display-inline-block">
+                    <div class="dropdown display-inline-block v-spacing-2">
                         <a class="no-hover dropdown-toggle" id="mod-actions-menu"
                            data-toggle="dropdown"><button class="btn-inverse h-spacing-left-2 btn-profile-adapt">Mod actions</button></a>
                         <ul class="dropdown-menu" aria-labelledby="mod-actions-menu">
@@ -49,7 +49,12 @@
                                 </li>
                             {% else %}
                                 <li class="bw-nav__action dropdown-item text-light-grey">
-                                    <a class="bw-link--black" href="{% url 'tickets-whitelist-user' user.id %}?next={{ next_path }}">
+                                    <a class="bw-link--black cursor-pointer"
+                                       data-toggle="confirmation-modal"
+                                       data-modal-confirmation-title="Whitelisting {{ user.username }} will approve all their currently pending sounds and approve future uploads, skipping moderation. Do you want to whitelist this user?"
+                                       data-modal-confirmation-url="{% url 'tickets-whitelist-user' user.id %}?next={{ next_path }}"
+                                       data-modal-confirmation-double-confirm-text="Are you really sure you want to whitelist {{ user.username }}?"
+                                       href="javascript:void(0);">
                                         Whitelist this user
                                     </a>
                                 </li>
@@ -104,6 +109,17 @@
                     <div><a id="user-following-users-button" data-modal-activation-param="following" data-modal-content-url="{% url 'user-following-users' user.username %}?ajax=1&page={{ following_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_count user.id %}{{ following.count }}{% endcache %} following</a></div>
                     <div><a id="user-following-tags-button" data-modal-activation-param="followingTags" data-modal-content-url="{% url 'user-following-tags' user.username %}?ajax=1&page={{ following_tags_modal_page }}" href="javascript:void(0);">{% cache 43200 bw_user_profile_following_tags_count user.id %}{% with following_tags.count as following_tags_count %}{{ following_tags.count|bw_intcomma }} tag{{ following_tags_count|pluralize }} following{% endwith %}{% endcache %}</a></div>
                 </div>
+                {% if old_usernames %}
+                <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
+                    <div class="text-grey">
+                        <i class="bw-icon-flag h-spacing-right-1" title="Visible to moderators only"></i>
+                        Previous usernames:
+                        {% for old_username in old_usernames %}
+                            <span class="bg-white text-black border-grey-light padding-1 h-spacing-1 no-text-wrap display-inline-block">{{ old_username }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
                 {% if user_downloads_public %}
                 <div class="bw-profile__stats v-spacing-top-1 padding-left-4 padding-right-4">
                     <div><a data-toggle="modal-default" data-modal-content-url="{% url "user-downloaded-sounds" user.username %}?ajax=1" data-modal-activation-param="downloaded_sounds" href="javascript:void(0);" >{{ user.profile.num_sound_downloads }} sound{{ user.profile.num_sound_downloads|pluralize}} downloaded</a></div>
@@ -191,11 +207,11 @@
                 <section class="v-spacing-top-4 v-spacing-4">
                     <h5 class="padding-bottom-3">Most used tags</h5>
                     {% for tag in tags|add_sizes:"count:0.1:1.0" %}
-                        {% bw_tag tag.name 1 '' tag.browse_url tag.size %}
+                        {% bw_tag tag.name size=1 class_name='' url=tag.browse_url weight=tag.size %}
                     {% endfor %}
                 </section>
                 {% endif %}
-                {% endwith%}
+                {% endwith %}
                 {% endcache %}
             </aside>
         </div>
@@ -203,5 +219,5 @@
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/profile.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/profile.js' %}"></script>
 {% endblock %}

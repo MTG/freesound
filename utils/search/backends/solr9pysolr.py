@@ -20,6 +20,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import re
 
 import pysolr
@@ -41,27 +43,30 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
         self.forum_index_url = forum_index_url
         self.solr_base_url = settings.SOLR9_BASE_URL
 
-    def get_sounds_index(self):
-        if self.sounds_index is None:
-            self.sounds_index = pysolr.Solr(
-                self.sounds_index_url,
-                encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
-                results_cls=solr555pysolr.SolrResponseInterpreter,
-                always_commit=True,
-            )
-        return self.sounds_index
+    def get_sounds_index(self, timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS, search_handler=None):
+        # Only forward search_handler when set
+        extra = {"search_handler": search_handler} if search_handler is not None else {}
+        return pysolr.Solr(
+            self.sounds_index_url,
+            encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
+            results_cls=solr555pysolr.SolrResponseInterpreter,
+            always_commit=True,
+            timeout=timeout,
+            **extra,
+        )
 
-    def get_forum_index(self):
-        if self.forum_index is None:
-            self.forum_index = pysolr.Solr(
-                self.forum_index_url,
-                encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
-                results_cls=solr555pysolr.SolrResponseInterpreter,
-                always_commit=True,
-            )
-        return self.forum_index
+    def get_forum_index(self, timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS):
+        return pysolr.Solr(
+            self.forum_index_url,
+            encoder=solr555pysolr.FreesoundSoundJsonEncoder(),
+            results_cls=solr555pysolr.SolrResponseInterpreter,
+            always_commit=True,
+            timeout=timeout,
+        )
 
-    def search_process_filter(self, query_filter, only_sounds_within_ids=False, only_sounds_with_pack=False):
+    def search_process_filter(
+        self, query_filter: str, only_sounds_within_ids: list[int] | bool = False, only_sounds_with_pack: bool = False
+    ) -> str:
         """Process the filter to make a number of adjustments
 
             1) Add type suffix to human-readable audio analyzer descriptor names (needed for dynamic solr field names).
@@ -76,12 +81,12 @@ class Solr9PySolrSearchEngine(solr555pysolr.Solr555PySolrSearchEngine):
         suffices to the filter names so users do not need to deal with that and Solr understands recognizes the field name.
 
         Args:
-            query_filter (str): query filter string.
-            only_sounds_with_pack (bool, optional): whether to only include sounds that belong to a pack
-            only_sounds_within_ids (List[int], optional): restrict search results to sounds with these IDs
+            query_filter: query filter string.
+            only_sounds_with_pack: whether to only include sounds that belong to a pack
+            only_sounds_within_ids: restrict search results to sounds with these IDs
 
         Returns:
-            str: processed filter query string.
+            processed filter query string.
         """
         # Add type suffix to human-readable audio analyzer descriptor names which is needed for solr dynamic fields
         query_filter = self.add_solr_suffix_to_dynamic_fieldnames_in_filter(query_filter)

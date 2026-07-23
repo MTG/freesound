@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+import json
 import logging
 
 import sentry_sdk
@@ -27,9 +28,11 @@ from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedi
 from django.shortcuts import render
 from django.urls import reverse
 
+from search.abuse import PaginationAbuseBlocked
 from search.views import search_view_helper
 from tags.models import FS1Tag, Tag
-from utils.search import SearchEngineException
+from utils.logging_filters import get_client_ip
+from utils.search import SearchEngineException, SearchEngineTimeoutException
 from utils.search.search_sounds import perform_search_engine_query
 
 search_logger = logging.getLogger("search")
@@ -37,7 +40,10 @@ search_logger = logging.getLogger("search")
 
 def tags(request):
     # Share same view code as for the search view, but "tags mode" will be on
-    tvars = search_view_helper(request)
+    try:
+        tvars = search_view_helper(request)
+    except PaginationAbuseBlocked:
+        return render(request, "429.html", status=429)
 
     # If there are no tags in filter, get display initial tag cloud
     if "sqp" in tvars and not tvars["sqp"].get_tags_in_filters():
@@ -62,6 +68,20 @@ def tag_cloud(request):
                     group_counts_as_one_in_facets=True,
                 )
             )
+        except SearchEngineTimeoutException as e:
+            search_logger.info(
+                "SearchTimeout (%s)"
+                % json.dumps(
+                    {
+                        "ip": get_client_ip(request),
+                        "url": request.get_full_path(),
+                        "query": "",
+                        "filter": "*:*",
+                        "tags_mode": True,
+                    }
+                )
+            )
+            tvars.update({"error_text": "Search is overloaded, please try again later."})
         except SearchEngineException as e:
             search_logger.info(f"Tag browse error: Could probably not connect to Solr - {e}")
             # Manually capture exception so it has more info and Sentry can organize it properly

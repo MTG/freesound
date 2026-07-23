@@ -219,13 +219,13 @@ def stream(request):
                     date_from = (timezone.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
                 else:
                     if not date_from:
-                        date_from = (datetime.strptime(date_to, "%Y-%m-%d") - datetime.timedelta(days=7)).strftime(
-                            "%Y-%m-%d"
-                        )  # A week before date to
+                        date_from = (
+                            datetime.datetime.strptime(date_to, "%Y-%m-%d") - datetime.timedelta(days=7)
+                        ).strftime("%Y-%m-%d")  # A week before date to
                     if not date_to:
-                        date_to = (datetime.strptime(date_from, "%Y-%m-%d") + datetime.timedelta(days=7)).strftime(
-                            "%Y-%m-%d"
-                        )  # A week after date from
+                        date_to = (
+                            datetime.datetime.strptime(date_from, "%Y-%m-%d") + datetime.timedelta(days=7)
+                        ).strftime("%Y-%m-%d")  # A week after date from
             time_lapse = f'["{date_from}T00:00:00Z" TO "{date_to}T23:59:59.999Z"]'
 
     # if first time going into the page, the default is last week

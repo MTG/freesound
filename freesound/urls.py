@@ -41,6 +41,7 @@ import tags.views
 import utils.tagrecommendation_utilities as tagrec
 from apiv2.apiv2_utils import apiv1_end_of_life_message
 from utils.converters import MultipleTagsConverter
+from utils.prometheus_metrics import prometheus_metrics_view
 
 admin.autodiscover()
 
@@ -48,6 +49,7 @@ register_converter(MultipleTagsConverter, "multitags")
 
 urlpatterns = [
     path("", sounds.views.front_page, name="front-page"),
+    path("metrics", prometheus_metrics_view, name="prometheus-metrics"),
     path("people/", accounts.views.accounts, name="accounts"),
     path("people/<username>/", accounts.views.account, name="account"),
     path("people/<username>/section/stats/", accounts.views.account_stats_section, name="account-stats-section"),
@@ -116,6 +118,7 @@ urlpatterns = [
     path("embed/geotags_box/iframe/", geotags.views.embed_iframe, name="embed-geotags"),
     path("oembed/", sounds.views.oembed, name="oembed-sound"),
     path("after-download-modal/", sounds.views.after_download_modal, name="after-download-modal"),
+    path("download-limit-modal/", sounds.views.download_limit_modal, name="download-limit-modal"),
     path("browse/", sounds.views.sounds, name="sounds"),
     path("browse/tags/", tags.views.tags, name="tags"),
     path("browse/tags/<multitags:multiple_tags>/", tags.views.multiple_tags_lookup, name="tags"),
@@ -136,6 +139,7 @@ urlpatterns = [
     ),
     path("", include("ratings.urls")),
     path("comments/", include("comments.urls")),
+    path("help/broad-sound-taxonomy/", sounds.views.broad_sound_taxonomy_info_page, name="bst-info-page"),
     path("help/", include("wiki.urls")),
     path("forum/", include("forum.urls")),
     path("geotags/", include("geotags.urls")),
@@ -199,9 +203,9 @@ if settings.DEBUG:
             serve,
             {"document_root": settings.DATA_PATH, "show_indexes": True},
         ),
-        re_path(
-            r"^docs/api/(?P<path>.*)$", serve, {"path": "index.html", "document_root": "_docs/api/build/html"}
-        ),  # Serve API docs, useful for local development
+        # In production WhiteNoise redirects /docs/api -> /docs/api/ itself, but in
+        # autorefresh (DEBUG) mode it does not, so add the redirect for local development.
+        re_path(r"^docs/api$", RedirectView.as_view(url="/docs/api/", permanent=False)),
         path("__debug__/", include(debug_toolbar.urls)),
         re_path(r"^.*\.map$", serve_source_map_files),
     ]

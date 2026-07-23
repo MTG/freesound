@@ -21,6 +21,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 
+from utils.username import get_user_by_username
+
 UserModel = get_user_model()
 
 
@@ -51,7 +53,7 @@ class CustomModelBackend(ModelBackend):
 
         # Do normal username+password login check
         try:
-            user = User.objects.get(username__iexact=username)
+            user = get_user_by_username(username)
             if user.check_password(password):
                 return user
         except User.DoesNotExist:

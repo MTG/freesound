@@ -61,7 +61,7 @@ class ApiV2ClientForm(forms.Form):
             In this way your application can be automatically notified when users have given the permissions to access their data.
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
             introduce the following url: <span style="font-family: 'Courier'">http://freesound.org/home/app_permissions/permission_granted/</span>.
-            <br>See the <a href="/docs/api" target="_blank">API documentation</a> for more information.</div>""",
+            <br>See the <a href="/docs/api/" target="_blank">API documentation</a> for more information.</div>""",
     )
     description = forms.CharField(
         label="Description*",
@@ -78,7 +78,6 @@ class ApiV2ClientForm(forms.Form):
         label=mark_safe(
             'Check this box to accept the <a href="/help/tos_api/" target="_blank">terms of use</a> of the Freesound API'
         ),
-        help_text=False,
         required=True,
         error_messages={"required": "You must accept the terms of use in order to get access to the API."},
     )
@@ -120,19 +119,15 @@ def my_quote(s):
     return quote(s, safe=",:[]*+()'")
 
 
-class SoundCombinedSearchFormAPI(forms.Form):
+class SoundTextSearchFormAPI(forms.Form):
     query = forms.CharField(required=False, label="query")
     page = forms.CharField(required=False, label="page")
     filter = forms.CharField(required=False, label="filter")
     weights = forms.CharField(required=False, label="weights")
     sort = forms.CharField(required=False, label="sort")
     fields = forms.CharField(required=False, label="fields")
-    descriptors = forms.CharField(required=False, label="descriptors")
-    normalized = forms.CharField(required=False, label="normalized")
     page_size = forms.CharField(required=False, label="page_size")
     group_by_pack = forms.CharField(required=False, label="group_by_pack")
-    descriptors_filter = forms.CharField(required=False, label="descriptors_filter")
-    target = forms.CharField(required=False, label="target")
     similar_to = forms.CharField(required=False, label="similar_to")
     similarity_space = forms.CharField(required=False, label="similarity_space")
     original_url_sort_value = None
@@ -156,14 +151,6 @@ class SoundCombinedSearchFormAPI(forms.Form):
             raise BadRequestException("Invalid filter.")
         return filt
 
-    def clean_descriptors(self):
-        descriptors = self.cleaned_data["descriptors"]
-        return my_quote(descriptors) if descriptors is not None else ""
-
-    def clean_normalized(self):
-        normalized = self.cleaned_data["normalized"]
-        return "1" if normalized == "1" else ""
-
     def clean_page(self):
         try:
             page = int(self.cleaned_data["page"])
@@ -172,9 +159,14 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return page
 
     def clean_sort(self):
+        sort = str(self.cleaned_data["sort"])
+        if ":" in sort:
+            # The sort uses a custom sorting target, therefore we return it as is
+            self.original_url_sort_value = sort
+            return sort
         sort_option = None
         for option in SEARCH_SORT_OPTIONS_API:
-            if option[0] == str(self.cleaned_data["sort"]):
+            if option[0] == sort:
                 sort_option = option[1]
                 self.original_url_sort_value = option[0]
         if not sort_option:
@@ -204,27 +196,21 @@ class SoundCombinedSearchFormAPI(forms.Form):
             paginate_by = settings.APIV2["PAGE_SIZE"]
         return paginate_by
 
-    def clean_descriptors_filter(self):
-        descriptors_filter = self.cleaned_data["descriptors_filter"]
-        if "descriptors_filter" in self.data and (not descriptors_filter or descriptors_filter.isspace()):
-            raise BadRequestException("Invalid descriptors_filter.")
-        return my_quote(descriptors_filter) if descriptors_filter is not None else ""
-
-    def clean_target(self):
-        target = self.cleaned_data["target"]
-        if "target" in self.data and (not target or target.isspace()):
-            raise BadRequestException("Invalid target.")
-        return my_quote(target) if target is not None else ""
-
     def clean_similar_to(self):
         similar_to = self.cleaned_data["similar_to"]
         if similar_to != "":
             # If it stars with '[', then we assume this is a serialized vector passed as target for similarity
             if similar_to.startswith("["):
-                similar_to = json.loads(similar_to)
+                try:
+                    similar_to = json.loads(similar_to)
+                except json.JSONDecodeError:
+                    raise BadRequestException("The 'similar_to' parameter is not a valid serialized vector")
             else:
                 # Otherwise, we assume it is a sound id and we pass it as integer
-                similar_to = int(similar_to)
+                try:
+                    similar_to = int(similar_to)
+                except ValueError:
+                    raise BadRequestException("The 'similar_to' parameter is not a valid sound ID")
         else:
             similar_to = None
         return similar_to
@@ -245,10 +231,6 @@ class SoundCombinedSearchFormAPI(forms.Form):
             and not self.original_url_sort_value == SEARCH_SOUNDS_SORT_DEFAULT_API.split(" ")[0]
         ):
             link += f"&sort={self.original_url_sort_value}"
-        if self.cleaned_data["descriptors_filter"]:
-            link += f"&descriptors_filter={self.cleaned_data['descriptors_filter']}"
-        if self.cleaned_data["target"]:
-            link += f"&target={self.cleaned_data['target']}"
         if include_page:
             if not page:
                 if self.cleaned_data["page"] and self.cleaned_data["page"] != 1:
@@ -259,10 +241,10 @@ class SoundCombinedSearchFormAPI(forms.Form):
             link += f"&page_size={str(self.cleaned_data['page_size'])}"
         if self.cleaned_data["fields"]:
             link += f"&fields={my_quote(self.cleaned_data['fields'])}"
-        if self.cleaned_data["descriptors"]:
-            link += f"&descriptors={self.cleaned_data['descriptors']}"
-        if self.cleaned_data["normalized"]:
-            link += f"&normalized={self.cleaned_data['normalized']}"
+        if self.cleaned_data["similar_to"]:
+            link += f"&similar_to={self.cleaned_data['similar_to']}"
+        if self.cleaned_data["similarity_space"]:
+            link += f"&similarity_space={self.cleaned_data['similarity_space']}"
         if not group_by_pack:
             if self.cleaned_data["group_by_pack"]:
                 link += f"&group_by_pack={self.cleaned_data['group_by_pack']}"
@@ -271,38 +253,7 @@ class SoundCombinedSearchFormAPI(forms.Form):
         return f"https://{Site.objects.get_current().domain}{base_url}{link}"
 
 
-class SoundTextSearchFormAPI(SoundCombinedSearchFormAPI):
-    """
-    This form is like CombinedSearch but disabling content-search-only fields
-    """
-
-    def clean_target(self):
-        return None
-
-    def clean_descriptors_filter(self):
-        return None
-
-
-class SoundContentSearchFormAPI(SoundCombinedSearchFormAPI):
-    """
-    This form is like CombinedSearch but disabling text-search-only fields
-    """
-
-    def clean_query(self):
-        return None
-
-    def clean_filter(self):
-        return None
-
-    def clean_sort(self):
-        self.original_url_sort_value = False
-        return None
-
-    def clean_group_by_pack(self):
-        return None
-
-
-class SimilarityFormAPI(SoundCombinedSearchFormAPI):
+class SimilarityFormAPI(SoundTextSearchFormAPI):
     def clean_query(self):
         return None
 
@@ -310,9 +261,6 @@ class SimilarityFormAPI(SoundCombinedSearchFormAPI):
         return None
 
     def clean_group_by_pack(self):
-        return None
-
-    def clean_target(self):
         return None
 
     def clean_similar_to(self):

@@ -39,7 +39,7 @@ from sounds.models import Pack, Sound
 from utils.logging_filters import get_client_ip
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.search.search_sounds import perform_search_engine_query
-from utils.username import raise_404_if_user_is_deleted, redirect_if_old_username
+from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
 
 web_logger = logging.getLogger("web")
 
@@ -118,7 +118,7 @@ def geotags_for_user_barray(request, username):
         {
             "query_filter": f'username:"{username}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
             "field_list": ["id", "score", "geotag"],
-            "num_sounds": profile.num_sounds,
+            "num_sounds": profile.num_sounds if profile.num_sounds else 1,  # Avoid potential 0-sized pagination
         }
     )
     generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results.docs)
@@ -130,7 +130,8 @@ def geotags_for_user_barray(request, username):
 @redirect_if_old_username
 @raise_404_if_user_is_deleted
 def geotags_for_user_latest_barray(request, username):
-    sounds = Sound.public.filter(user__username__iexact=username).exclude(geotag=None)[0:10]
+    user = get_parameter_user_or_404(request)
+    sounds = Sound.public.filter(user=user).exclude(geotag=None)[0:10]
     generated_bytearray, num_geotags = generate_geotag_bytearray_queryset_fast(sounds)
     if num_geotags > 0:
         log_map_load("user_latest", num_geotags, request)
@@ -143,7 +144,7 @@ def geotags_for_pack_barray(request, pack_id):
         {
             "query_filter": f'pack_grouping:"{pack.id}_{pack.name}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
             "field_list": ["id", "score", "geotag"],
-            "num_sounds": pack.num_sounds,
+            "num_sounds": pack.num_sounds if pack.num_sounds else 1,  # Avoid potential 0-sized pagination
         }
     )
     generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results.docs)
@@ -168,13 +169,19 @@ def geotags_for_query_barray(request):
     else:
         # Otherwise, perform a search query to get the results
         sqp = SearchQueryProcessor(request)
-        query_params = sqp.as_query_params()
-        if "facets" in query_params:
-            # No need to compute facets for bytearray query
-            del query_params["facets"]
-        results, _ = perform_search_engine_query(query_params)
-        results_docs = results.docs
+        if sqp.errors:
+            # invalid filter: don't search on solr
+            results_docs = []
+        else:
+            query_params = sqp.as_query_params()
+            if "facets" in query_params:
+                # No need to compute facets for bytearray query
+                del query_params["facets"]
+            results, _ = perform_search_engine_query(query_params)
+            results_docs = results.docs
 
+    if results_docs is None:
+        results_docs = []
     generated_bytearray, num_geotags = generate_geotag_bytearray_dict(results_docs)
     if num_geotags > 0:
         log_map_load("query", num_geotags, request)
@@ -243,7 +250,7 @@ def for_user(request, username):
 @redirect_if_old_username
 def for_sound(request, username, sound_id):
     sound = get_object_or_404(Sound.objects.select_related("geotag", "user"), id=sound_id)
-    if sound.user.username.lower() != username.lower() or sound.geotag is None:
+    if sound.user.username.lower() != username.lower() or not hasattr(sound, "geotag"):
         raise Http404
     tvars = _get_geotags_query_params(request)
     tvars.update(
@@ -294,6 +301,23 @@ def for_pack(request, username, pack_id):
 def for_query(request):
     tvars = _get_geotags_query_params(request)
     request_parameters_string = request.get_full_path().split("?")[-1]
+    sqp = SearchQueryProcessor(request)
+    if sqp.errors:
+        tvars.update(
+            {
+                "tag": None,
+                "username": None,
+                "pack": None,
+                "sound": None,
+                "query_params": None,
+                "query_params_encoded": None,
+                "query_search_page_url": None,
+                "query_description": None,
+                "url": None,
+                "error_text": "There was an error while searching, is your query correct?",
+            }
+        )
+        return render(request, "geotags/geotags.html", tvars)
     tvars.update(
         {
             "tag": None,
@@ -303,7 +327,7 @@ def for_query(request):
             "query_params": request_parameters_string,
             "query_params_encoded": urllib.parse.quote(request_parameters_string),
             "query_search_page_url": reverse("sounds-search") + f"?{request_parameters_string}",
-            "query_description": SearchQueryProcessor(request).get_textual_description(),
+            "query_description": sqp.get_textual_description(),
             "url": reverse("geotags-for-query-barray") + f"?{request_parameters_string}",
         }
     )

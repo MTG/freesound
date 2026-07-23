@@ -44,12 +44,18 @@ examples = {
             ],
         ),
         (
-            "Search with a content-based filter",
+            "Search with a filter on audio descriptors",
             [
                 "apiv2/search/?query=piano&filter=bpm:60",
                 "apiv2/search/?query=piano&filter=pitch:[435 TO 445]",
                 "apiv2/search/?query=piano&filter=note_name:E",
                 "apiv2/search/?query=piano&filter=note_confidence:[0.9 TO *]",
+            ],
+        ),
+        (
+            "Search with a custom sorting target specified",
+            [
+                "apiv2/search/?query=piano&sort=pitch:220,pitch_var:0.0",
             ],
         ),
         (
@@ -84,61 +90,6 @@ examples = {
             "Geospatial search for points at a maximum distance d (in km) from a latitude,longitude position and with a particular tag",
             [
                 "apiv2/search/?filter={!geofilt sfield=geotag pt=41.3833,2.1833 d=10} tag:barcelona&fields=id,geotag,tags",
-            ],
-        ),
-    ],
-    "ContentSearch": [
-        (
-            "Setting a target as some descriptor values",
-            [
-                "apiv2/search/content/?target=lowlevel.pitch.mean:220",
-                "apiv2/search/content/?target=lowlevel.pitch.mean:220 AND lowlevel.pitch.var:0",
-            ],
-        ),
-        (
-            "Using multidimensional descriptors in the target",
-            [
-                "apiv2/search/content/?target=sfx.tristimulus.mean:0,1,0&fields=id,analysis&descriptors=sfx.tristimulus.mean"
-            ],
-        ),
-        ("Using a Freesound sound id as target", ["apiv2/search/content/?target=1234"]),
-        (
-            "Using an Essentia analysis file as target",
-            [
-                'curl -X POST -H "Authorization: Token {{your_api_key}}" -F analysis_file=@"/path/to/your_file.json" \'%s/apiv2/search/content/\''
-            ],
-        ),
-        (
-            "Using descriptors filter",
-            [
-                "apiv2/search/content/?descriptors_filter=lowlevel.pitch.mean:[219.9 TO 220.1]",
-                "apiv2/search/content/?descriptors_filter=lowlevel.pitch.mean:[219.9 TO 220.1] AND lowlevel.pitch_salience.mean:[0.6 TO *]",
-                "apiv2/search/content/?descriptors_filter=lowlevel.mfcc.mean[0]:[-1124 TO -1121]",
-                "apiv2/search/content/?descriptors_filter=lowlevel.mfcc.mean[1]:[17 TO 20] AND lowlevel.mfcc.mean[4]:[0 TO 20]",
-                'apiv2/search/content/?descriptors_filter=tonal.key_key:"Asharp"',
-                'apiv2/search/content/?descriptors_filter=tonal.key_scale:"major"',
-                'apiv2/search/content/?descriptors_filter=(tonal.key_key:"C" AND tonal.key_scale:"major") OR (tonal.key_key:"A" AND tonal.key_scale:"minor")',
-                'apiv2/search/content/?descriptors_filter=tonal.key_key:"C" tonal.key_scale="major" tonal.key_strength:[0.8 TO *]',
-            ],
-        ),
-    ],
-    "CombinedSearch": [
-        (
-            "Combining query with target descriptors and textual filter",
-            ["apiv2/search/combined/?target=rhythm.bpm:120&filter=tag:loop"],
-        ),
-        (
-            "Combining textual query with descriptors filter",
-            ["apiv2/search/combined/?filter=tag:loop&descriptors_filter=rhythm.bpm:[119 TO 121]"],
-        ),
-        (
-            "Combining two filters (textual and descriptors)",
-            ['apiv2/search/combined/?descriptors_filter=tonal.key_key:"A" tonal.key_scale:"major"&filter=tag:chord'],
-        ),
-        (
-            "Combining textual query with multidimensional descriptors filter",
-            [
-                "apiv2/search/combined/?query=music&fields=id,analysis&descriptors=lowlevel.mfcc.mean&descriptors_filter=lowlevel.mfcc.mean[1]:[17 TO 20] AND lowlevel.mfcc.mean[4]:[0 TO 20]"
             ],
         ),
     ],

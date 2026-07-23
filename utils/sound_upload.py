@@ -17,6 +17,8 @@
 # Authors:
 #     See AUTHORS file.
 #
+from __future__ import annotations
+
 import csv
 import hashlib
 import json
@@ -24,6 +26,7 @@ import logging
 import os
 import shutil
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 import openpyxl
 import xlrd
@@ -35,6 +38,7 @@ from django.urls import reverse
 from geotags.models import GeoTag
 from utils.audioprocessing import get_sound_type
 from utils.cache import invalidate_user_template_caches
+from utils.cdn import create_cdn_symlink
 from utils.filesystem import md5file, remove_directory, remove_directory_if_empty
 from utils.forms import filename_has_valid_extension
 from utils.mirror_files import (
@@ -43,6 +47,10 @@ from utils.mirror_files import (
     remove_uploaded_file_from_mirror_locations,
 )
 from utils.text import remove_control_chars
+
+if TYPE_CHECKING:
+    from apiv2.models import ApiV2Client
+    from sounds.models import BulkUploadProgress, Sound
 
 console_logger = logging.getLogger("console")
 sounds_logger = logging.getLogger("sounds")
@@ -114,29 +122,37 @@ def get_processing_before_describe_sound_folder(audio_file_path):
 
 def get_processing_before_describe_sound_base_url(audio_file_path):
     path = get_processing_before_describe_sound_folder(audio_file_path)
-    return settings.PROCESSING_BEFORE_DESCRIPTION_URL + "/".join(path.split("/")[-2:]) + "/"
+    relative = os.path.relpath(path, settings.PROCESSING_BEFORE_DESCRIPTION_DIR)
+    return settings.PROCESSING_BEFORE_DESCRIPTION_URL + relative + "/"
 
 
-def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=None, process=True, remove_exists=False):
+def create_sound(
+    user: User,
+    sound_fields: dict,
+    apiv2_client: ApiV2Client | None = None,
+    bulk_upload_progress: BulkUploadProgress | None = None,
+    process: bool = True,
+    remove_exists: bool = False,
+) -> Sound:
     """
     This function is used to create sound objects uploaded via the sound describe form, the API or the bulk describe
     feature.
 
     Args:
-        user (User): user that will appear as the uploader of the sound (author)
-        sound_fields (dict): dictionary with data to populate the different fields of the sound object. Check example
+        user: user that will appear as the uploader of the sound (author)
+        sound_fields: dictionary with data to populate the different fields of the sound object. Check example
             usages of create_sound for more information about what are these fields and their expected format
-        apiv2_client (ApiV2Client): ApiV2Client object corresponding to the API account that triggered the creation
+        apiv2_client: ApiV2Client object corresponding to the API account that triggered the creation
             of that sound object (if not provided, will be set to None)
-        bulk_upload_progress (BulkUploadProgress): BulkUploadProgress object corresponding to the bulk upload progress
+        bulk_upload_progress: BulkUploadProgress object corresponding to the bulk upload progress
             that triggered the creation of this sound object (if not provided, will be set to None)
-        process (bool): whether to trigger processing and analysis of the sound object after being created
+        process: whether to trigger processing and analysis of the sound object after being created
             (defaults to True)
-        remove_exists (bool): if the sound we're trying to create an object for already exists (according to
+        remove_exists: if the sound we're trying to create an object for already exists (according to
             md5 check), delete it (defaults to False)
 
     Returns:
-        Sound: returns the created Sound object
+        The created Sound object.
     """
 
     # Import models using apps.get_model (to avoid circular dependencies)
@@ -207,6 +223,9 @@ def create_sound(user, sound_fields, apiv2_client=None, bulk_upload_progress=Non
             raise CantMoveException(f"Failed to move file from {sound.original_path} to {new_original_path}")
         sound.original_path = new_original_path
         sound.save()
+
+    # Create CDN symlink so the sound can be served via cdn.freesound.org
+    create_cdn_symlink(sound)
 
     # Copy to mirror location
     copy_sound_to_mirror_locations(sound)
@@ -434,8 +453,11 @@ def validate_input_csv_file(csv_header, csv_lines, sounds_base_dir, username=Non
                     if not filename_has_valid_extension(audio_filename):
                         line_errors["audio_filename"] = "Invalid file extension."
                     else:
-                        src_path = os.path.join(sounds_base_dir, audio_filename)
-                        if not os.path.exists(src_path):
+                        sounds_base_real = os.path.realpath(sounds_base_dir)
+                        src_path = os.path.realpath(os.path.join(sounds_base_real, audio_filename))
+                        if os.path.commonpath([sounds_base_real, src_path]) != sounds_base_real:
+                            line_errors["audio_filename"] = "audio_filename must be a single filename."
+                        elif not os.path.exists(src_path):
                             line_errors["audio_filename"] = (
                                 "Audio file does not exist. This should be the name of "
                                 "one of the audio files you previously uploaded."

@@ -1,32 +1,49 @@
-const inquirer = require('inquirer');
-const shell = require('shelljs');
+const { Parcel } = require('@parcel/core');
+const fs = require('node:fs');
+const path = require('node:path');
 
-const outDir = 'freesound/static/bw-frontend/dist';
-const outDirDarkMode = 'freesound/static/bw-frontend/dist-dark';
+const projectDir = __dirname;
+const distDir = path.join(projectDir, 'dist');
 
-// Clear dist folder
-shell.exec(`rm -rf ${outDir}/*`)
+const entries = [
+  path.join(projectDir, 'src/index.js'),
+  path.join(projectDir, 'src/index-dark.js'),
+  path.join(projectDir, 'src/pages/*.js'),
+];
 
-// Copy public files to dist folder
-shell.exec(
-  `parcel build freesound/static/bw-frontend/public/*.* -d ${outDir}`
-);
+const cleanDist = () => {
+  if (fs.existsSync(distDir)) {
+    fs.rmSync(distDir, { recursive: true, force: true });
+  }
+};
 
-// Build main js and css files
-shell.exec(
-  `echo "\\$color-theme: 'light';" > freesound/static/bw-frontend/styles/variables/color-theme.scss && parcel build freesound/static/bw-frontend/src/index.js -d ${outDir}`
-);
+const build = async () => {
+  const bundler = new Parcel({
+    entries,
+    defaultConfig: '@parcel/config-default',
+    defaultTargetOptions: {
+      distDir,
+      publicUrl: '/static/bw-frontend/dist',
+      sourceMaps: true,
+    },
+    mode: 'production',
+    shouldDisableCache: false,
+    env: {
+      NODE_ENV: 'production',
+    },
+  });
 
-// Build page-specific js files
-shell.exec(
-  `parcel build freesound/static/bw-frontend/src/pages/*.js -d ${outDir}`
-);
+  try {
+    cleanDist();
+    console.log('⚙️  Building frontend assets with Parcel...');
+    const { bundleGraph, buildTime } = await bundler.run();
+    const bundles = bundleGraph.getBundles();
+    console.log(`✅ Build complete in ${(buildTime / 1000).toFixed(2)}s (${bundles.length} bundles output)`);
+  } catch (error) {
+    console.error('❌ Build failed');
+    console.error(error);
+    process.exitCode = 1;
+  }
+};
 
-// Build dark-mode css
-// Now build again js and css for the dark mode
-// 1) Build them in a different directory
-// 2) Copy the generated css files (js is not relevant)
-// 3) Remove that extra directory
-shell.exec(
-  `echo "\\$color-theme: 'dark';" > freesound/static/bw-frontend/styles/variables/color-theme.scss && parcel build freesound/static/bw-frontend/src/index.js -d ${outDirDarkMode} && cp ${outDirDarkMode}/logo* ${outDir}/ && cp ${outDirDarkMode}/index.css ${outDir}/index-dark.css && cp ${outDirDarkMode}/index.map ${outDir}/index-dark.map && rm -r ${outDirDarkMode}`
-);
+build();

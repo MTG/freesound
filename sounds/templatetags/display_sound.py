@@ -293,8 +293,8 @@ def display_sound_no_sound_object(
         'samplerate': sound.samplerate,  # Useful for the ruler of the player, if not indicated, a default will be assumed
         'preview_mp3': sound.locations('preview.LQ.mp3.url'),
         'preview_ogg': sound.locations('preview.LQ.ogg.url'),
-        'wave': sound.locations('display.wave_bw.L.url'),
-        'spectral': sound.locations('display.spectral_bw.L.url'),
+        'wave': sound.locations('display.wave.L.url'),
+        'spectral': sound.locations('display.spectral.L.url'),
         'id': sound.id,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity buttons
         'username': sound.user.username,  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
         'ready_for_similarity': sound.ready_for_similarity  # Only used for sounds that do actually have a sound object so we can display bookmark/similarity/remix buttons
@@ -317,8 +317,8 @@ def display_sound_no_sound_object(
             "locations": {
                 "preview": {"LQ": {"mp3": {"url": file_data["preview_mp3"]}, "ogg": {"url": file_data["preview_ogg"]}}},
                 "display": {
-                    "wave_bw": {"M": {"url": file_data["wave"]}, "L": {"url": file_data["wave"]}},
-                    "spectral_bw": {"M": {"url": file_data["spectral"]}, "L": {"url": file_data["spectral"]}},
+                    "wave": {"M": {"url": file_data["wave"]}, "L": {"url": file_data["wave"]}},
+                    "spectral": {"M": {"url": file_data["spectral"]}, "L": {"url": file_data["spectral"]}},
                 },
             },
         },
@@ -355,12 +355,25 @@ def display_sound_small_no_sound_object_no_bookmark(context, file_data):
 
 
 @register.inclusion_tag("sounds/display_sound_selectable.html", takes_context=True)
-def display_sound_small_selectable(context, sound, selected=False):
+def display_sound_small_selectable(context, sound, *, selected=False):
     context = context.get("original_context", context)  # This is to allow passing context in nested inclusion tags
     tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
     tvars.update(
         {
             "selected": selected,
+        }
+    )
+    return tvars
+
+
+@register.inclusion_tag("sounds/display_sound_with_actions.html", takes_context=True)
+def display_sound_small_with_actions(context, sound, *, is_featured=False):
+    """Display sound with featured and remove action toggles below it."""
+    context = context.get("original_context", context)  # This is to allow passing context in nested inclusion tags
+    tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
+    tvars.update(
+        {
+            "is_featured": is_featured,
         }
     )
     return tvars

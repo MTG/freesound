@@ -17,7 +17,7 @@
         <div class="row">
             <div class="col-9">
                 <div>
-                    {% display_post post.post 0 0 False False False %}
+                    {% display_post post.post show_action_icons=False show_report_actions=False show_moderator_info=True %}
                 </div>
                 <div class="text-grey">
                     In thread: <a href="{% url "forums-thread" post.post.thread.forum.name_slug post.post.thread.id %}">{{post.post.thread.title|safe}}</a>
@@ -32,9 +32,7 @@
         </div>
         {% if not forloop.last %}
             <div class="divider-light v-spacing-top-3 v-spacing-3"></div>
-        {% endif %}  
+        {% endif %}
     {% endfor %}
 </div>
 {% endblock %}
-
-

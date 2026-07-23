@@ -17,22 +17,33 @@
 # Authors:
 #     See AUTHORS file.
 #
+import json
+from unittest import mock
+
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.http import Http404
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
+from rest_framework.exceptions import ValidationError
 
-from apiv2.apiv2_utils import ApiSearchPaginator
 from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import Sound
-from utils.test_helpers import create_user_and_sounds
+from utils.ratelimit import request_limit_events_total
+from utils.test_helpers import counter_samples, create_user_and_sounds
 
-from .exceptions import BadRequestException
-from .forms import SoundCombinedSearchFormAPI
+from .exceptions import (
+    BadRequestException,
+    NotFoundException,
+    ServerErrorException,
+    Throttled,
+)
+from .forms import SoundTextSearchFormAPI
+from .handlers import api_exception_handler
 
 
 class TestAPiViews(TestCase):
@@ -111,10 +122,9 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
 
         sound = sounds[0]
         sound.change_processing_state("OK")
@@ -130,10 +140,9 @@ class TestAPI(TestCase):
         # Create App to login using token
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
 
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
 
         sound = sounds[0]
         sound.change_processing_state("OK")
@@ -149,149 +158,79 @@ class TestAPI(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-class ApiSearchPaginatorTest(TestCase):
-    def test_page(self):
-        paginator = ApiSearchPaginator([1, 2, 3, 4, 5], 5, 2)
-        page = paginator.page(2)
-
-        self.assertEqual(
-            page,
-            {
-                "object_list": [1, 2, 3, 4, 5],
-                "has_next": True,
-                "has_previous": True,
-                "has_other_pages": True,
-                "next_page_number": 3,
-                "previous_page_number": 1,
-                "page_num": 2,
-            },
-        )
-
-
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):
     # Query
     def test_query_empty_valid(self):
         for query in [" ", "", '" "', '""', "' '", "''"]:
-            form = SoundCombinedSearchFormAPI(data={"query": query})
+            form = SoundTextSearchFormAPI(data={"query": query})
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data["query"], "")
 
     # Filter
     def test_filter_empty_invalid(self):
         for filt in ["", " "]:
-            form = SoundCombinedSearchFormAPI(data={"filter": filt})
+            form = SoundTextSearchFormAPI(data={"filter": filt})
             with self.assertRaisesMessage(BadRequestException, "Invalid filter."):
                 self.assertFalse(form.is_valid())
 
     def test_filter_valid(self):
         filt = "text"
-        form = SoundCombinedSearchFormAPI(data={"filter": "text"})
+        form = SoundTextSearchFormAPI(data={"filter": "text"})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["filter"], filt)
 
-    # Descriptors
-    def test_descriptors_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["descriptors"], "")
-
-    def test_descriptors_valid(self):
-        descriptors = "test"
-        form = SoundCombinedSearchFormAPI(data={"descriptors": descriptors})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["descriptors"], descriptors)
-
-    # Normalized
-    def test_normalized_valid(self):
-        normalized = "1"
-        form = SoundCombinedSearchFormAPI(data={"normalized": normalized})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["normalized"], normalized)
-
-    def test_normalized_bogus_valid(self):
-        for normalized in ["0", "", "test"]:
-            form = SoundCombinedSearchFormAPI(data={"normalized": normalized})
-            self.assertTrue(form.is_valid())
-            self.assertEqual(form.cleaned_data["normalized"], "")
-
     # Page
     def test_page_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
+        form = SoundTextSearchFormAPI(data={})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["page"], 1)
 
     def test_page_bogus_valid(self):
         for page in ["", "test"]:
-            form = SoundCombinedSearchFormAPI(data={"page": page})
+            form = SoundTextSearchFormAPI(data={"page": page})
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data["page"], 1)
 
     # Sort
     def test_sort_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
+        form = SoundTextSearchFormAPI(data={})
         self.assertTrue(form.is_valid())
         sort = form.cleaned_data["sort"]
         self.assertEqual(len(sort), 1)
         self.assertEqual(sort[0], "score desc")
 
     def test_sort_multiple_valid(self):
-        form = SoundCombinedSearchFormAPI(data={"sort": "rating_desc"})
+        form = SoundTextSearchFormAPI(data={"sort": "rating_desc"})
         self.assertTrue(form.is_valid())
         sort = form.cleaned_data["sort"]
         self.assertEqual(sort[0], "avg_rating desc")
         self.assertEqual(len(sort), 2)
         self.assertEqual(sort[1], "num_ratings desc")
 
-    # Normalized
+    # Group by pack
     def test_group_by_pack_valid(self):
         group_by_pack = "1"
-        form = SoundCombinedSearchFormAPI(data={"group_by_pack": group_by_pack})
+        form = SoundTextSearchFormAPI(data={"group_by_pack": group_by_pack})
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["group_by_pack"], group_by_pack)
 
     def test_group_by_pack_bogus_valid(self):
         for group_by_pack in ["0", "", "test"]:
-            form = SoundCombinedSearchFormAPI(data={"group_by_pack": group_by_pack})
+            form = SoundTextSearchFormAPI(data={"group_by_pack": group_by_pack})
             self.assertTrue(form.is_valid())
             self.assertEqual(form.cleaned_data["group_by_pack"], "")
 
     # Page size
     def test_page_size_empty_valid(self):
-        form = SoundCombinedSearchFormAPI(data={})
+        form = SoundTextSearchFormAPI(data={})
         self.assertTrue(form.is_valid())
         self.assertTrue(form.cleaned_data[settings.APIV2["PAGE_SIZE_QUERY_PARAM"]], settings.APIV2["PAGE_SIZE"])
 
     def test_page_size_max_valid(self):
         param = settings.APIV2["PAGE_SIZE_QUERY_PARAM"]
-        form = SoundCombinedSearchFormAPI(data={param: settings.APIV2["MAX_PAGE_SIZE"] + 1})
+        form = SoundTextSearchFormAPI(data={param: settings.APIV2["MAX_PAGE_SIZE"] + 1})
         self.assertTrue(form.is_valid())
         self.assertTrue(form.cleaned_data[param], settings.APIV2["MAX_PAGE_SIZE"])
-
-    # Descriptors filter
-    def test_descriptors_filter_empty_invalid(self):
-        for descriptors_filter in ["", " "]:
-            form = SoundCombinedSearchFormAPI(data={"descriptors_filter": descriptors_filter})
-            with self.assertRaisesMessage(BadRequestException, "Invalid descriptors_filter."):
-                self.assertFalse(form.is_valid())
-
-    def test_descriptors_filter_valid(self):
-        descriptors_filter = "test"
-        form = SoundCombinedSearchFormAPI(data={"descriptors_filter": descriptors_filter})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["descriptors_filter"], descriptors_filter)
-
-    # Target
-    def test_target_empty_invalid(self):
-        for target in ["", " "]:
-            form = SoundCombinedSearchFormAPI(data={"target": target})
-            with self.assertRaisesMessage(BadRequestException, "Invalid target."):
-                self.assertFalse(form.is_valid())
-
-    def test_target_valid(self):
-        target = "test"
-        form = SoundCombinedSearchFormAPI(data={"target": target})
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["target"], target)
 
 
 class TestSoundListSerializer(TestCase):
@@ -760,10 +699,9 @@ class APIAuthenticationTestCase(TestCase):
 
     def test_token_authentication_with_header(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
         headers = {
             "HTTP_AUTHORIZATION": f"Token {c.key}",
         }
@@ -772,18 +710,121 @@ class APIAuthenticationTestCase(TestCase):
 
     def test_token_authentication_with_query_param(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 200)
 
     def test_token_authentication_disabled_client(self):
         user = User.objects.create_user("testuser")
-        c = ApiV2Client(
+        c = ApiV2Client.objects.create(
             user=user, status="REV", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
         )
-        c.save()
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 401)
+
+
+class TestAPIExceptionHandlerIntegration(SimpleTestCase):
+    def test_exception_handler_is_wired_into_drf(self):
+        # End-to-end check that a real request that raises a LoggedAPIException is routed through
+        # our configured EXCEPTION_HANDLER.
+        url = reverse("apiv2-download_from_token", args=["bogus"])
+
+        with self.assertLogs("api_errors", level="INFO") as logs:
+            response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json(), {"detail": "Invalid token."})
+        self.assertEqual(len(logs.records), 1)
+
+
+class TestAPIExceptionHandler(SimpleTestCase):
+    def assert_single_log(self, logs, status_code, summary_label, detail):
+        # Every LoggedAPIException emits exactly one api_errors line in a specific format
+        self.assertEqual(len(logs.records), 1)
+        summary, data, info = logs.records[0].getMessage().split(" #!# ")
+        self.assertEqual(summary, f"{status_code} {summary_label}")
+        self.assertEqual(
+            json.loads(data),
+            {
+                "summary_message": f"{status_code} {summary_label}",
+                "long_message": detail,
+                "status": status_code,
+            },
+        )
+        self.assertIsNone(json.loads(info))
+
+    def test_plain_4xx_logs_once_and_is_not_reported_to_sentry(self):
+        with mock.patch("apiv2.handlers.sentry_sdk.capture_exception") as capture_exception:
+            with self.assertLogs("api_errors", level="INFO") as logs:
+                response = api_exception_handler(NotFoundException(), context={})
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {"detail": "Not found"})
+        self.assert_single_log(logs, 404, "Not found", "Not found")
+        capture_exception.assert_not_called()
+
+    def test_server_error_is_reported_to_sentry(self):
+        with mock.patch("apiv2.handlers.sentry_sdk.capture_exception") as capture_exception:
+            with self.assertLogs("api_errors", level="INFO") as logs:
+                exception = ServerErrorException()
+                response = api_exception_handler(exception, context={})
+
+        self.assertEqual(response.status_code, 500)
+        self.assert_single_log(logs, 500, "Server error", "Server error")
+        capture_exception.assert_called_once_with(exception)
+
+    def test_non_custom_exceptions_delegate_without_telemetry(self):
+        cases = (
+            # A DRF exception (APIException subclass) that isn't one of ours.
+            (ValidationError({"field": ["Invalid"]}), 400, {"field": ["Invalid"]}),
+            # Not a DRF exception - a Django exception that DRF adapts into a response.
+            (Http404("Missing"), 404, {"detail": "Missing"}),
+        )
+
+        for exception, status_code, detail in cases:
+            with self.subTest(exception=type(exception).__name__):
+                with (
+                    mock.patch("apiv2.handlers.sentry_sdk.capture_exception") as capture_exception,
+                    mock.patch("apiv2.handlers.count_request_limit_event") as count_request_limit_event,
+                    self.assertNoLogs("api_errors", level="INFO"),
+                ):
+                    response = api_exception_handler(exception, context={})
+
+                self.assertEqual(response.status_code, status_code)
+                self.assertEqual(response.data, detail)
+                capture_exception.assert_not_called()
+                count_request_limit_event.assert_not_called()
+
+
+class TestThrottledException(SimpleTestCase):
+    @staticmethod
+    def _samples():
+        return counter_samples(request_limit_events_total, "reason", "enforced", "user_type")
+
+    def _make_request(self, user):
+        request = RequestFactory().get("/apiv2/search/text/")
+        request.user = user
+        request.successful_authenticator = None
+        return request
+
+    def test_throttled_counts_event_for_anonymous_request(self):
+        request = self._make_request(AnonymousUser())
+        before = self._samples().get(("api_throttle", "true", "anonymous"), 0)
+
+        with self.assertLogs("api_errors", level="INFO"):
+            response = api_exception_handler(Throttled(request=request), context={})
+
+        assert response.status_code == 429
+        assert self._samples()[("api_throttle", "true", "anonymous")] == before + 1
+
+    def test_throttled_counts_event_for_authenticated_request(self):
+        request = self._make_request(User(username="throttled_user"))
+        before = self._samples().get(("api_throttle", "true", "authenticated"), 0)
+
+        with self.assertLogs("api_errors", level="INFO"):
+            response = api_exception_handler(Throttled(request=request), context={})
+
+        assert response.status_code == 429
+        assert self._samples()[("api_throttle", "true", "authenticated")] == before + 1

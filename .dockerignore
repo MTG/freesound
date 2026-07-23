@@ -1,5 +1,6 @@
 *.gz
 *.bz2
+.venv
 env
 freesound-data
 .git

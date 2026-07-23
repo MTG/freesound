@@ -18,11 +18,11 @@
             </div>
         </div>
         <div class="v-spacing-top-1">
-            {% bw_paginator paginator page current_page request "message" %}
+            {% bw_paginator page request anchor="message" %}
         </div>
     </div>
 {% endblock %}
 
 {% block extrabody %}
-<script src="{% static 'bw-frontend/dist/messages.js' %}"></script>
+<script src="{% static 'bw-frontend/dist/pages/messages.js' %}"></script>
 {% endblock %}

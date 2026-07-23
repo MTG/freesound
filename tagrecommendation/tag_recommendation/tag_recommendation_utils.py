@@ -26,7 +26,7 @@ from numpy import *
 def cNMostSimilar(input_tags, tag_names, similarity_matrix, options):
 
     N = options['cNMostSimilar_N']
-    unicode_tag_names = [t.decode('utf-8') for t in tag_names]
+    unicode_tag_names = list(tag_names)  # No need for further conversion in python 3
     candidate_tags = []
     for tag in input_tags:
         # Check that tag exists in the tag matrix, if it does not exist we cannot recommend similar tags

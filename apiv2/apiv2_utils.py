@@ -18,10 +18,8 @@
 #     See AUTHORS file.
 #
 
-import collections
 import json
 import logging
-import math
 import urllib.parse
 from urllib.parse import unquote
 
@@ -49,24 +47,19 @@ from rest_framework.utils import formatting
 from apiv2.authentication import OAuth2Authentication, SessionAuthentication, TokenAuthentication
 from apiv2.exceptions import (
     BadRequestException,
-    NotFoundException,
     RequiresHttpsException,
     ServerErrorException,
     UnauthorizedException,
 )
 from apiv2.forms import API_SORT_OPTIONS_MAP
-from similarity.client import SimilarityException
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search import SearchEngineException, get_search_engine
+from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
 from utils.search.search_sounds import parse_weights_parameter
-from utils.similarity_utilities import api_search as similarity_api_search
-from utils.similarity_utilities import get_sounds_descriptors
 
-from . import combined_search_strategies
 from .examples import examples
 
-error_logger = logging.getLogger("api_errors")
+search_logger = logging.getLogger("search")
 cache_api_monitoring = caches["api_monitoring"]
 
 
@@ -268,20 +261,6 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
         self.get_request_information(request)
         self.store_monitor_usage()
 
-    def get_serializer(self, *args, **kwargs):
-        # Overwrite DRF's get_serializer method so that we add sound analysis information when requested
-        serializer_class = self.get_serializer_class()
-        kwargs["context"] = self.get_serializer_context()
-        if "SoundListSerializer" in str(serializer_class):
-            # If we are trying to serialize sounds, check if we should and sound analysis data to them and add it
-            if isinstance(args[0], collections.abc.Iterable):
-                sound_analysis_data = get_analysis_data_for_sound_ids(
-                    kwargs["context"]["request"], sound_ids=[s.id for s in args[0]]
-                )
-                if sound_analysis_data:
-                    kwargs["sound_analysis_data"] = sound_analysis_data
-        return serializer_class(*args, **kwargs)
-
     def finalize_response(self, request, response, *args, **kwargs):
         # See comment in GenericAPIView.finalize_response
         response = super().finalize_response(request, response, *args, **kwargs)
@@ -310,112 +289,91 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
 ##################
 
 
-def api_search(
-    search_form, target_file=None, extra_parameters=False, merging_strategy="merge_optimized", resource=None
-):
+def api_process_sort_parameter(sort):
+    # We need to convert the sort parameter to standard sorting options from settings.SEARCH_SOUNDS_SORT_OPTION_X,
+    # or pass it as a sorting_target if provided as such.
+    if type(sort) == str:
+        # The sort uses a custom sorting target, therefore we return it as is
+        return None, sort
+
+    # If sort is a sorting option, here we convert to the standard freesound sorting names and later the
+    # get_search_engine().search_sounds() function will convert it back to search engine meaningful names
+    return API_SORT_OPTIONS_MAP[sort[0]], None
+
+
+def api_search(search_form, target_file=None, resource=None):
     if (
         search_form.cleaned_data["query"] is None
         and search_form.cleaned_data["filter"] is None
-        and not search_form.cleaned_data["descriptors_filter"]
-        and not search_form.cleaned_data["target"]
         and not search_form.cleaned_data["similar_to"]
         and not target_file
     ):
         # No input data for search, return empty results
         return [], 0, None, None, None, None, None
 
-    if (
-        search_form.cleaned_data["query"] is None
-        and search_form.cleaned_data["filter"] is None
-        and search_form.cleaned_data["similar_to"] is None
-    ):
-        # Standard content-based search
-        try:
-            results, count, note = similarity_api_search(
-                target=search_form.cleaned_data["target"],
-                filter=search_form.cleaned_data["descriptors_filter"],
-                num_results=search_form.cleaned_data["page_size"],
-                offset=(search_form.cleaned_data["page"] - 1) * search_form.cleaned_data["page_size"],
-                target_file=target_file,
-            )
+    # Standard text-based search
+    try:
+        sort, sorting_target = api_process_sort_parameter(search_form.cleaned_data["sort"])
+        result = get_search_engine().search_sounds(
+            textual_query=unquote(search_form.cleaned_data["query"] or ""),
+            query_filter=unquote(search_form.cleaned_data["filter"] or ""),
+            query_fields=parse_weights_parameter(search_form.cleaned_data["weights"]),
+            sort=sort,
+            sorting_target=sorting_target,
+            offset=(search_form.cleaned_data["page"] - 1) * search_form.cleaned_data["page_size"],
+            num_sounds=search_form.cleaned_data["page_size"],
+            group_by_pack=search_form.cleaned_data["group_by_pack"],
+            similar_to=search_form.cleaned_data["similar_to"],
+            similar_to_similarity_space=search_form.cleaned_data["similarity_space"]
+            or settings.SIMILARITY_SPACE_DEFAULT,
+        )
 
-            gaia_ids = [result[0] for result in results]
-            distance_to_target_data = None
-            if search_form.cleaned_data["target"] or target_file:
-                # Save sound distance to target into view class so it can be accessed by the serializer
-                # We only do that when a target is specified (otherwise there is no meaningful distance value)
-                distance_to_target_data = dict(results)
+        ids_score = [(int(element["id"]), element["score"]) for element in result.docs]
 
-            gaia_count = count
-            return gaia_ids, gaia_count, distance_to_target_data, None, note, None, None
-        except SimilarityException as e:
-            if e.status_code == 500:
-                raise ServerErrorException(msg=str(e), resource=resource)
-            elif e.status_code == 400:
-                raise BadRequestException(msg=str(e), resource=resource)
-            elif e.status_code == 404:
-                raise NotFoundException(msg=str(e), resource=resource)
-            else:
-                raise ServerErrorException(msg=f"Similarity server error: {str(e)}", resource=resource)
-        except Exception:
-            raise ServerErrorException(
-                msg="The similarity server could not be reached or some unexpected error occurred.", resource=resource
-            )
+        distance_to_target_data = None
+        if result.docs and "dist" in result.docs[0]:
+            # If field "dist" is returned by solr, we store it in a separate deictionrty so it can be
+            # accessed later when serializing sounds
+            distance_to_target_data = {int(element["id"]): element["dist"] for element in result.docs}
 
-    elif (
-        not search_form.cleaned_data["descriptors_filter"]
-        and not search_form.cleaned_data["target"]
-        and not target_file
-    ):
-        # Standard text-based search
-        try:
-            # We need to convert the sort parameter to standard sorting options from
-            # settings.SEARCH_SOUNDS_SORT_OPTION_X. Therefore here we convert to the standard names and later
-            # the get_search_engine().search_sounds() function will convert it back to search engine meaningful names
-            processed_sort = API_SORT_OPTIONS_MAP[search_form.cleaned_data["sort"][0]]
-            result = get_search_engine().search_sounds(
-                textual_query=unquote(search_form.cleaned_data["query"] or ""),
-                query_filter=unquote(search_form.cleaned_data["filter"] or ""),
-                query_fields=parse_weights_parameter(search_form.cleaned_data["weights"]),
-                sort=processed_sort,
-                offset=(search_form.cleaned_data["page"] - 1) * search_form.cleaned_data["page_size"],
-                num_sounds=search_form.cleaned_data["page_size"],
-                group_by_pack=search_form.cleaned_data["group_by_pack"],
-                similar_to=search_form.cleaned_data["similar_to"],
-                similar_to_similarity_space=search_form.cleaned_data["similarity_space"]
-                or settings.SIMILARITY_SPACE_DEFAULT,
-            )
+        num_found = result.num_found
+        more_from_pack_data = None
+        if search_form.cleaned_data["group_by_pack"]:
+            # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
+            more_from_pack_data = {
+                int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
+            }
 
-            ids_score = [(int(element["id"]), element["score"]) for element in result.docs]
-            num_found = result.num_found
-            more_from_pack_data = None
-            if search_form.cleaned_data["group_by_pack"]:
-                # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
-                more_from_pack_data = {
-                    int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
+        return ids_score, num_found, distance_to_target_data, more_from_pack_data, None, None, None
+
+    except SearchEngineTimeoutException as e:
+        search_logger.info(
+            "SearchTimeout (%s)"
+            % json.dumps(
+                {
+                    "ip": resource.end_user_ip,
+                    "query": search_form.cleaned_data["query"],
+                    "filter": search_form.cleaned_data["filter"],
+                    "page": search_form.cleaned_data["page"],
+                    "sort": search_form.cleaned_data["sort"],
+                    "api_version": "v2",
                 }
-
-            return ids_score, num_found, None, more_from_pack_data, None, None, None
-
-        except SearchEngineException as e:
-            if search_form.cleaned_data["filter"] is not None:
-                raise BadRequestException(
-                    msg="Search server error: %s (please check that your filter syntax and field "
-                    "names are correct)" % str(e),
-                    resource=resource,
-                )
-            raise BadRequestException(msg=f"Search server error: {str(e)}", resource=resource)
-        except Exception as e:
-            print(e)
-            raise ServerErrorException(
-                msg="The search server could not be reached or some unexpected error occurred.", resource=resource
             )
-
-    else:
-        # Combined search (there is at least one of query/filter and one of descriptors_filter/target)
-        # Strategies are implemented in 'combined_search_strategies'
-        strategy = getattr(combined_search_strategies, merging_strategy)
-        return strategy(search_form, target_file=target_file, extra_parameters=extra_parameters)
+        )
+        raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource)
+    except SearchEngineException as e:
+        if search_form.cleaned_data["filter"] is not None:
+            raise BadRequestException(
+                msg="Search server error: %s (please check that your filter syntax and field "
+                "names are correct)" % str(e),
+                resource=resource,
+            )
+        raise BadRequestException(msg=f"Search server error: {str(e)}", resource=resource)
+    except Exception as e:
+        print(e)
+        raise ServerErrorException(
+            msg="The search server could not be reached or some unexpected error occurred.", resource=resource
+        )
 
 
 ###############
@@ -531,29 +489,6 @@ def request_parameters_info_for_log_message(get_parameters):
     return ",".join([f"{key}={value}" for key, value in get_parameters.items()])
 
 
-class ApiSearchPaginator:
-    def __init__(self, results, count, num_per_page):
-        self.num_per_page = num_per_page
-        self.count = count
-        self.num_pages = math.ceil(count / num_per_page)
-        self.page_range = list(range(1, self.num_pages + 1))
-        self.results = results
-
-    def page(self, page_num):
-        has_next = page_num < self.num_pages
-        has_previous = 1 < page_num <= self.num_pages
-
-        return {
-            "object_list": self.results,
-            "has_next": has_next,
-            "has_previous": has_previous,
-            "has_other_pages": has_next or has_previous,
-            "next_page_number": page_num + 1,
-            "previous_page_number": page_num - 1,
-            "page_num": page_num,
-        }
-
-
 # Docs examples utils
 #####################
 
@@ -584,34 +519,6 @@ def get_formatted_examples_for_view(view_name, url_name, max=10):
     output += "</pre></div>"
 
     return output
-
-
-# Similarity utils
-##################
-
-
-def get_analysis_data_for_sound_ids(request, sound_ids=[]):
-    # Get analysis data for all requested sounds and return it as a dictionary
-    sound_analysis_data = {}
-    analysis_data_is_requested = "analysis" in request.query_params.get("fields", "").split(",")
-    if analysis_data_is_requested:
-        descriptors = request.query_params.get("descriptors", "")
-        normalized = request.query_params.get("normalized", "0") == "1"
-        ids = [int(sid) for sid in sound_ids]
-        if descriptors:
-            try:
-                sound_analysis_data = get_sounds_descriptors(
-                    ids, descriptors.split(","), normalized, only_leaf_descriptors=True
-                )
-            except:
-                pass
-        else:
-            for id in ids:
-                sound_analysis_data[str(id)] = (
-                    "No descriptors specified. You should indicate which descriptors "
-                    "you want with the 'descriptors' request parameter."
-                )
-    return sound_analysis_data
 
 
 # APIv1 end of life

@@ -1,11 +1,11 @@
 .bw-carousel-container {
   position: relative;
-  
+
   @media (hover) {
     // If hover is not supported (touch devices), don't add this hover as it will require two taps in touch devices for interaction with carousel dots/arrows
     // NOTE: for the moment we keep the default hover-on-tap behaviour as it is not that bad actually
     &:hover > .bw-carousel-icon {
-      opacity: 1; 
+      opacity: 1;
     }
   }
 }
@@ -16,13 +16,12 @@
   &.carousel-no-margins {
     margin-left: calc(-#{$grid-gutter-width/2} + 1px);
     width: calc(100% + #{$grid-gutter-width});
-  
+
     .bw-carousel {
       .row:first-child {
         margin: 0;
       }
     }
-    
   }
 }
 

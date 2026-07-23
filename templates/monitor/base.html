@@ -11,16 +11,19 @@
                 <aside class="col-md-4 col-extra-left-padding-large-md v-spacing-3 order-md-last">
                     <ul class="navbar-profile bw-sticky-top padding-0">
                         <li class="nav-item">
-                            <a class="nav-link {% if activePage == 'stats'%} active {% endif %}" href="{% url "monitor-stats" %}">Stats</a>
+                            <a class="nav-link {% if activePage == 'stats' %} active {% endif %}" href="{% url "monitor-stats" %}">Stats</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if activePage == 'moderation'%} active {% endif %}" href="{% url 'monitor-moderation' %}">Moderation</a>
+                            <a class="nav-link {% if activePage == 'moderation' %} active {% endif %}" href="{% url 'monitor-moderation' %}">Moderation</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if activePage == 'processing'%} active {% endif %}" href="{% url "monitor-processing" %}">Processing</a>
+                            <a class="nav-link {% if activePage == 'processing' %} active {% endif %}" href="{% url "monitor-processing" %}">Processing</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if activePage == 'analysis'%} active {% endif %}" href="{% url "monitor-analysis" %}">Analysis</a>
+                            <a class="nav-link {% if activePage == 'analysis' %} active {% endif %}" href="{% url "monitor-analysis" %}">Analysis</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if activePage == 'similarity' %} active {% endif %}" href="{% url "monitor-similarity" %}">Similarity</a>
                         </li>
                     </ul>
                 </aside>
@@ -36,7 +39,7 @@
 
 {% block extrabody %}
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>    
-<script src="{% static 'bw-frontend/dist/monitor.js' %}"></script>
+<script src="{% static 'bw-frontend/dist/pages/monitor.js' %}"></script>
 <script src="https://d3js.org/d3.v4.min.js" type="text/javascript"></script>
 <script src="https://d3js.org/d3-axis.v1.min.js"></script>
 <script src="https://d3js.org/d3-array.v1.min.js"></script>

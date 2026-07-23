@@ -22,13 +22,15 @@ import datetime
 from unittest import mock
 
 from django.contrib.auth.models import Permission, User
+from django.contrib.sites.models import Site
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.html import escape
 
 from accounts.models import OldUsername
 from geotags.models import GeoTag
 from sounds.models import Download, PackDownload, SoundOfTheDay
-from utils.search import SearchResultsPaginator
+from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.test_helpers import create_fake_perform_search_engine_query_results_tags_mode, create_user_and_sounds
 
 
@@ -112,12 +114,14 @@ class SimpleUserTest(TestCase):
         # Packs for user
         resp = self.client.get(reverse("packs-for-user", kwargs={"username": self.user.username}))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url and self.user.username in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url and self.user.username in resp_url)
 
         # Sounds for user
         resp = self.client.get(reverse("sounds-for-user", kwargs={"username": self.user.username}))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url and self.user.username in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url and self.user.username in resp_url)
 
         self.client.force_login(self.user)
 
@@ -215,6 +219,22 @@ class SimpleUserTest(TestCase):
             ),
         )
 
+    def test_download_attribution_html(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("accounts-attribution") + "?format=html")
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode("utf-8")
+        # The template uses force_escape so users see copyable HTML — assert against escaped expected output
+        domain = f"https://{Site.objects.get_current().domain}"
+        sound_url = f"{domain}{reverse('sound', args=[self.user.username, self.sound.id])}"
+        user_url = f"{domain}{reverse('account', args=[self.user.username])}"
+        expected_sound_line = (
+            f'<li>S: <a href="{sound_url}">{self.sound.original_filename}</a>'
+            f' by <a href="{user_url}">{self.user.username}</a>'
+            f' | License: <a href="{self.sound.license.deed_url}">{self.sound.license.name_with_version}</a></li>'
+        )
+        self.assertIn(escape(expected_sound_line), content)
+
     def test_download_attribution_txt(self):
         self.client.force_login(self.user)
         # 200 response on download attribution as txt
@@ -247,7 +267,8 @@ class SimpleUserTest(TestCase):
         # 302 response on sounds page access (since BW, there is a redirect to the search page)
         resp = self.client.get(reverse("sounds"))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url)
 
         # Test other sound related views. Nota that since BW many of these will include redirects
         user = self.sound.user
@@ -288,7 +309,7 @@ class SimpleUserTest(TestCase):
     @mock.patch("search.views.perform_search_engine_query")
     def test_tags_response(self, perform_search_engine_query):
         results = create_fake_perform_search_engine_query_results_tags_mode()
-        paginator = SearchResultsPaginator(results, 15)
+        paginator = PreSlicedCountProvidedPaginator(results.docs, 15, results.num_found)
         perform_search_engine_query.return_value = (results, paginator)
 
         # 200 response on tags page access
@@ -301,7 +322,8 @@ class SimpleUserTest(TestCase):
         # 302 response (note that since BW, there will be a redirect to the search page in between)
         resp = self.client.get(reverse("packs"))
         self.assertEqual(resp.status_code, 302)
-        self.assertTrue(reverse("sounds-search") in resp.url)
+        resp_url = resp["Location"]
+        self.assertTrue(reverse("sounds-search") in resp_url)
 
     def test_contact_response(self):
         # 200 response on contact page access
@@ -349,7 +371,8 @@ class SimpleUserTest(TestCase):
         # In BW, home page does not really exist
         resp = self.client.get(reverse("accounts-home"))
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp.url, reverse("account", args=[user.username]))
+        resp_url = resp["Location"]
+        self.assertEqual(resp_url, reverse("account", args=[user.username]))
 
         # 200 response on Account edit page
         resp = self.client.get(reverse("accounts-edit"))

@@ -22,7 +22,7 @@
   }
 
   &:hover .bw-icon-checkbox.disabled {
-    opacity: 1.0;
+    opacity: 1;
   }
 }
 
@@ -41,7 +41,6 @@
 }
 
 .bw-search__filter-section {
-
   padding-top: $tiny-spacing;
 
   .bw-search__filter-section-name > span {
@@ -73,7 +72,7 @@
 
   .stars-margin-top-middle-player {
     margin-top: -5px;
-    
+
     @include md-and-above {
       height: 0px;
     }
@@ -87,18 +86,6 @@
 
   .bw-icon-close {
     font-size: 10px;
-  }
-}
-
-.bw-search__input2 {
-  font-size: 32px;
-  line-height: 38px;
-  font-weight: bold;
-  width: 90%;
-  text-align: center;
-
-  &::placeholder {
-    color: $navy-light-grey;
   }
 }
 
@@ -123,7 +110,7 @@
   /*padding-left: 60px;*/
   color: $black;
   text-align: center;
-  
+
   &::placeholder {
     color: $navy-light-grey;
   }

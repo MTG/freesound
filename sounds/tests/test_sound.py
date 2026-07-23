@@ -385,14 +385,16 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check download works successfully if user logged in
             self.client.force_login(self.user)
-            resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
 
             # Download again and check n download objects is still 1
-            self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+            with self.captureOnCommitCallbacks(execute=True):
+                self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
 
             # Check num_download attribute of Sound is 1
@@ -431,6 +433,39 @@ class SoundPackDownloadTestCase(TestCase):
             # Check n download objects is 1
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
 
+    @override_settings(
+        USE_CDN_FOR_DOWNLOADS=True,
+        CDN_SECURE_LINK_SECRET="test-secret",
+        CDN_DOWNLOAD_URL_LIFETIME=3600,
+        CDN_DOWNLOADS_BASE_URL="https://cdn.freesound.org",
+    )
+    @mock.patch("utils.cdn.os.path.exists", return_value=True)
+    def test_download_sound_cdn_redirect(self, mock_exists):
+        """When CDN is enabled and file exists, download redirects to signed CDN URL."""
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("cdn.freesound.org", resp["Location"])
+        self.assertIn("md5=", resp["Location"])
+        self.assertIn("expires=", resp["Location"])
+        # Download record should still be created
+        self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
+
+    @override_settings(
+        USE_CDN_FOR_DOWNLOADS=True,
+        CDN_SECURE_LINK_SECRET="test-secret",
+        CDN_DOWNLOAD_URL_LIFETIME=3600,
+        CDN_DOWNLOADS_BASE_URL="https://cdn.freesound.org",
+    )
+    @mock.patch("utils.cdn.os.path.exists", return_value=False)
+    @mock.patch("sounds.views.sendfile", return_value=HttpResponse())
+    def test_download_sound_cdn_fallback_when_file_missing(self, mock_sendfile, mock_exists):
+        """When CDN is enabled but file is missing, falls back to sendfile."""
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+        self.assertEqual(resp.status_code, 200)
+        mock_sendfile.assert_called_once()
+
     def test_download_pack(self):
         with mock.patch("sounds.views.download_sounds", return_value=HttpResponse()):
             # Check sound can't be downloaded if user not logged in
@@ -442,7 +477,8 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check download works successfully if user logged in
             self.client.force_login(self.user)
-            resp = self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1
@@ -454,8 +490,10 @@ class SoundPackDownloadTestCase(TestCase):
                 1,
             )
 
-            # Download again and check n download objects is still 1
-            self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
+            # Download again and check n download objects is still 1 (deduplicated via the
+            # in-progress sentinel, which is written on transaction commit)
+            with self.captureOnCommitCallbacks(execute=True):
+                self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(PackDownload.objects.filter(user=self.user, pack=self.pack).count(), 1)
 
             # Check num_download attribute of Sound is 1
@@ -705,34 +743,6 @@ class SoundTemplateCacheTests(TestCase):
         # Verify that sound display has updated number of downloads
         resp = self._get_sound_from_profile_page(self.user)
         self.assertContains(resp, 'data-num-downloads="1"')
-
-    # Similarity link (cached in display and view)
-    @mock.patch("general.management.commands.similarity_update.Similarity.add", return_value="Dummy response")
-    def _test_similarity_update(self, cache_keys, expected, request_func, similarity_add, user=None):
-        # Create a SoundAnalysis object with status OK so "similarity_update" command will pick it up
-        SoundAnalysis.objects.create(
-            sound=self.sound, analyzer=settings.FREESOUND_ESSENTIA_EXTRACTOR_NAME, analysis_status="OK"
-        )
-        self.sound.save()
-
-        self._assertCacheAbsent(cache_keys)
-
-        self.client.force_login(self.user)
-
-        # Initial check
-        self.assertEqual(self.sound.similarity_state, "PE")
-        self.assertNotContains(request_func(user) if user is not None else request_func(), expected)
-        self._assertCachePresent(cache_keys)
-
-        # Update similarity
-        call_command("similarity_update")
-        similarity_add.assert_called_once_with(self.sound.id, self.sound.locations("analysis.statistics.path"))
-        self._assertCacheAbsent(cache_keys)
-
-        # Check similarity icon
-        self.sound.refresh_from_db()
-        self.assertEqual(self.sound.similarity_state, "OK")
-        self.assertContains(request_func(user) if user is not None else request_func(), expected)
 
     # Pack link (cached in display and view)
     def _test_add_remove_pack(self, cache_keys, text, request_func, user=None):

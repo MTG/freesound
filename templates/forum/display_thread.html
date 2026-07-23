@@ -5,14 +5,14 @@
     <div class="row middle">
         <div class="col-2 col-md-1">
             {% if thread.last_post.created > request.last_action_time and thread.forum.last_post.author != request.user %}
-                {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username 50 "new-posts-notification" %}
+                {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username size=50 extra_class="new-posts-notification" %}
             {% else %}
-                {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username 50 %}
+                {% bw_user_avatar thread.author.profile.locations.avatar.M.url thread.author.username size=50 %}
             {% endif %}
         </div>
         <div class="col-10 col-md-5">
             <h6><a href="{% url "forums-thread" thread.forum.name_slug thread.id %}" {% if thread.status != 2 %}class="text-black"{% endif %}>{{ thread.title|safe }}</a></h6>
-            <p class="ellipsis">Started by <a href="{% url 'account' thread.author.username%}">{{ thread.author.username }}</a> {{thread.first_post.created|timesince}} ago · {{ thread.num_replies|bw_intcomma }} repl{{ thread.num_replies|pluralize:"y,ies" }}</p>
+            <p class="ellipsis">Started by <a href="{% url 'account' thread.author.username %}">{{ thread.author.username }}</a> {{thread.first_post.created|timesince}} ago · {{ thread.num_replies|bw_intcomma }} repl{{ thread.num_replies|pluralize:"y,ies" }}</p>
         </div>
         <div class="col-md-4 offset-md-2 d-none d-md-block">
             {% cache 86400 bw_thread_common_commenters thread.id %}
@@ -20,7 +20,7 @@
                     {% with thread.get_most_relevant_commenters_info_for_avatars as info %}
                         {% for user_avatar_url, username in info.common_commenters %}
                             <div class="bw-threads__avatar-mini-container">
-                                {% bw_user_avatar user_avatar_url username 32 %}
+                                {% bw_user_avatar user_avatar_url username size=32 %}
                             </div>
                         {% endfor %}
                         {% if info.num_extra_commenters > 0 %}

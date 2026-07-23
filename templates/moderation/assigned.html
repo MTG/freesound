@@ -52,7 +52,7 @@
                     </table>
                 </div>
                 {% if show_pagination %}
-                    {% bw_paginator paginator page current_page request "ticket" %}
+                    {% bw_paginator page request anchor="ticket" %}
                 {% endif %}
                 <div class="v-spacing-4">
                     <div>
@@ -88,14 +88,14 @@
                                         {% if message.sender %} <a href="{% url "account" message.sender.username %}">{{ message.sender.username }}</a> {% else %} Anonymous {% endif %}<span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><span class="text-grey">{{ message.created }}</span>
                                         {% if message.moderator_only %}<span title="This message is only visible to other moderators" class="text-blue">{% bw_icon 'notification' 'rotate180' %}</span>{% endif %}
                                     </div>
-                                    <div class="{% if message.moderator_only %}text-blue{%endif%} overflow-hidden">{{ message.text|safe|linebreaksbr }}</div>
+                                    <div class="{% if message.moderator_only %}text-blue{% endif %} overflow-hidden">{{ message.text|safe|linebreaksbr }}</div>
                                 </div>
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
                         {% endwith %}
                     </div>
-                    {%endfor%}
+                    {% endfor %}
                 </div>
             {% endif %}
             </div>
@@ -106,6 +106,7 @@
                     <h4 id="moderate-form-title-label"></h4>
                     <div>
                         <form action="." method="post" class="bw-form disable-on-submit do-not-submit-on-enter">{% csrf_token %}
+                            <input type="hidden" name="page" value="{{ current_page }}" />
                             <div class="bw-inline-radio">
                             {{ mod_sound_form.as_p }}
                             </div>
@@ -116,7 +117,7 @@
                                         data-text="{{text|force_escape}}" title="{{text|force_escape}}">{{ label }}</a>
                                     {% if not forloop.last %}
                                     <span class="h-spacing-left-1 h-spacing-1 text-grey">·</span>
-                                    {% endif%}
+                                    {% endif %}
                                 {% endfor %}
                             </div>
                             <div class="v-spacing-top-2 v-spacing-4">
@@ -142,5 +143,5 @@
 {% endblock %}
 
 {% block extrabody %}
-<script src="{% static 'bw-frontend/dist/moderation.js' %}"></script>
+<script src="{% static 'bw-frontend/dist/pages/moderation.js' %}"></script>
 {% endblock %}

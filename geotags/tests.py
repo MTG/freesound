@@ -71,6 +71,15 @@ class GeoTagsTests(TestCase):
         resp = self.client.get(reverse("geotags-for-user", kwargs={"username": "Anton"}))
         self.assertEqual(resp.status_code, 404)
 
+    def test_browse_geotags_for_sound_without_geotag_returns_404(self):
+        sound = Sound.objects.first()
+        # Ensure sound has no geotag associated
+        GeoTag.objects.filter(sound=sound).delete()
+
+        url = reverse("sound-geotag", kwargs={"username": sound.user.username, "sound_id": sound.id})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
     def test_geotags_infowindow(self):
         sound = Sound.objects.first()
         gt = GeoTag.objects.create(sound=sound, lat=45.8498, lon=-62.6879, zoom=9)
@@ -101,3 +110,10 @@ class GeoTagsTests(TestCase):
         resp = self.client.get(reverse("geotags-query") + "?q=barcelona")
         check_values = {"query_description": '"barcelona"'}
         self.check_context(resp.context, check_values)
+
+    def test_geotags_for_query_barray_invalid_filter_returns_empty(self):
+        # A corrupted/invalid filter sets sqp.errors, which must short-circuit before
+        # Solr; the endpoint returns an empty bytearray rather than crashing.
+        resp = self.client.get(reverse("geotags-for-query-barray") + "?f=samplerate%3Aabc")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.content), 0)

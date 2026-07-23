@@ -26,13 +26,17 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.cache import cache
 from django.core.management import call_command
 from django.db import IntegrityError
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
+from django.utils.http import int_to_base36
+from freezegun import freeze_time
 
 from accounts.forms import DeleteUserForm, FsPasswordResetForm, UsernameField
 from accounts.models import DeletedUser, OldUsername, Profile, ResetEmailRequest, SameUser, UserDeletionRequest
@@ -120,6 +124,22 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(User.objects.filter(username=username).count(), 0)
         self.assertEqual(len(mail.outbox), 0)  # No email sent
 
+        # Try registration with reserved username
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": ["myFreeSoundName"],
+                "password1": ["123456!@"],
+                "accepted_tos": ["on"],
+                "email1": ["example@email.com"],
+                "email2": ["example@email.com"],
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "You cannot use this username to create an account")
+        self.assertEqual(User.objects.filter(username="myFreeSoundName").count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
         # Try registration with different email addresses
         resp = self.client.post(
             reverse("accounts-registration-modal"),
@@ -193,6 +213,25 @@ class UserRegistrationAndActivation(TestCase):
         self.assertEqual(resp.context["all_ok"], True)
         self.assertEqual(User.objects.get(username=username).is_active, True)
 
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
+    def test_user_registration_handles_integrity_error(self, magic_mock_function):
+        username = "race_user"
+        with mock.patch("accounts.forms.User.save", side_effect=IntegrityError):
+            resp = self.client.post(
+                reverse("accounts-registration-modal"),
+                data={
+                    "username": [username],
+                    "password1": ["GoodPass123!"],
+                    "accepted_tos": ["on"],
+                    "email1": ["race@example.com"],
+                    "email2": ["race@example.com"],
+                },
+            )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Unable to create this account. Please try again.")
+        self.assertEqual(User.objects.filter(username=username).count(), 0)
+        self.assertEqual(len(mail.outbox), 0)  # No email sent
+
     def test_user_activation_fails(self):
         user = User.objects.get(username="User6Inactive")  # Inactive user in fixture
 
@@ -207,6 +246,69 @@ class UserRegistrationAndActivation(TestCase):
         resp = self.client.get(reverse("accounts-activate", args=["noone", hash]))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["user_does_not_exist"], True)
+
+    @mock.patch("django_recaptcha.fields.ReCaptchaField.validate")
+    @freeze_time("2026-01-01 12:00:00")
+    @override_settings(RATELIMIT_ENABLE=True)
+    def test_registration_rate_limit(self, magic_mock_function):
+        # LocMemCache state persists across tests in the same process — explicitly
+        # clear so this test isn't affected by any rate-limit counter set earlier.
+        cache.clear()
+
+        # The test client doesn't set X-Forwarded-For; without it,
+        # utils.ratelimit.get_ip_or_random_ip substitutes a fresh random per-request
+        # IP and the limiter never trips. Pin a stable IP so the bucket is shared
+        # across calls in this test.
+        ip_a = "10.0.0.1"
+        ip_b = "10.0.0.2"
+
+        # 5 allowed POSTs from same IP within the (frozen) minute. Distinct usernames
+        # (>=3 chars per UsernameField min_length) and emails so each call exercises
+        # the success path through form.save(), not just the form-error path.
+        for i in range(5):
+            resp = self.client.post(
+                reverse("accounts-registration-modal"),
+                data={
+                    "username": f"usr{i}",
+                    "password1": "passw0rd!XYZ",
+                    "accepted_tos": "on",
+                    "email1": f"a{i}@example.com",
+                    "email2": f"a{i}@example.com",
+                },
+                HTTP_X_FORWARDED_FOR=ip_a,
+            )
+            self.assertNotIn("Too many registration attempts", resp.content.decode())
+
+        # 6th call from same IP within the same window is rate-limited.
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": "ratelimit_test_user",
+                "password1": "passw0rd!XYZ",
+                "accepted_tos": "on",
+                "email1": "rl@example.com",
+                "email2": "rl@example.com",
+            },
+            HTTP_X_FORWARDED_FOR=ip_a,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Too many registration attempts", resp.content.decode())
+        # No user created on rate-limited call (form is never validated/saved).
+        self.assertEqual(User.objects.filter(username="ratelimit_test_user").count(), 0)
+
+        # A different IP shares no bucket with ip_a — should still be allowed.
+        resp = self.client.post(
+            reverse("accounts-registration-modal"),
+            data={
+                "username": "ratelimit_test_user2",
+                "password1": "passw0rd!XYZ",
+                "accepted_tos": "on",
+                "email1": "rl2@example.com",
+                "email2": "rl2@example.com",
+            },
+            HTTP_X_FORWARDED_FOR=ip_b,
+        )
+        self.assertNotIn("Too many registration attempts", resp.content.decode())
 
 
 class UserDelete(TestCase):
@@ -269,9 +371,8 @@ class UserDelete(TestCase):
         self.assertTrue(Sound.objects.filter(user__id=user.id).exists())
         self.assertTrue(Sound.objects.filter(user__id=user.id)[0].is_index_dirty)
 
-    @mock.patch("sounds.models.delete_sound_from_gaia")
     @mock.patch("sounds.models.delete_sounds_from_search_engine")
-    def test_user_delete_include_sounds(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
+    def test_user_delete_include_sounds(self, delete_sounds_from_search_engine):
         # This should set user's attribute deleted_user to True and anonymize it
         # Sounds and Packs should be deleted (creating DeletedSound objects), but other user content should be preserved
         user = self.create_user_and_content()
@@ -297,11 +398,9 @@ class UserDelete(TestCase):
         self.assertTrue(DeletedSound.objects.filter(user__id=user.id).exists())
 
         delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in user_sound_ids], any_order=True)
-        delete_sound_from_gaia.assert_has_calls([mock.call(i) for i in user_sound_ids], any_order=True)
 
-    @mock.patch("sounds.models.delete_sound_from_gaia")
     @mock.patch("sounds.models.delete_sounds_from_search_engine")
-    def test_user_delete_sounds_and_user_object(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
+    def test_user_delete_sounds_and_user_object(self, delete_sounds_from_search_engine):
         # This should delete all user content, including the User object, and create a DeletedUser object. This will
         # create DeletedSound objects.
         user = self.create_user_and_content()
@@ -320,12 +419,10 @@ class UserDelete(TestCase):
         self.assertFalse(OldUsername.objects.filter(user__id=user.id).exists())
 
         delete_sounds_from_search_engine.assert_has_calls([mock.call([i]) for i in user_sound_ids], any_order=True)
-        delete_sound_from_gaia.assert_has_calls([mock.call(i) for i in user_sound_ids], any_order=True)
 
     @skipIf(True, "This tests a method that should never be called")
-    @mock.patch("sounds.models.delete_sound_from_gaia")
     @mock.patch("sounds.models.delete_sounds_from_search_engine")
-    def test_user_full_delete(self, delete_sounds_from_search_engine, delete_sound_from_gaia):
+    def test_user_full_delete(self, delete_sounds_from_search_engine):
         # This should delete all user content, including the User object and without creating DeletedUser. It does
         # create however DeletedSound objects.
         user = self.create_user_and_content()
@@ -349,7 +446,6 @@ class UserDelete(TestCase):
 
         calls = [mock.call(i) for i in user_sound_ids]
         delete_sounds_from_search_engine.assert_has_calls(calls, any_order=True)
-        delete_sound_from_gaia.assert_has_calls(calls, any_order=True)
 
     @mock.patch("general.tasks.delete_user.delay")
     def test_user_delete_include_sounds_using_web_form(self, submit_job):
@@ -469,11 +565,10 @@ class UserDelete(TestCase):
             user.profile.delete_user(deletion_reason=reason)
             self.assertEqual(DeletedUser.objects.get(user_id=user.id).reason, reason)
 
-    @mock.patch("sounds.models.delete_sound_from_gaia")
     @mock.patch("sounds.models.delete_sounds_from_search_engine")
     @mock.patch("forum.models.delete_posts_from_search_engine")
     def test_delete_user_with_count_fields_out_of_sync(
-        self, delete_posts_from_search_engine, delete_sounds_from_search_engine, delete_sound_from_gaia
+        self, delete_posts_from_search_engine, delete_sounds_from_search_engine
     ):
         # Test that deleting a user work properly even when the profile count fields (num_sounds, num_posts,
         # num_sound_downloads and num_pack_downloads) are out of sync. This is a potential issue because if the
@@ -933,6 +1028,22 @@ class EmailResetTestCase(TestCase):
 
         self.assertNotEqual(resp.context["form"].errors, None)
 
+    def test_reset_email_complete_handles_integrity_error(self):
+        user = User.objects.create_user("testuser", email="testuser@freesound.org")
+        self.client.force_login(user)
+        ResetEmailRequest.objects.create(user=user, email="new_email@freesound.org")
+        uidb36 = int_to_base36(user.id)
+        token = default_token_generator.make_token(user)
+        with mock.patch("django.contrib.auth.models.User.save", side_effect=IntegrityError):
+            resp = self.client.get(
+                reverse("accounts-email-reset-complete", kwargs={"uidb36": uidb36, "token": token}),
+                follow=True,
+            )
+        self.assertEqual(resp.redirect_chain[-1][0], reverse("accounts-email-reset"))
+        self.assertContains(resp, "Unable to update your email address. Please try again.")
+        user.refresh_from_db()
+        self.assertEqual(user.email, "testuser@freesound.org")
+
 
 class ReSendActivationTestCase(TestCase):
     def test_resend_activation_code_from_email(self):
@@ -1094,6 +1205,23 @@ class ChangeUsernameTest(TestCase):
         userA.refresh_from_db()
         self.assertEqual(userA.username, "userANewNewName")  # ...username has not changed...
         self.assertEqual(OldUsername.objects.filter(user=userA).count(), 2)  # ...and no new OldUsername objects created
+
+    def test_change_username_handles_integrity_error(self):
+        userA = User.objects.create_user("userA", email="userA@freesound.org")
+        self.client.force_login(userA)
+        with mock.patch("django.contrib.auth.models.User.save", side_effect=IntegrityError):
+            resp = self.client.post(
+                reverse("accounts-edit"),
+                data={"profile-username": ["userANewName"], "profile-ui_theme_preference": "f"},
+            )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["profile_form"].has_error("username"), True)
+        self.assertIn(
+            "This username is already taken or has been in used in the past",
+            str(resp.context["profile_form"]["username"].errors),
+        )
+        userA.refresh_from_db()
+        self.assertEqual(userA.username, "userA")
 
     def test_change_username_mark_sounds_dirty(self):
         # Thest that changing username of a user that has sounds marks her sounds as dirty

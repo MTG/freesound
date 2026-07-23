@@ -27,7 +27,6 @@ from django.core.cache import cache
 
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
-from utils.search import get_search_engine
 from utils.search.search_sounds import (
     add_sounds_to_search_engine,
     delete_sounds_from_search_engine,
@@ -111,7 +110,7 @@ class Command(LoggingBaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "-s", "--slize_size", dest="size_size", default=500, type=int, help="How many posts to add at once"
+            "-s", "--slice_size", dest="slice_size", default=4000, type=int, help="How many posts to add at once"
         )
 
         parser.add_argument(
@@ -135,7 +134,7 @@ class Command(LoggingBaseCommand):
         )
         n_sounds_indexed_correctly = send_sounds_to_search_engine(
             sounds_to_index_ids,
-            slice_size=options["size_size"],
+            slice_size=options["slice_size"],
             delete_if_existing=options["delete_if_existing"],
             include_similarity_vectors=True,
             update=True,
@@ -146,19 +145,21 @@ class Command(LoggingBaseCommand):
         # present. This bit of code should ideally be redundant as sounds should be deleted from the index when they
         # are deleted from the database or when their moderation state changes, etc. But in case for some reason there
         # are leftovers in the index, we delete them here.
-        sounds_dirty_to_remove = Sound.objects.filter(is_index_dirty=True).exclude(
-            moderation_state="OK", processing_state="OK"
+        # Do one bulk delete and then clear is_index_dirty for the whole set including rows that weren't actually in
+        # Solr, otherwise sounds that never made it to the index stay flagged forever and are retried on every run.
+        ids_to_remove = list(
+            Sound.objects.filter(is_index_dirty=True)
+            .exclude(moderation_state="OK", processing_state="OK")
+            .values_list("id", flat=True)
         )
-        n_deleted_sounds = 0
-        search_engine = get_search_engine()
-        for sound in sounds_dirty_to_remove:
-            if search_engine.sound_exists_in_index(sound):
-                # We need to know if the sound exists in solr so that besides deleting it (which could be accomplished
-                # by simply using delete_sounds_from_solr), we know whether we have to change is_index_dirty state. If
-                # we do not change it, then we would try to delete the sound at every attempt.
-                delete_sounds_from_search_engine([sound.id])
-                n_deleted_sounds += 1
-                sound.is_index_dirty = False
-                sound.save()
+        # This will mark unprocessed/unmoderated sounds that are not in solr as
+        # is_index_dirty=False. When they finally pass moderation, they'll get
+        # marked as dirty again and picked up on the next run.
+        if ids_to_remove:
+            delete_sounds_from_search_engine(ids_to_remove)
+            Sound.objects.filter(pk__in=ids_to_remove).update(is_index_dirty=False)
+        # This reports "number of sounds we tried to delete" not
+        # "number of sounds that were actually in solr"
+        n_deleted_sounds = len(ids_to_remove)
 
         self.log_end({"n_sounds_added": n_sounds_indexed_correctly, "n_sounds_deleted": n_deleted_sounds})

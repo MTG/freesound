@@ -8,11 +8,11 @@ services:
 
     # Database server
     db:
-        image: postgres:16.6
+        image: postgres:18.3
         volumes:
             - pghome:/root
-            - pgdata:/var/lib/postgresql/data
-            - ./freesound-data/db_dev_dump:/freesound-data/db_dev_dump
+            - pgdata:/var/lib/postgresql
+            - ${FS_DATA_DIR:-./freesound-data}/db_dev_dump:/freesound-data/db_dev_dump
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5432:5432"
         environment:
@@ -32,10 +32,11 @@ services:
             target: freesound
             platforms:
               - linux/amd64
+        image: freesound
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - .:/code
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
             - fswebhome:/home/fsweb
         ports:
             - "0.0.0.0:${LOCAL_PORT_PREFIX}8000:8000"  # web does not use FS_BIND_HOST because it should be always 0.0.0.0
@@ -50,6 +51,19 @@ services:
             - redis
             - search
 
+    # Frontend asset builder
+    frontend_builder:
+        build:
+            context: ./
+            dockerfile: ./docker/Dockerfile.workers_web
+            target: frontend_build
+            platforms:
+              - linux/amd64
+        volumes:
+            - .:/code
+            - /code/node_modules
+        command: npm run dev
+
     # Search server
     search:
         image: solr:9.8.1
@@ -61,32 +75,27 @@ services:
 
     # Redis (caches)
     redis:
-        image: redis:7.4.2
+        image: redis:8.4.2
         command: redis-server --port 6379
 
     # Celery broker (queue manager)
     rabbitmq:
         hostname: rabbit
-        image: rabbitmq:3.9.1-management
+        image: rabbitmq:4.2.5-management
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5673:5673"
         volumes:
             - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-            - ./freesound-data/rabbitmq:/var/lib/rabbitmq/mnesia/
+            - ${FS_DATA_DIR:-./freesound-data}/rabbitmq:/var/lib/rabbitmq/mnesia/
 
     # Worker for async tasks and sound processing
     worker_celery:
-        build:
-            context: ./
-            dockerfile: ./docker/Dockerfile.workers_web
-            target: freesound
-            platforms:
-              - linux/amd64
+        image: freesound
         init: true
         command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue,clustering_queue
         volumes:
             - .:/code
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         env_file:
             - environment
         environment:
@@ -100,7 +109,7 @@ services:
         profiles: ["analyzers", "all"]
         image: ac-extractor_v3
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --concurrency=1 -l info -Q ac-extractor_v3
         depends_on:
@@ -109,23 +118,11 @@ services:
     # Essentia extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer2:
         profiles: ["analyzers", "all"]
-        image: fs-essentia-extractor_legacy
+        image: fs-essentia-extractor_v1
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
-        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_legacy
-        depends_on:
-            - rabbitmq
-
-    # Audioset-YAMNet extractor - needs image to be built from freesound-audio-analyzers repository
-    # Note this worker must be run with --pool=threads in order for tensorflow predictions to work inside celery
-    worker_analyzer3:
-        profiles: ["analyzers", "all"]
-        image: audioset-yamnet_v1
-        volumes:
-            - ./freesound-data/:/freesound-data
-        init: true
-        command: celery -A main worker --pool=threads --concurrency=1 -l info -Q audioset-yamnet_v1
+        command: celery -A main worker --concurrency=1 -l info -Q fs-essentia-extractor_v1
         depends_on:
             - rabbitmq
 
@@ -134,7 +131,7 @@ services:
         profiles: ["analyzers", "all"]
         image: birdnet_v1
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --concurrency=1 -l info -Q birdnet_v1
         depends_on:
@@ -146,7 +143,7 @@ services:
         profiles: ["analyzers", "all"]
         image: fsd-sinet_v1
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --pool=threads --concurrency=1 -l info -Q fsd-sinet_v1
         depends_on:
@@ -158,7 +155,7 @@ services:
         profiles: ["analyzers", "all"]
         image: bst-extractor_v1
         volumes:
-            - ./freesound-data/:/freesound-data
+            - ${FS_DATA_DIR:-./freesound-data}/:/freesound-data
         init: true
         command: celery -A main worker --pool=threads --concurrency=1 -l info -Q bst-extractor_v1
         depends_on:
@@ -168,16 +165,16 @@ services:
     similarity:
         profiles: ["all"]
         build:
-            context: ./similarity
-            dockerfile: ../docker/Dockerfile.similarity
+            dockerfile: ./docker/Dockerfile.py2
+            target: similarity
             platforms:
               - linux/amd64
         init: true
         command: python similarity_server.py
         volumes:
             - ./similarity:/code
-            - ./freesound-data/similarity_index:/freesound-data/similarity_index
-            - ./freesound-data/analysis:/freesound-data/analysis
+            - ${FS_DATA_DIR:-./freesound-data}/similarity_index:/freesound-data/similarity_index
+            - ${FS_DATA_DIR:-./freesound-data}/analysis:/freesound-data/analysis
         ports:
             - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8008:8008"
         environment:
@@ -187,16 +184,28 @@ services:
     tagrecommendation:
         profiles: ["all"]
         build:
-            context: ./tagrecommendation
-            dockerfile: ../docker/Dockerfile.tagrecommendation
+            dockerfile: ./docker/Dockerfile.tagrecommendation
             platforms:
               - linux/amd64
         init: true
-        command: python tagrecommendation_server.py
+        command: python server.py
         volumes:
             - ./tagrecommendation:/code
-            - ./freesound-data/tag_recommendation_models:/freesound-data/tag_recommendation_models
+            - ${FS_DATA_DIR:-./freesound-data}/tag_recommendation_models:/tag_recommendation_models
         ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}8010:8010"
-        environment:
-            - FS_USER_ID
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5000:5000"
+
+
+    textencoder:
+        profiles: ["all"]
+        build:
+            dockerfile: ./docker/Dockerfile.textencoder
+            platforms:
+              - linux/amd64
+        init: true
+        command: python server.py
+        volumes:
+            - ./textencoder:/code
+        ports:
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5001:5001"
+

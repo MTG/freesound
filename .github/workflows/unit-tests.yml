@@ -12,25 +12,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    # https://github.com/actions/checkout/releases/tag/v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-      with:
-        install: true
-        driver: docker
-
-    #- name: Notify workflow starting
-    #  uses: voxmedia/github-action-slack-notify-build@v1
-    #  continue-on-error: true
-    #  if: success()
-    #  id: slack
-    #  with:
-    #    channel_id: ${{ secrets.SLACK_NOTIFICATIONS_CHANNEL_ID }}
-    #    status: STARTING
-    #    color: warning
-    #  env:
-    #    SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
+      # https://github.com/docker/setup-buildx-action/releases/tag/v4.2.0
+      uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
 
     - name: Setup
       run: bash -c 'mkdir -p ./freesound-data/{packs,uploads,avatars} && echo FS_USER_ID_FROM_ENV=$(id -u) > .env && cp freesound/local_settings.example.py freesound/local_settings.py'
@@ -43,13 +30,19 @@ jobs:
       continue-on-error: true
 
     - name: Pull docker images
-      run: docker compose -f docker-compose.test.yml pull
+      run: docker compose -f docker-compose.test.yml pull db redis
 
-    - name: Build base image
-      run: make -C docker py3
-
-    - name: Build images
-      run: docker compose -f docker-compose.test.yml build db test_runner
+    - name: Build test_runner image
+      # https://github.com/docker/build-push-action/releases/tag/v7.3.0
+      uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
+      with:
+        context: .
+        file: ./docker/Dockerfile.workers_web
+        target: freesound_test
+        tags: freesound-test:ci
+        load: true
+        cache-from: type=gha,scope=test_runner
+        cache-to: type=gha,mode=max,scope=test_runner
 
     - name: Run tests
       run: docker compose -f docker-compose.test.yml run --rm test_runner pytest

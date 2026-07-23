@@ -111,6 +111,8 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
         "load_similarity_vectors",
         "reindex_sound",
         "clear_caches",
+        "view_analyses",
+        "view_sim_vectors",
     )
 
     def has_add_permission(self, request):
@@ -188,6 +190,18 @@ class SoundAdmin(DjangoObjectActions, admin.ModelAdmin):
             sound_objects = Sound.objects.bulk_query_solr([s.id for s in queryset_or_object])
         n_indexed = add_sounds_to_search_engine(sound_objects, update=True, include_similarity_vectors=True)
         messages.add_message(request, messages.INFO, f"{n_indexed} sounds were re-indexed.")
+
+    @admin.action(description="View analyses")
+    def view_analyses(self, request, queryset_or_object):
+        return HttpResponseRedirect(
+            reverse("admin:sounds_soundanalysis_changelist") + "?sound__id__exact=" + str(queryset_or_object.id)
+        )
+
+    @admin.action(description="View sim vectors")
+    def view_sim_vectors(self, request, queryset_or_object):
+        return HttpResponseRedirect(
+            reverse("admin:sounds_soundsimilarityvector_changelist") + "?sound__id__exact=" + str(queryset_or_object.id)
+        )
 
     @admin.display(description="Download filename")
     def get_filename(self, obj):

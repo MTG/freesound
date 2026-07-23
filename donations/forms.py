@@ -8,14 +8,14 @@ from .models import DonationCampaign
 
 
 class DonateForm(forms.Form):
-    RADIO_CHOICES = []
+    RADIO_CHOICES: list[tuple[str, str]] = []
 
     donation_type = forms.ChoiceField(
         widget=forms.RadioSelect(),
         choices=RADIO_CHOICES,
         label=mark_safe("Please choose the <b>name</b> that will appear with the donation:"),
     )
-    name_option = forms.CharField(required=False, max_length=255, label=False)
+    name_option = forms.CharField(required=False, max_length=255, label=None)
     amount = forms.FloatField(
         initial=10.0,
         min_value=1,

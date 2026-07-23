@@ -18,21 +18,31 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
 
 import json
-import urllib
+import urllib.parse
+from typing import TYPE_CHECKING
 
+import luqum.exceptions
 import luqum.tree
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.http import urlencode
-from luqum.parser import parser
 from luqum.pretty import prettify
 
 from sounds.models import Sound
+from tags.models import Tag
+from textencoder.client import TextEncoder
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
+from utils.search import SearchEngineException
+from utils.search.filter_validation import parse_filter, validate_filter_types
 from utils.search.search_sounds import allow_beta_search_features
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 from .search_query_processor_options import (
     SearchOptionBool,
@@ -62,6 +72,9 @@ class SearchQueryProcessor:
     """The SearchQueryProcessor class is used to parse and process search query information from a request object and
     compute a number of useful items for displaying search information in templates, constructing search URLs, and
     preparing search options to be passed to the backend search engine.
+
+    You must check `self.errors` after constructing this object. If it's not empty then it's not guaranteed
+    to be completely initialised.
     """
 
     request = None
@@ -84,10 +97,14 @@ class SearchQueryProcessor:
                 query_param_name="s",
                 label="Sort",
                 choices=[(option, option) for option in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB],
-                should_be_disabled=lambda option: bool(option.sqp.get_option_value_to_apply("similar_to")),
-                get_default_value=lambda option: settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
-                if option.sqp.get_option_value_to_apply("query") == ""
-                else settings.SEARCH_SOUNDS_SORT_DEFAULT,
+                get_default_value=lambda option: (
+                    settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST
+                    if (
+                        option.sqp.get_option_value_to_apply("query") == ""
+                        and not option.sqp.get_option_value_to_apply("similar_to")
+                    )
+                    else settings.SEARCH_SOUNDS_SORT_DEFAULT
+                ),
             ),
         ),
         (
@@ -97,9 +114,9 @@ class SearchQueryProcessor:
                 advanced=False,
                 query_param_name="page",
                 value_default=1,
-                get_value_to_apply=lambda option: 1
-                if option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    1 if option.sqp.get_option_value_to_apply("map_mode") else max(1, option.value)
+                ),
             ),
         ),
         (
@@ -117,9 +134,21 @@ class SearchQueryProcessor:
                     (settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING, "Collections"),
                     (settings.SEARCH_SOUNDS_FIELD_ID, "Sound ID"),
                     (settings.SEARCH_SOUNDS_FIELD_USER_NAME, "Username"),
+                ]
+                if settings.ENABLE_COLLECTIONS
+                else [
+                    (settings.SEARCH_SOUNDS_FIELD_TAGS, "Tags"),
+                    (settings.SEARCH_SOUNDS_FIELD_NAME, "Sound name"),
+                    (settings.SEARCH_SOUNDS_FIELD_DESCRIPTION, "Description"),
+                    (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, "Pack name"),
+                    (settings.SEARCH_SOUNDS_FIELD_ID, "Sound ID"),
+                    (settings.SEARCH_SOUNDS_FIELD_USER_NAME, "Username"),
                 ],
-                should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("tags_mode")
-                or bool(option.sqp.get_option_value_to_apply("similar_to")),
+                should_be_disabled=lambda option: (
+                    option.sqp.get_option_value_to_apply("tags_mode")
+                    or bool(option.sqp.get_option_value_to_apply("similar_to"))
+                    or option.sqp.get_option_value_to_apply("neural_search_mode")
+                ),
             ),
         ),
         (
@@ -142,9 +171,9 @@ class SearchQueryProcessor:
                 label="Only geotagged sounds",
                 help_text="Only find sounds that have geolocation information",
                 should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("map_mode"),
-                get_value_to_apply=lambda option: True
-                if option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    True if option.sqp.get_option_value_to_apply("map_mode") else option.value
+                ),
             ),
         ),
         (
@@ -165,11 +194,15 @@ class SearchQueryProcessor:
                 query_param_name="dp",
                 label="Display results as packs",
                 help_text="Display search results as packs rather than individual sounds",
-                get_value_to_apply=lambda option: False
-                if option.sqp.has_filter_with_name("pack_grouping") or option.sqp.get_option_value_to_apply("map_mode")
-                else option.value,
-                should_be_disabled=lambda option: option.sqp.has_filter_with_name("pack_grouping")
-                or option.sqp.get_option_value_to_apply("map_mode"),
+                get_value_to_apply=lambda option: (
+                    False
+                    if option.sqp.has_filter_with_name("pack_grouping")
+                    or option.sqp.get_option_value_to_apply("map_mode")
+                    else option.value
+                ),
+                should_be_disabled=lambda option: (
+                    option.sqp.has_filter_with_name("pack_grouping") or option.sqp.get_option_value_to_apply("map_mode")
+                ),
             ),
         ),
         (
@@ -181,9 +214,11 @@ class SearchQueryProcessor:
                 help_text="Group search results so that multiple sounds of the same pack only represent one item",
                 value_default=True,
                 get_value_to_apply=_get_value_to_apply_group_by_pack,
-                should_be_disabled=lambda option: option.sqp.has_filter_with_name("pack_grouping")
-                or option.sqp.get_option_value_to_apply("display_as_packs")
-                or option.sqp.get_option_value_to_apply("map_mode"),
+                should_be_disabled=lambda option: (
+                    option.sqp.has_filter_with_name("pack_grouping")
+                    or option.sqp.get_option_value_to_apply("display_as_packs")
+                    or option.sqp.get_option_value_to_apply("map_mode")
+                ),
             ),
         ),
         (
@@ -194,9 +229,9 @@ class SearchQueryProcessor:
                 query_param_name="cm",
                 label="Display results in grid",
                 help_text="Display search results in a grid so that more sounds are visible per search results page",
-                get_default_value=lambda option: option.request.user.profile.use_compact_mode
-                if option.request.user.is_authenticated
-                else False,
+                get_default_value=lambda option: (
+                    option.request.user.profile.use_compact_mode if option.request.user.is_authenticated else False
+                ),
                 should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("map_mode"),
             ),
         ),
@@ -211,7 +246,16 @@ class SearchQueryProcessor:
             ),
         ),
         ("tags_mode", SearchOptionBoolElementInPath, dict(advanced=False, element_in_path="/browse/tags/")),
-        ("similar_to", SearchOptionStr, dict(query_param_name="st", label="Similarity target", placeholder="Sound ID")),
+        (
+            "similar_to",
+            SearchOptionStr,
+            dict(
+                query_param_name="st",
+                label="Similarity target",
+                placeholder="Sound ID",
+                should_be_disabled=lambda option: option.sqp.get_option_value_to_apply("neural_search_mode"),
+            ),
+        ),
         (
             "compute_clusters",
             SearchOptionBool,
@@ -223,9 +267,9 @@ class SearchQueryProcessor:
             dict(
                 advanced=False,
                 query_param_name="cid",
-                get_value_to_apply=lambda option: -1
-                if not option.sqp.get_option_value_to_apply("compute_clusters")
-                else option.value,
+                get_value_to_apply=lambda option: (
+                    -1 if not option.sqp.get_option_value_to_apply("compute_clusters") else option.value
+                ),
             ),
         ),
         (
@@ -256,18 +300,28 @@ class SearchQueryProcessor:
             SearchOptionBool,
             dict(
                 query_param_name="se",
-                search_engine_field_name="ac_single_event",
+                search_engine_field_name="single_event",
                 label='Only include "single event" sounds',
+            ),
+        ),
+        (
+            "neural_search_mode",
+            SearchOptionBool,
+            dict(
+                advanced=True,
+                query_param_name="nsm",
+                label="Neural search mode",
+                help_text="Use AI-based text-to-audio search mode",
             ),
         ),
     ]
 
-    def __init__(self, request, facets=None):
+    def __init__(self, request: HttpRequest, facets: dict | None = None):
         """Initializes the SearchQueryProcessor object by parsing data from the request and setting up search options.
 
         Args:
-            request (django.http.HttpRequest): request object from which to parse search options
-            facets (dict, optional): dictionary with facet options to be used in the search. If not provided, default
+            request: request object from which to parse search options
+            facets: dictionary with facet options to be used in the search. If not provided, default
               facets will be used. Default is None.
         """
 
@@ -292,26 +346,36 @@ class SearchQueryProcessor:
             self.options[option_name] = option
 
         # Get filter and parse it. Make sure it is iterable (even if it only has one element)
-        self.f = urllib.parse.unquote(request.GET.get("f", "")).strip().lstrip()
+        self.f = urllib.parse.unquote(request.GET.get("f", "")).strip()
         if self.f:
             try:
-                f_parsed = parser.parse(self.f)
-                if type(f_parsed) == luqum.tree.SearchField:
-                    self.f_parsed = [f_parsed]
-                else:
-                    self.f_parsed = f_parsed.children
+                self.f_parsed = parse_filter(self.f)
             except luqum.exceptions.ParseError as e:
                 self.errors = f"Filter parsing error: {e}"
                 self.f_parsed = []
         else:
             self.f_parsed = []
 
-        # Handle the special case of old "gropuing_pack" filter which is not valid anymore
-        # Looks like some bots are still using it which results in many errors reported in the logs and
-        # many Solr queries failing. By returning an early error, we avoid the Solr request.
-        if self.has_filter_with_name("grouping_pack"):
-            self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
-            return
+        # Validate tag filters to match tag naming rules. You can't add a tag that doesn't match our validation regex
+        # and the tag is used in the follow_tags url. If the tag is invalid, just return an error.
+        for node in self.f_parsed:
+            if type(node) == luqum.tree.SearchField and node.name == "tag":
+                tag_value = str(node.expr)
+                if tag_value.startswith('"') and tag_value.endswith('"'):
+                    tag_value = tag_value[1:-1]
+                try:
+                    Tag._meta.get_field("name").clean(tag_value, None)
+                except ValidationError:
+                    self.errors = f"Filter parsing error: invalid tag value '{tag_value}'"
+                    return
+
+        # Validate that values on filter fields are the correct type. Catches issues where incorrectly formatted
+        # queries cause a solr exception (e.g. `samplerate:22050+tag:"x"` parses as "22050+tag" instead of 22050)
+        if not self.errors:
+            type_error = validate_filter_types(self.f_parsed)
+            if type_error is not None:
+                self.errors = type_error
+                return
 
         # Remove duplicate filters if any
         nodes_in_filter = []
@@ -346,9 +410,11 @@ class SearchQueryProcessor:
         for node in self.f_parsed:
             if type(node) == luqum.tree.SearchField:
                 if node.name == field_name:
-                    # node.expr is expected to be of type luqum.tree.Range
-                    values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
-                    self.f_parsed = [f for f in self.f_parsed if f != node]
+                    if isinstance(node.expr, luqum.tree.Range):
+                        values_to_update[field_name] = [str(node.expr.low), str(node.expr.high)]
+                        self.f_parsed = [f for f in self.f_parsed if f != node]
+                    else:
+                        self.errors = f"Filter parsing error: '{field_name}' filter value must be a range (e.g., {field_name}:[0 TO 100])"
 
         if values_to_update:
             self.request.GET = self.request.GET.copy()
@@ -373,6 +439,11 @@ class SearchQueryProcessor:
             option.set_search_query_processor(self)
             option.load_value()
 
+        # Do a second pass of loading values as some default values might depend on the values of other options, so we need to have all options
+        # loaded before being able to load the value of some of them.
+        for option in self.options.values():
+            option.load_value()
+
         # Some of the filters included in the search query (in f_parsed) might belong to filters which are added by SearchOption objects, but some others might
         # be filters added by search facets or "raw filters" directly added to the URL by the user. Some methods of the SearchQueryProcessor need to know which
         # filters belong to search options, so we pre-compute the list of non-option filters here as a list of (field,value) tuples. For example, if
@@ -389,28 +460,33 @@ class SearchQueryProcessor:
                 if node.name not in search_engine_field_names_used_in_options:
                     self.non_option_filters.append((node.name, str(node.expr)))
 
-    # Filter-related methods
+        # Handle the special case of old "grouping_pack" filter which is not valid anymore
+        # Looks like some bots are still using it which results in many errors reported in the logs and
+        # many Solr queries failing.
+        if self.has_filter_with_name("grouping_pack"):
+            self.errors = "Filter parsing error: 'grouping_pack' is not a valid filter name"
 
+    # Filter-related methods
     def get_active_filters(
         self,
-        include_filters_from_options=True,
-        include_non_option_filters=True,
-        include_filters_from_facets=True,
-        extra_filters=None,
-        ignore_filters=None,
+        include_filters_from_options: bool = True,
+        include_non_option_filters: bool = True,
+        include_filters_from_facets: bool = True,
+        extra_filters: list | None = None,
+        ignore_filters: list | None = None,
     ):
         """Returns a list of all filters which are active in the query in a ["field:value", "field:value", ...] format. This method
         also allows to add extra filters to the list or ignore some of the existing filters.
 
         Args:
-            include_filters_from_options (bool, optional): If True, filters from search options will be included. Default is True.
-            include_non_option_filters (bool, optional): If True, filters from non-option filters will be included. Default is True.
-            include_filters_from_facets (bool, optional): If True, filters from search facets will be included. Note that if
+            include_filters_from_options: If True, filters from search options will be included. Default is True.
+            include_non_option_filters: If True, filters from non-option filters will be included. Default is True.
+            include_filters_from_facets: If True, filters from search facets will be included. Note that if
               include_non_option_filters is set to False, include_filters_from_facets will have no effect as facet filters are part of
               non-option filters. Default is True.
-            extra_filters (list, optional): List of extra filters to be added. Each filter should be a string in the format "field:value",
+            extra_filters: List of extra filters to be added. Each filter should be a string in the format "field:value",
               e.g.: extra_filters=["tag:tagname"]. Default is None.
-            ignore_filters (list, optional): List of filters to be ignored. Each filter should be a string in the format "field:value",
+            ignore_filters: List of filters to be ignored. Each filter should be a string in the format "field:value",
               e.g.: ignore_filters=["tag:tagname"]. Default is None.
         """
         # Create initial list of the active filters according to the types of filters that are requested to be included
@@ -557,7 +633,7 @@ class SearchQueryProcessor:
                         return True
         return False
 
-    def get_clustering_data_cache_key(self, include_filters_from_facets=False):
+    def get_clustering_data_cache_key(self, include_filters_from_facets: bool = False) -> str:
         """Generates a cache key used to store clustering results in the cache. Note that the key excludes facet filters
         by default because clusters are computed on the subset of results BEFORE applying the facet filters (this is by
         design to avoid recomputing clusters when changing facets). However, the key can be generated including facets as
@@ -565,12 +641,12 @@ class SearchQueryProcessor:
         are applied after the main clustering computation.
 
         Args:
-            include_filters_from_facets (bool): If True, the key will include filters from facets as well. Default is False.
+            include_filters_from_facets: If True, the key will include filters from facets as well. Default is False.
               Filters that are included in facets correspond to the facet fields defined in self.facets, which defaults to
               settings.SEARCH_SOUNDS_DEFAULT_FACETS.
 
         Returns:
-            str: Cache key for the clustering data
+            Cache key for the clustering data
         """
         query_filter = self.get_filter_string_for_search_engine(include_filters_from_facets=include_filters_from_facets)
         key = (
@@ -611,19 +687,24 @@ class SearchQueryProcessor:
             for filter in self.non_option_filters:
                 print("-", f"{filter[0]}={filter[1]}")
 
-    def as_query_params(self, exclude_facet_filters=False):
+    def as_query_params(self, exclude_facet_filters: bool = False) -> dict:
         """Returns a dictionary with the search options and filters to be used as parameters for the SearchEngine.search_sounds method.
         This method post-processes the data loaded into the SearchQueryProcessor to generate an appropriate query_params dict. Note that
         this method includes some complex logic that takes into account the interaction with some option values to calculate the
         query_params values to be used by the search engine.
 
         Args:
-            exclude_facet_filters (bool, optional): If True, facet filters will not be used to create the query_params dict. Default is False.
+            exclude_facet_filters: If True, facet filters will not be used to create the query_params dict. Default is False.
               This is useful as part of the clustering features for which we want to make a query which ignores the facet filters provided in the URL.
 
         Returns:
             dict: Dictionary with the query parameters to be used by the SearchEngine.search_sounds method.
+
+        Raises:
+            SearchEngineException: if self.errors is set (see class docstring).
         """
+        if self.errors:
+            raise SearchEngineException(f"Cannot build query params, filter has errors: {self.errors}")
 
         # Filter field weights by "search in" options
         field_weights = self.get_option_value_to_apply("field_weights")
@@ -668,12 +749,28 @@ class SearchQueryProcessor:
         if similar_to != "":
             # If it stars with '[', then we assume this is a serialized vector passed as target for similarity
             if similar_to.startswith("["):
-                similar_to = json.loads(similar_to)
+                try:
+                    similar_to = json.loads(similar_to)
+                except json.JSONDecodeError:
+                    raise SearchEngineException("The 'similar_to' parameter is not a valid serialized vector")
             else:
                 # Otherwise, we assume it is a sound id and we pass it as integer
-                similar_to = int(similar_to)
+                try:
+                    similar_to = int(similar_to)
+                except ValueError:
+                    raise SearchEngineException("The 'similar_to' parameter is not a valid sound ID")
         else:
             similar_to = None
+
+        # Process neural search mode: if neural search mode is active, we need to obtain a vector representation of the textual query which we
+        # then use as a similar_to target
+        if self.get_option_value_to_apply("neural_search_mode"):
+            textual_query = self.get_option_value_to_apply("query")
+            if textual_query:
+                try:
+                    similar_to = TextEncoder().encode_text(textual_query)["embeddings"]["laion_clap"]
+                except Exception as e:
+                    raise SearchEngineException(f"Error encoding textual query for neural search mode: {e}")
 
         return dict(
             textual_query=self.get_option_value_to_apply("query"),
@@ -694,18 +791,20 @@ class SearchQueryProcessor:
             only_sounds_with_pack=self.get_option_value_to_apply("display_as_packs"),
             only_sounds_within_ids=only_sounds_within_ids,
             similar_to=similar_to,
-            similar_to_similarity_space=self.get_option_value_to_apply("similarity_space"),
+            similar_to_similarity_space=self.get_option_value_to_apply("similarity_space")
+            if not self.get_option_value_to_apply("neural_search_mode")
+            else settings.SIMILARITY_SPACE_LAION_CLAP,
         )
 
-    def get_url(self, add_filters=None, remove_filters=None):
+    def get_url(self, add_filters: list | None = None, remove_filters: list | None = None):
         """Returns the URL of the search page (or tags page, see below) corresponding to the current parameters loaded in the SearchQueryProcessor.
         This method also has parameters to "add_filters" and "remove_filters", which will return the URL to the search page corresponding to the
         current parameters loaded in the SearchQueryProcessor BUT with some filters added or removed.
 
         Args:
-            add_filters (list, optional): List of filters to be added. Each filter should be a string in the format "field:value",
+            add_filters: List of filters to be added. Each filter should be a string in the format "field:value",
               e.g.: add_filters=["tag:tagname"]. Default is None.
-            remove_filters (list, optional): List of filters to be ignored. Each filter should be a string in the format "field:value",
+            remove_filters: List of filters to be ignored. Each filter should be a string in the format "field:value",
               e.g.: remove_filters=["tag:tagname"]. Default is None.
         """
         # Decide the base url (if in the tags page, we'll use the base URL for tags, otherwise we use the one for the normal search page)

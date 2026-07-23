@@ -120,7 +120,9 @@ class AudioProcessingTestCase(TestCase):
     @override_processing_tmp_path_with_temp_directory
     def test_sound_path_does_not_exist(self):
         self.pre_test(create_sound_file=False)
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process()
         self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.processing_state, "FA")
@@ -135,7 +137,9 @@ class AudioProcessingTestCase(TestCase):
     @override_sounds_path_with_temp_directory
     def test_conversion_to_pcm_failed(self, *args):
         self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process()
         # will fail because mocked version of convert_to_pcm fails
         self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
@@ -150,7 +154,9 @@ class AudioProcessingTestCase(TestCase):
     @override_sounds_path_with_temp_directory
     def test_stereofy_failed(self, *args):
         self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process()
         # processing will fail because stereofy mock raises an exception
         self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
@@ -164,7 +170,9 @@ class AudioProcessingTestCase(TestCase):
     @override_sounds_path_with_temp_directory
     def test_set_audio_info_fields(self, *args):
         self.pre_test()
-        FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        FreesoundAudioProcessor(sound_id=first_sound.id).process()
         self.sound.refresh_from_db()
         self.assertEqual(self.sound.duration, 2.0)  # Assert that info properties were set
         self.assertEqual(self.sound.channels, 1)
@@ -179,7 +187,9 @@ class AudioProcessingTestCase(TestCase):
     @override_previews_path_with_temp_directory
     def test_make_mp3_previews_fails(self, *args):
         self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process()
         # processing will fail because convert_to_mp3 mock raises an exception
         self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
@@ -195,7 +205,9 @@ class AudioProcessingTestCase(TestCase):
     @override_previews_path_with_temp_directory
     def test_make_ogg_previews_fails(self, *args):
         self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process()
         # processing will fail because convert_to_ogg mock raises an exception
         self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
@@ -212,7 +224,9 @@ class AudioProcessingTestCase(TestCase):
     @override_displays_path_with_temp_directory
     def test_create_images_fails(self, *args):
         self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process()
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process()
         # processing will fail because create_wave_images mock raises an exception
         self.assertFalse(result)  # Processing failed, returned False
         self.sound.refresh_from_db()
@@ -228,20 +242,18 @@ class AudioProcessingTestCase(TestCase):
     @override_displays_path_with_temp_directory
     def test_skip_previews(self, *args):
         self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process(skip_previews=True)
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process(skip_previews=True)
 
         self.assertFalse(os.path.exists(self.sound.locations("preview.LQ.ogg.path")))
         self.assertFalse(os.path.exists(self.sound.locations("preview.HQ.ogg.path")))
         self.assertFalse(os.path.exists(self.sound.locations("preview.LQ.mp3.path")))
         self.assertFalse(os.path.exists(self.sound.locations("preview.HQ.mp3.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.spectral.M.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.spectral_bw.M.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.spectral.L.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.spectral_bw.L.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.wave.M.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.wave_bw.M.path")))
         self.assertTrue(os.path.exists(self.sound.locations("display.wave.L.path")))
-        self.assertTrue(os.path.exists(self.sound.locations("display.wave_bw.L.path")))
 
         self.assertTrue(result)  # Processing succeeded
         self.sound.refresh_from_db()
@@ -256,20 +268,18 @@ class AudioProcessingTestCase(TestCase):
     @override_displays_path_with_temp_directory
     def test_skip_displays(self, *args):
         self.pre_test()
-        result = FreesoundAudioProcessor(sound_id=Sound.objects.first().id).process(skip_displays=True)
+        first_sound = Sound.objects.first()
+        assert first_sound is not None
+        result = FreesoundAudioProcessor(sound_id=first_sound.id).process(skip_displays=True)
 
         self.assertTrue(os.path.exists(self.sound.locations("preview.LQ.ogg.path")))
         self.assertTrue(os.path.exists(self.sound.locations("preview.HQ.ogg.path")))
         self.assertTrue(os.path.exists(self.sound.locations("preview.LQ.mp3.path")))
         self.assertTrue(os.path.exists(self.sound.locations("preview.HQ.mp3.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.spectral.M.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.spectral_bw.M.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.spectral.L.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.spectral_bw.L.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.wave.M.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.wave_bw.M.path")))
         self.assertFalse(os.path.exists(self.sound.locations("display.wave.L.path")))
-        self.assertFalse(os.path.exists(self.sound.locations("display.wave_bw.L.path")))
 
         self.assertTrue(result)  # Processing succeeded
         self.sound.refresh_from_db()

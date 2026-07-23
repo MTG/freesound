@@ -3,14 +3,6 @@
     left: 0;
   }
 
-  .bw-nav__search {
-    margin-left: 20px;
-
-    &::placeholder {
-      color: $navy-light-grey;
-    }
-  }
-
   &__messages-list {
     height: 60vh;
     overflow: scroll;

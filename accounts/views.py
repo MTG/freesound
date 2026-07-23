@@ -46,7 +46,7 @@ from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.cache import caches
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
@@ -62,10 +62,12 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import base36_to_int, int_to_base36
 from django.views.decorators.cache import never_cache
+from django_ratelimit.decorators import ratelimit
 from oauth2_provider.models import AccessToken
 
 import utils.sound_upload
 from accounts.forms import (
+    AIPreferenceForm,
     AvatarForm,
     BulkDescribeForm,
     DeleteUserForm,
@@ -110,7 +112,13 @@ from utils.mirror_files import (
     remove_uploaded_file_from_mirror_locations,
 )
 from utils.pagination import paginate
-from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
+from utils.ratelimit import RequestLimitReason, count_request_limit_event, key_for_ratelimiting, rate_per_ip
+from utils.username import (
+    get_parameter_user_or_404,
+    get_user_by_username,
+    raise_404_if_user_is_deleted,
+    redirect_if_old_username,
+)
 
 sounds_logger = logging.getLogger("sounds")
 upload_logger = logging.getLogger("file_upload")
@@ -132,6 +140,7 @@ def ratelimited_error(request, exception):
     if not path.endswith("/"):
         path += "/"
     volatile_logger.info(f"Rate limited IP ({json.dumps({'ip': get_client_ip(request), 'path': path})})")
+    count_request_limit_event(request, RequestLimitReason.DJANGO_RATELIMIT, enforced=True)
     return render(request, "429.html", status=429)
 
 
@@ -321,12 +330,41 @@ def update_old_cc_licenses(request):
         return HttpResponseRedirect(reverse("accounts-home"))
 
 
-@transaction.atomic()
+@ratelimit(
+    key=key_for_ratelimiting,
+    rate=rate_per_ip,
+    group=settings.RATELIMIT_REGISTRATION_GROUP,
+    method="POST",
+    block=False,
+)
 def registration_modal(request):
     if request.method == "POST":
+        if getattr(request, "limited", False):
+            volatile_logger.info(f"Registration rate limit triggered ({json.dumps({'ip': get_client_ip(request)})})")
+            # Return the modal HTML with an error banner. We deliberately do NOT
+            # instantiate a bound RegistrationForm here, because that would trigger
+            # ReCaptchaField validation (the network call we want to avoid for
+            # rate-limited requests). Status 200 because the modal frontend in
+            # static/bw-frontend/src/components/modal.js only re-renders for 2xx.
+            return render(
+                request,
+                "accounts/modal_registration.html",
+                {
+                    "registration_form": RegistrationForm(),
+                    "rate_limit_error": "Too many registration attempts. Please wait a moment and try again.",
+                },
+            )
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            try:
+                user = form.save()
+            except IntegrityError:
+                form.add_error(None, "Unable to create this account. Please try again.")
+                if form.has_error("email1") and "email2" in form.data:
+                    post_data = form.data.copy()
+                    post_data["email2"] = ""
+                    form.data = post_data
+                return render(request, "accounts/modal_registration.html", {"registration_form": form})
             send_activation(user)
             # If the form is valid we will return a JSON response with the URL where
             # the user should be redirected (a URL which will include the "Almost done" message). The browser
@@ -363,7 +401,7 @@ def activate_user(request, username, uid_hash):
     # login modal is used the user will be redirected to the front-page instead of that same page
 
     try:
-        user = User.objects.get(username__iexact=username)
+        user = get_user_by_username(username)
     except User.DoesNotExist:
         return render(
             request, "accounts/activate.html", {"user_does_not_exist": True, "next_path": reverse("accounts-home")}
@@ -427,6 +465,49 @@ def edit_email_settings(request):
 
 @login_required
 @transaction.atomic()
+def edit_ai_preferences(request):
+    profile = request.user.profile
+
+    if request.method == "POST":
+        form = AIPreferenceForm(request.POST)
+
+        if form.is_valid():
+            # We get the existing preference so later we can compare if it has changed.
+            # Note that "default preference" is the same as "no preference", but we still want to
+            # save a "default preference" object so that we know if users have explicitly set it through the
+            # preferences panel. For this reason, here we don't want to get the default if the preference is not
+            # set, so that we can compare with the form value and properly create the object if needed.
+            old_ai_preference = str(profile.get_gen_ai_preference(default_if_not_set=False))
+            old_ai_opt_out_speech = profile.get_gen_ai_preference_opt_out_speech()
+
+            profile.set_gen_ai_preference(
+                form.cleaned_data["ai_sound_usage_preference"], form.cleaned_data["opt_out_speech"]
+            )
+
+            # If preference has changed, mark all sounds as index dirty
+            if (
+                old_ai_preference != form.cleaned_data["ai_sound_usage_preference"]
+                or old_ai_opt_out_speech != form.cleaned_data["opt_out_speech"]
+            ):
+                Sound.objects.filter(user=request.user).update(is_index_dirty=True)
+
+            msg_txt = "Your Gen AI preference options have been updated correctly."
+            messages.add_message(request, messages.INFO, msg_txt)
+            return HttpResponseRedirect(reverse("accounts-ai-preferences"))
+    else:
+        form = AIPreferenceForm(
+            initial={
+                "ai_sound_usage_preference": profile.get_gen_ai_preference(),
+                "opt_out_speech": profile.get_gen_ai_preference_opt_out_speech(),
+            }
+        )
+
+    tvars = {"form": form, "activePage": "ai_preferences"}
+    return render(request, "accounts/edit_ai_preferences.html", tvars)
+
+
+@login_required
+@transaction.atomic()
 def edit(request):
     profile = request.user.profile
 
@@ -443,18 +524,33 @@ def edit(request):
 
     if is_selected("profile"):
         profile_form = ProfileForm(request, request.POST, instance=profile, prefix="profile")
+        # Save a couple of variables that we will need later to check if they have changed and we need
+        # to mark user sounds as index dirty or show some messages to the user
+        old_username = request.user.username
         old_sound_signature = profile.sound_signature
         if profile_form.is_valid():
             # Update username, this will create an entry in OldUsername
             request.user.username = profile_form.cleaned_data["username"]
-            request.user.save()
-            invalidate_user_template_caches(request.user.id)
-            profile.save()
-            msg_txt = "Your profile has been updated correctly."
-            if old_sound_signature != profile.sound_signature:
-                msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
-            messages.add_message(request, messages.INFO, msg_txt)
-            return HttpResponseRedirect(reverse("accounts-edit"))
+            try:
+                request.user.save()
+            except IntegrityError:
+                profile_form.add_error(
+                    "username",
+                    "This username is already taken or has been in used in the past by another user",
+                )
+                request.user.refresh_from_db(fields=["username"])
+            else:
+                profile.save()
+                # profile.refresh_from_db()  # Refresh profile to get updated ai preference when calling get_gen_ai_preference
+                if old_username != request.user.username:
+                    Sound.objects.filter(user=request.user).update(is_index_dirty=True)
+                invalidate_user_template_caches(request.user.id)
+
+                msg_txt = "Your profile has been updated correctly."
+                if old_sound_signature != profile.sound_signature:
+                    msg_txt += " Please note that it might take some time until your sound signature is updated in all your sounds."
+                messages.add_message(request, messages.INFO, msg_txt)
+                return HttpResponseRedirect(reverse("accounts-edit"))
     else:
         profile_form = ProfileForm(request, instance=profile, prefix="profile")
 
@@ -464,6 +560,7 @@ def edit(request):
             if image_form.cleaned_data["remove"]:
                 profile.has_avatar = False
                 profile.save()
+
             else:
                 handle_uploaded_image(profile, image_form.cleaned_data["file"])
                 profile.has_avatar = True
@@ -684,9 +781,7 @@ def manage_sounds(request, tab):
                     session_key_prefix = str(uuid.uuid4())[
                         0:8
                     ]  # Use a new so we don't interfere with other active description/editing processes
-                    request.session[f"{session_key_prefix}-edit_sounds"] = (
-                        sounds  # Add the list of sounds to edit in the session object
-                    )
+                    request.session[f"{session_key_prefix}-edit_sounds"] = [s.id for s in sounds]
                     request.session[f"{session_key_prefix}-len_original_edit_sounds"] = len(sounds)
                     return HttpResponseRedirect(
                         reverse("accounts-edit-sounds") + f"?next={request.path}&session={session_key_prefix}"
@@ -698,13 +793,12 @@ def manage_sounds(request, tab):
                         web_logger.info(f"User {request.user.username} requested to delete sound {sound.id}")
                         try:
                             ticket = sound.ticket
-                            tc = TicketComment(
+                            tc = TicketComment.objects.create(
                                 sender=request.user,
                                 text=f"User {request.user} deleted the sound",
                                 ticket=ticket,
                                 moderator_only=False,
                             )
-                            tc.save()
                         except Ticket.DoesNotExist:
                             pass
                         sound.delete()
@@ -835,7 +929,7 @@ def sounds_pending_description_helper(request, file_structure, files):
                     0:8
                 ]  # Use a new so we don't interfere with other active description/editing processes
                 request.session[f"{session_key_prefix}-describe_sounds"] = [
-                    files[x] for x in form.cleaned_data["files"]
+                    {"name": files[x].name, "full_path": files[x].full_path} for x in form.cleaned_data["files"]
                 ]
                 request.session[f"{session_key_prefix}-len_original_describe_sounds"] = len(
                     request.session[f"{session_key_prefix}-describe_sounds"]
@@ -868,7 +962,7 @@ def describe_license(request):
     if request.method == "POST":
         form = LicenseForm(request.POST, hide_old_license_versions=True)
         if form.is_valid():
-            request.session[f"{session_key_prefix}-describe_license"] = form.cleaned_data["license"]
+            request.session[f"{session_key_prefix}-describe_license"] = form.cleaned_data["license"].id
             return HttpResponseRedirect(reverse("accounts-describe-pack") + f"?session={session_key_prefix}")
     else:
         form = LicenseForm(hide_old_license_versions=True)
@@ -890,9 +984,9 @@ def describe_pack(request):
             data = form.cleaned_data
             if data["new_pack"]:
                 pack, created = Pack.objects.get_or_create(user=request.user, name=data["new_pack"])
-                request.session[f"{session_key_prefix}-describe_pack"] = pack
+                request.session[f"{session_key_prefix}-describe_pack"] = pack.id
             elif data["pack"]:
-                request.session[f"{session_key_prefix}-describe_pack"] = data["pack"]
+                request.session[f"{session_key_prefix}-describe_pack"] = data["pack"].id
             else:
                 request.session[f"{session_key_prefix}-describe_pack"] = False
             return HttpResponseRedirect(reverse("accounts-describe-sounds") + f"?session={session_key_prefix}")
@@ -1323,6 +1417,10 @@ def account(request, username):
     else:
         num_sounds_pending = None
         num_mod_annotations = None
+    if request.user.has_perm("tickets.can_moderate") or request.user.is_staff:
+        old_usernames = list(user.old_usernames.order_by("-created").values_list("username", flat=True))
+    else:
+        old_usernames = None
 
     show_about = (
         (request.user == user)  # user is looking at own page
@@ -1334,9 +1432,7 @@ def account(request, username):
 
     last_geotags_serialized = []
     if user.profile.has_geotags and settings.MAPBOX_USE_STATIC_MAPS_BEFORE_LOADING:
-        for sound in (
-            Sound.public.select_related("geotag").filter(user__username__iexact=username).exclude(geotag=None)[0:10]
-        ):
+        for sound in Sound.public.select_related("geotag").filter(user=user).exclude(geotag=None)[0:10]:
             last_geotags_serialized.append({"lon": sound.geotag.lon, "lat": sound.geotag.lat})
         last_geotags_serialized = json.dumps(last_geotags_serialized)
 
@@ -1359,6 +1455,7 @@ def account(request, username):
         "following_tags_modal_page": request.GET.get("followingTags", 1),
         "last_geotags_serialized": last_geotags_serialized,
         "user_downloads_public": settings.USER_DOWNLOADS_PUBLIC,
+        "old_usernames": old_usernames,
     }
     return render(request, "accounts/account.html", tvars)
 
@@ -1397,7 +1494,7 @@ def handle_uploaded_file(user_id, f):
     upload_logger.info(
         "handling file upload from user %s, filename %s and saving to %s", user_id, f.name, dest_path.decode("utf-8")
     )
-    starttime = time.time()
+    starttime = time.monotonic()
     if settings.MOVE_TMP_UPLOAD_FILES_INSTEAD_OF_COPYING and isinstance(f, TemporaryUploadedFile):
         # Big files (bigger than ~2MB, this is configured by Django and can be customized) will be delivered via a
         # TemporaryUploadedFile which has already been streamed in disk, so we only need to move the already existing
@@ -1428,7 +1525,7 @@ def handle_uploaded_file(user_id, f):
     # NOTE: if we enable mirror locations for uploads and the copying below causes problems, we could do it async
     copy_uploaded_file_to_mirror_locations(dest_path)
     upload_logger.info(
-        "file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.time() - starttime
+        "file upload (%s) - handling file upload done, took %.2f seconds", user_id, time.monotonic() - starttime
     )
     return True
 
@@ -1674,7 +1771,11 @@ def email_reset_complete(request, uidb36=None, token=None):
     # Change the mail in the DB
     old_email = user.email
     user.email = rer.email
-    user.save()
+    try:
+        user.save()
+    except IntegrityError:
+        messages.add_message(request, messages.ERROR, "Unable to update your email address. Please try again.")
+        return HttpResponseRedirect(reverse("accounts-email-reset"))
 
     # Remove temporal mail change information from the DB
     ResetEmailRequest.objects.get(user=user).delete()
@@ -1733,7 +1834,7 @@ def problems_logging_in(request):
 @transaction.atomic()
 def flag_user(request, username):
     if request.POST:
-        flagged_user = User.objects.get(username__iexact=username)
+        flagged_user = get_user_by_username(username)
         reporting_user = request.user
         object_id = request.POST["object_id"]
         if object_id:
@@ -1752,8 +1853,7 @@ def flag_user(request, username):
             return HttpResponse(json.dumps({"errors": True}), content_type="application/javascript")
 
         previous_reports_count = UserFlag.objects.filter(user=flagged_user).values("reporting_user").distinct().count()
-        uflag = UserFlag(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
-        uflag.save()
+        uflag = UserFlag.objects.create(user=flagged_user, reporting_user=reporting_user, content_object=flagged_object)
 
         reports_count = UserFlag.objects.filter(user=flagged_user).values("reporting_user").distinct().count()
         if reports_count != previous_reports_count and (

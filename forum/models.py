@@ -41,6 +41,7 @@ web_logger = logging.getLogger("web")
 
 
 class Forum(SortableMixin):
+    id: int
     order = models.PositiveIntegerField(default=0, editable=False)
 
     name = models.CharField(max_length=50)
@@ -69,6 +70,11 @@ class Forum(SortableMixin):
         if commit:
             self.save()
 
+    def set_num_posts(self, commit=False):
+        self.num_posts = Post.objects.filter(thread__forum=self, moderation_state="OK").count()
+        if commit:
+            self.save(update_fields=["num_posts"])
+
     def __str__(self):
         return self.name
 
@@ -87,6 +93,7 @@ def forum_pre_save_set_slug(sender, instance, **kwargs):
 
 
 class Thread(models.Model):
+    id: int
     forum = models.ForeignKey(Forum, on_delete=models.CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=250)
@@ -119,6 +126,11 @@ class Thread(models.Model):
         invalidate_template_cache("bw_thread_common_commenters", self.id)
 
         return has_posts
+
+    def set_num_posts(self, commit=False):
+        self.num_posts = self.post_set.filter(moderation_state="OK").count()
+        if commit:
+            self.save(update_fields=["num_posts"])
 
     def set_first_post(self, commit=False):
         self.first_post = self.post_set.first()
@@ -208,6 +220,7 @@ def update_last_post_on_thread_delete(sender, instance, **kwargs):
 
 
 class Post(models.Model):
+    id: int
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     author = models.ForeignKey(User, related_name="posts", on_delete=models.CASCADE)
     body = models.TextField()
@@ -308,15 +321,17 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
     elif post.moderation_state == "OK":
         try:
             with transaction.atomic():
-                post.author.profile.num_posts = F("num_posts") - 1
-                post.author.profile.save()
+                # Update the author's profile count with a queryset update so that it is a no-op when the profile has already been deleted.
+                accounts.models.Profile.objects.filter(user_id=post.author_id).update(
+                    num_posts=Greatest(F("num_posts") - 1, 0)
+                )
                 post.thread.forum.refresh_from_db()
-                post.thread.forum.num_posts = F("num_posts") - 1
+                post.thread.forum.num_posts = Greatest(F("num_posts") - 1, 0)
                 post.thread.forum.set_last_post()
                 post.thread.forum.save()
                 thread_has_posts = post.thread.set_last_post()
                 if thread_has_posts:
-                    post.thread.num_posts = F("num_posts") - 1
+                    post.thread.num_posts = Greatest(F("num_posts") - 1, 0)
                     post.thread.save()
 
                     # If this post was the first post in the thread then we should set it to the next one
@@ -332,15 +347,11 @@ def update_thread_on_post_delete(sender, instance, **kwargs):
             # to update the thread, but it would be nice to get to the forum object
             # somehow and update that one....
             web_logger.info("Tried setting last posts for thread and forum, but the thread has already been deleted?")
-        except accounts.models.Profile.DoesNotExist:
-            # When a user is deleted using the admin, is possible that his posts are deleted after the profile has been
-            # deleted. In that case we shouldn't update the value of num_posts because the profile doesn't exists
-            # anymore, here it's safe to ignore the exception since we are deleting all the objects.
-            web_logger.info("Tried setting last posts for thread and forum, but the profile has already been deleted?")
     invalidate_template_cache("latest_posts")
 
 
 class Subscription(models.Model):
+    id: int
     subscriber = models.ForeignKey(User, on_delete=models.CASCADE)
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     is_active = models.BooleanField(db_index=True, default=True)

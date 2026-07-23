@@ -34,7 +34,7 @@
 
 .dot-separated-divs {
   div:not(:last-child):after {
-    content: "·";
+    content: '·';
     margin-left: $tiny-spacing;
     margin-right: $tiny-spacing;
   }

@@ -13,12 +13,11 @@
   input ~ label:hover,
   input ~ label:hover ~ label {
     span {
-      color: $yellow!important;
+      color: $yellow !important;
 
       :before {
-        color: $yellow!important;
+        color: $yellow !important;
       }
-      
     }
   }
 }

@@ -22,7 +22,7 @@
             <a class="nav-link {% if tab == "processing" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'processing' %}">Processing{% if sounds_processing_count %} ({{ sounds_processing_count|bw_intcomma }}){% endif %}</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description{% if sounds_pending_description_count|bw_intcomma%} ({{ sounds_pending_description_count }}){% endif %}</a>
+            <a class="nav-link {% if tab == "pending_description" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'pending_description' %}">Pending description{% if sounds_pending_description_count|bw_intcomma %} ({{ sounds_pending_description_count }}){% endif %}</a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if tab == "packs" %}active{% endif %}" href="{% url 'accounts-manage-sounds' 'packs' %}">Packs{% if packs_count %} ({{ packs_count|bw_intcomma }}){% endif %}</a>
@@ -56,9 +56,9 @@
                 </form>
             </div>
             {% if tab == "packs" %}
-                {%  if packs_to_select %}
+                {% if packs_to_select %}
                     {% packs_selector_with_select_buttons packs_to_select %}
-                    {% bw_paginator paginator page current_page request "pack" %}
+                    {% bw_paginator page request anchor="pack" %}
                 {% else %}
                     <div class="v-spacing-7 v-spacing-top-6 text-center">
                         <h5>No packs...</h5>
@@ -70,7 +70,7 @@
             {% else %}
                 {% if sounds_to_select %}
                     {% sounds_selector_with_select_buttons sounds_to_select %}
-                    {% bw_paginator paginator page current_page request "sound" %}
+                    {% bw_paginator page request anchor="sound" %}
                 {% else %}
                     <div class="v-spacing-7 v-spacing-top-6 text-center">
                         <h5>No sounds...</h5>
@@ -93,7 +93,7 @@
                         <h5 class="v-spacing-3">Select the files you want to describe:</h5>
                         <div class="center v-spacing-2"><a id="select-all" class="bw-link--grey cursor-pointer">Select all</a><span class="h-spacing-left-1 h-spacing-1 text-grey">·</span><a id="select-none" class="bw-link--grey cursor-pointer select-button">Select None</a></div>
                         <div id="describe-file-checkboxes">
-                            {% show_file file_structure True %}
+                            {% show_file file_structure non_recursive=True %}
                         </div>
                     </div>
                 {% endif %}
@@ -171,5 +171,5 @@
 {% endblock %}
 
 {% block extrabody %}
-    <script src="{% static 'bw-frontend/dist/manageSounds.js' %}"></script>
+    <script src="{% static 'bw-frontend/dist/pages/manageSounds.js' %}"></script>
 {% endblock %}

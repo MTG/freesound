@@ -30,7 +30,7 @@ from django.conf import settings
 
 from forum.models import Post
 from sounds.models import Sound, SoundSimilarityVector
-from utils.search import SearchEngineBase, SearchEngineException, SearchResults
+from utils.search import SearchEngineBase, SearchEngineException, SearchEngineTimeoutException, SearchResults
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
 from utils.text import remove_control_chars
 
@@ -38,6 +38,10 @@ SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
 SOLR_SOUNDS_URL = f"{settings.SOLR5_BASE_URL}/freesound"
 
 USE_COLLAPSE_AND_EXPAND_QUERY_PARSER = True  # Note that changing this requies a reindex of the Solr index to used sound IDs as pack_gropuing when sounds have no pack
+USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH = (
+    False  # This query parser simplifies some of the vector-search query logic, but it seems to be much slower
+)
+
 
 # Mapping from freesound sound field names to solr sound field names
 FIELD_NAMES_MAP = {
@@ -183,6 +187,14 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, value)
 
 
+def _raise_search_engine_exception(error: BaseException) -> None:
+    # pysolr swallows exceptions and returns a generic SolrError with some specific text in the message
+    # super annoying but this is the only way to check the type of error.
+    if "timed out" in str(error).lower():
+        raise SearchEngineTimeoutException(error)
+    raise SearchEngineException(error)
+
+
 class Solr555PySolrSearchEngine(SearchEngineBase):
     solr_base_url = settings.SOLR5_BASE_URL
     sounds_index = None
@@ -204,6 +216,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
                 always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.sounds_index
 
@@ -215,6 +228,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 results_cls=SolrResponseInterpreter,
                 search_handler="fsquery",
                 always_commit=True,
+                timeout=settings.SEARCH_SOLR_TIMEOUT_SECONDS,
             )
         return self.forum_index
 
@@ -230,6 +244,20 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         new_document = {"id": document["id"]}
         new_document.update({key: {"set": value} for key, value in document.items() if key != "id"})
         return new_document
+
+    def get_pack_grouping_value_for_document(self, sound):
+        if sound.pack:
+            return str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
+        else:
+            if not USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
+                return str(sound.id)
+            return None
+
+    def get_avg_rating_value_for_document(self, sound):
+        if sound.num_ratings >= settings.MIN_NUMBER_RATINGS:
+            return sound.avg_rating
+        else:
+            return 0
 
     def convert_sound_to_search_engine_document(self, sound):
         """
@@ -264,21 +292,13 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         document["tag"] = list({t.lower() for t in sound.tag_array})
         document["license"] = sound.license.name
 
-        if document["num_ratings"] >= settings.MIN_NUMBER_RATINGS:
-            document["avg_rating"] = sound.avg_rating
-        else:
-            document["avg_rating"] = 0
+        document["avg_rating"] = self.get_avg_rating_value_for_document(sound)
 
         if sound.pack:
             document["pack"] = remove_control_chars(sound.pack.name)
-            document["pack_grouping"] = str(sound.pack.id) + "_" + remove_control_chars(sound.pack.name)
-        else:
-            if not USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
-                # If we're not using the collapse query parser, we need to set the pack_grouping field to the sound ID
-                # for sounds that don't have a pack. This is so that we get the correct total count of packs/individual sounds
-                # when grouping by pack. With the collapse query parser, this is not needed because the nullPolicy=expand will
-                # precisely treat sounds without packs as a group of their own.
-                document["pack_grouping"] = str(sound.id)
+        document["pack_grouping"] = self.get_pack_grouping_value_for_document(
+            sound
+        )  # This is called outside the if "sound.pack" as in some cases it might still need ot be set
 
         collections = []
         for collection_data in sound.collections_array:
@@ -358,6 +378,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     f"{settings.SEARCH_SOUNDS_FIELD_SUBCATEGORY}{SOLR_DYNAMIC_FIELDS_SUFFIX_MAP[settings.AUDIO_DESCRIPTOR_TYPE_STRING]}"
                 ] = user_provided_subcategory
 
+        # Index uploader AI preference
+        document["gen_ai_preference"] = sound.get_gen_ai_preference()
+
         # Finally add the sound ID and content type
         document.update({"id": sound.id, "content_type": SOLR_DOC_CONTENT_TYPES["sound"]})
 
@@ -380,6 +403,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             for ssv in SoundSimilarityVector.objects.filter(
                 sound_id__in=sound_ids, similarity_space_name=similarity_space_name
             ):
+                sound = sound_objects_dict[ssv.sound_id]
                 similairty_vectors_per_space_per_sound = []
                 sim_vector_document_data = {
                     "content_type": SOLR_DOC_CONTENT_TYPES["similarity_vector"],
@@ -391,14 +415,16 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 # Because we still want to be able to group by pack when matching sim vector documents (sound child documents),
                 # we add the pack_grouping field here as well. In the future we might be able to optimize this if we can tell solr
                 # to group results by the field value of a parent document (just like we do to compute facets)
-                if sound_objects_dict[ssv.sound_id].pack_id:
-                    sim_vector_document_data["pack_grouping_child"] = (
-                        str(sound_objects_dict[ssv.sound_id].pack_id)
-                        + "_"
-                        + remove_control_chars(sound_objects_dict[ssv.sound_id].pack_name)
-                    )
-                else:
-                    sim_vector_document_data["pack_grouping_child"] = str(sound_objects_dict[ssv.sound_id].id)
+                sim_vector_document_data["pack_grouping"] = self.get_pack_grouping_value_for_document(sound)
+
+                if not USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                    # If not using the block parent join query parser, when doing vector searches we will retrieve child documents
+                    # (vector documents), and in order to be able to sort them properly, we need to have available the fields needed
+                    # to support basic sorting options. Note that this is not needed for filtering, as there are performant ways to
+                    # filter based on parent fields when retrieving child documents, but for sorting this does not seem to be the case.
+                    sim_vector_document_data["avg_rating"] = self.get_avg_rating_value_for_document(sound)
+                    for key in ["duration", "num_downloads", "created", "num_ratings"]:
+                        sim_vector_document_data[key] = getattr(sound, key)
 
                 # NOTE: if there were multiple vectors per sound per similarity space, we would add them all here
                 similairty_vectors_per_space_per_sound.append(sim_vector_document_data)
@@ -440,21 +466,16 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         field and how it should treat it.
         """
         for raw_fieldname, solr_fieldname in SOLR_DYNAMIC_FIELDS_MAP.items():
-            query_filter = query_filter.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
+            updated_query_filter_parts = []
+            for part in query_filter.split(" "):
+                if part.startswith(raw_fieldname + ":"):
+                    part = part.replace(f"{raw_fieldname}:", f"{solr_fieldname}:")
+                updated_query_filter_parts.append(part)
+            query_filter = " ".join(updated_query_filter_parts)
         return query_filter
 
     def search_process_sort(self, sort, forum=False):
-        """Translates sorting criteria to solr sort criteria and add extra criteria if sorting by ratings.
-
-        If order by rating, when rating is the same sort also by number of ratings.
-
-        Args:
-            sort (str): sorting criteria as defined in settings.SEARCH_SOUNDS_SORT_OPTIONS_WEB.
-            forum (bool, optional): use the forum sort options map instead of the standard sort map
-
-        Returns:
-            List[str]: list containing the sorting field names list for the search engine.
-        """
+        """Translates sorting criteria to solr sort criteria and adds extra criteria if sorting by ratings."""
         search_map = SORT_OPTIONS_MAP_FORUM if forum else SORT_OPTIONS_MAP
         if sort in [sort_web_name for sort_web_name, _ in search_map.items()]:
             if search_map[sort] == "avg_rating desc" or search_map[sort] == "avg_rating asc":
@@ -464,6 +485,23 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         else:
             sort = [search_map[settings.SEARCH_FORUM_SORT_DEFAULT if forum else settings.SEARCH_SOUNDS_SORT_DEFAULT]]
         return sort
+
+    def search_process_sort_distance(self, sorting_target):
+        """Build distance-based sort and extra field for the query."""
+        try:
+            sorting_target_elements = sorting_target.split(",")
+            solr_dist_sort_field_names = []
+            solr_dist_sort_field_values = []
+            for element in sorting_target_elements:
+                name = element.split(":")[0]
+                value = float(element.split(":")[1])
+                solr_field_name = get_solr_fieldname_from_freesound_fieldname(name)
+                solr_dist_sort_field_names.append(solr_field_name)
+                solr_dist_sort_field_values.append(value)
+            dist_expr = f"dist(2,{','.join(solr_dist_sort_field_names)},{','.join([str(v) for v in solr_dist_sort_field_values])})"
+            return [f"{dist_expr} asc"], f"dist:{dist_expr}"
+        except (ValueError, IndexError):
+            raise SearchEngineException("Error processing sorting target for distance-based sorting.")
 
     def search_filter_make_intersection(self, query_filter):
         # In solr 4, fq="a:1 b:2" will take the AND of these two filters, but in solr 5+, this will use OR
@@ -554,9 +592,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if update:
             documents = [self.transform_document_into_update_document(d) for d in documents]
         try:
-            self.get_sounds_index().add(documents)
+            self.get_sounds_index(timeout=60).add(documents)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def update_similarity_vectors_in_index(self, sound_objects):
         """Create an update document to add only similarity vectors to sounds that already exist in the index"""
@@ -564,9 +602,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         self.add_similarity_vectors_to_documents(sound_objects, documents)
         documents = [self.transform_document_into_update_document(d) for d in documents]
         try:
-            self.get_sounds_index().add(documents)
+            self.get_sounds_index(timeout=60).add(documents)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_sounds_from_index(self, sound_objects_or_ids):
         try:
@@ -576,15 +614,15 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     sound_ids.append(str(sound_object_or_id))
                 else:
                     sound_ids.append(str(sound_object_or_id.id))
-            self.get_sounds_index().delete(id=sound_ids)
+            self.get_sounds_index(timeout=60).delete(id=sound_ids)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_all_sounds(self):
         try:
-            self.get_sounds_index().delete(q="*:*")
+            self.get_sounds_index(timeout=60).delete(q="*:*")
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def sound_exists_in_index(self, sound_object_or_id):
         if not isinstance(sound_object_or_id, Sound):
@@ -604,6 +642,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 sort=settings.SEARCH_SOUNDS_SORT_OPTION_DATE_NEW_FIRST,
                 offset=(current_page - 1) * page_size,
                 num_sounds=page_size,
+                timeout=60,
+                enforce_time_allowed=False,
             )
             solr_ids += [int(element["id"]) for element in response.docs]
             solr_count = response.num_found
@@ -615,11 +655,12 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         textual_query="",
         query_fields=None,
         query_filter="",
-        field_list=["id", "score"],
+        field_list=None,
         offset=0,
         current_page=None,
         num_sounds=settings.SOUNDS_PER_PAGE,
         sort=settings.SEARCH_SOUNDS_SORT_OPTION_AUTOMATIC,
+        sorting_target=None,
         group_by_pack=False,
         num_sounds_per_pack_group=1,
         facets=None,
@@ -629,8 +670,29 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         similar_to=None,
         similar_to_min_similarity=settings.SIMILARITY_MIN_THRESHOLD,
         similar_to_similarity_space=settings.SIMILARITY_SPACE_DEFAULT,
+        timeout=None,
+        enforce_time_allowed=True,
     ):
-        query = SolrQuery()
+        # Tell solr to stop after this time. Give similarity a bit more time
+        if not enforce_time_allowed:
+            query = SolrQuery(time_allowed=None)
+        elif similar_to is not None:
+            query = SolrQuery(time_allowed=settings.SEARCH_SOLR_SIMILARITY_TIME_ALLOWED_MS)
+        else:
+            query = SolrQuery(time_allowed=settings.SEARCH_SOLR_TIME_ALLOWED_MS)
+        # Just in case timeAllowed above doesn't stick
+        if timeout is None:
+            timeout = (
+                settings.SEARCH_SOLR_SIMILARITY_TIMEOUT_SECONDS
+                if similar_to is not None
+                else settings.SEARCH_SOLR_TIMEOUT_SECONDS
+            )
+        # Use a separate request handler for similarity to have separate metrics
+        search_handler = "select_similarity" if similar_to is not None else None
+
+        if field_list is None:
+            # We generally only want the sound IDs of the results as we load data from DB
+            field_list = ["id", "score"]
 
         if similar_to is None:
             # Usual search query, no similarity search
@@ -680,10 +742,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     config_options["vector_size"], config_options.get("l2_norm", False)
                 )
                 if vector is not None and vector_field_name is not None:
-                    serialized_vector = ",".join([str(n) for n in vector])
-                    query.set_query(
-                        f"{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]"
-                    )
+                    serialized_vector = ",".join([f"{n:.4f}" for n in vector])
+
+                    if USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                        # We define a query which matches child documents (similarity vectors), but returns the parent document (sound) and uses the
+                        # score of the child document (similarity vector) as the score of the parent document. This way we can apply filters and
+                        # sorting on the parent documents (sounds) but use the similarity score for ranking.
+                        sim_search_pre_filter = f"preFilter=similarity_space:{similar_to_similarity_space} preFilter=content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}"
+                        query.set_query(
+                            f"{{!parent which=content_type:{SOLR_DOC_CONTENT_TYPES['sound']} score=max}}{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} {sim_search_pre_filter}}}[{serialized_vector}]"
+                        )
+                    else:
+                        # We define a query that matches and returns child documents. Leter we modify the filters and facets so these are computed
+                        # at the parent level. In order to enable proper sorting using this document, we need to index child documents with fields
+                        # needed for sorting (created, duration, avg rating, num downloads) as we don't have a way to sort by parent fields. All in all,
+                        # this methods seems to be faster than using the block join query parser for vector search...
+                        query.set_query(
+                            f"{{!vectorSimilarity f={vector_field_name} minReturn={similar_to_min_similarity} }}[{serialized_vector}]"
+                        )
 
         # Process filter
         query_filter = self.search_process_filter(
@@ -691,41 +767,58 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         )
 
         if similar_to is not None:
-            # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
-            query_filter_modified = [
-                f"content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}",
-                f"similarity_space:{similar_to_similarity_space}",
-            ]  # Add basic filter to only get similarity vectors from selected similarity space and from child documents (this is because root documents can also have sim vectors)
-            top_similar_sounds_as_filter = query.as_kwargs()["q"]
-            try:
-                # Also if target is specified as a sound ID, remove it from the list so it is not returned as a result
-                query_filter_modified.append(f"-_nest_parent_:{int(similar_to)}")
-            except TypeError:
-                # Target is not a sound id, so we don't need to add the filter
-                pass
+            if USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                # If the similarity target is specified as a sound ID, add a filter so the sound itself is not included in the results
+                try:
+                    int_similar_to = int(similar_to)
+                    query_filter = [query_filter, f"-id:{int(similar_to)}"]
+                except (TypeError, ValueError):
+                    # Sound ID is not an integer, do not add any extra filter
+                    pass
+            else:
+                # If doing a similarity query, the filter needs to be further processed so we perform filters based on parent documents
+                query_filter_modified = [
+                    f"content_type:{SOLR_DOC_CONTENT_TYPES['similarity_vector']}",
+                    f"similarity_space:{similar_to_similarity_space}",
+                ]  # Add basic filter to only get similarity vectors from selected similarity space and from child documents (this is because root documents can also have sim vectors)
+                top_similar_sounds_as_filter = query.as_kwargs()["q"]
+                try:
+                    # Also if target is specified as a sound ID, remove it from the list so it is not returned as a result
+                    query_filter_modified.append(f"-_nest_parent_:{int(similar_to)}")
+                except TypeError:
+                    # Target is not a sound id, so we don't need to add the filter
+                    pass
 
-            # Also add the NN query as a filter so we don't get past the first similar_to_min_similarity results when applying extra filters
-            query_filter_modified += [top_similar_sounds_as_filter]
+                # Also add the NN query as a filter so we don't get past the first similar_to_min_similarity results when applying extra filters
+                query_filter_modified += [top_similar_sounds_as_filter]
 
-            # Now add the usual filter, but wrap it in "child of" modifier so it filters on parent documents instead of child documents
-            if query_filter:
-                query_filter_modified.append(
-                    f'{{!child of="content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}"}}({query_filter})'
-                )
+                # Now add the usual filter, but wrap it in "child of" modifier so it filters on parent documents instead of child documents
+                if query_filter:
+                    query_filter_modified.append(
+                        f'{{!child of="content_type:{SOLR_DOC_CONTENT_TYPES["sound"]}"}}({query_filter})'
+                    )
 
-            # Replace query_filter with the modified version
-            query_filter = query_filter_modified
+                # Replace query_filter with the modified version
+                query_filter = query_filter_modified
 
         # Set query options
         if current_page is not None:
             offset = (current_page - 1) * num_sounds
+
+        if sorting_target is not None:
+            # Custom sorting by distance to target
+            sort, dist_field = self.search_process_sort_distance(sorting_target)
+            field_list.append(dist_field)
+        else:
+            sort = self.search_process_sort(sort)
+
         query.set_query_options(
             start=offset,
             rows=num_sounds,
-            field_list=field_list,  # We generally only want the sound IDs of the results as we load data from DB
+            field_list=field_list,
             filter_query=query_filter,
-            sort=self.search_process_sort(sort) if not similar_to else ["score desc"],
-        )  # In similarity queries, we always sort by distance to target
+            sort=sort,
+        )
 
         # Configure facets
         if facets is not None:
@@ -736,8 +829,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             for field in facet_fields:
                 json_facets[field] = SOLR_SOUND_FACET_DEFAULT_OPTIONS.copy()
                 json_facets[field]["field"] = field
-                if similar_to is not None:
-                    # In similarity search we need to set the "domain" facet option to apply them to the parent documents of the child documents we will match
+                if similar_to is not None and not USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                    # If not using the block join query parser for vector search, we need to set the "domain" facet option to apply them to the
+                    # parent documents instead of the child documents (similarity vectors)
                     json_facets[field]["domain"] = {"blockParent": f"content_type:{SOLR_DOC_CONTENT_TYPES['sound']}"}
             for field_name, extra_options in facets.items():
                 json_facets[get_solr_facet_fieldname_from_freesound_fieldname(field_name)].update(extra_options)
@@ -747,8 +841,8 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if group_by_pack:
             if USE_COLLAPSE_AND_EXPAND_QUERY_PARSER:
                 current_filter = query.params.get("fq", "")
-                field_name = "pack_grouping" if similar_to is None else "pack_grouping_child"
-                group_by_pack_filter = f"{{!collapse field={field_name} nullPolicy=expand}}"
+                field_name = "pack_grouping"
+                group_by_pack_filter = f"{{!collapse field={field_name} sort='created desc' nullPolicy=expand}}"
                 if current_filter:
                     if type(current_filter) is list:
                         query.params["fq"] = current_filter + [group_by_pack_filter]
@@ -762,7 +856,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                     0, num_sounds_per_pack_group - 1
                 )  # We return one less sound per pack group because the first sound is used to represent the pack group
             else:
-                query.set_group_field(group_field="pack_grouping" if not similar_to else "pack_grouping_child")
+                query.set_group_field(group_field="pack_grouping")
                 query.set_group_options(
                     group_func=None,
                     group_query=None,
@@ -798,7 +892,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 if not group_counts_as_one_in_facets and "json.facet" in query_as_kwargs:
                     facets_kwarg = query_as_kwargs["json.facet"]
                     query_as_kwargs["json.facet"] = {}
-                results = self.get_sounds_index().search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
 
                 # Now make the second query in which we get the facets and the total number of results, and remove the "collapse" filter.
                 fq = [fq_element for fq_element in query_as_kwargs["fq"] if "collapse field" not in fq_element]
@@ -807,13 +903,17 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 query_as_kwargs["expand"] = False
                 if not group_counts_as_one_in_facets and facets_kwarg is not None:
                     query_as_kwargs["json.facet"] = facets_kwarg
-                results_extra_query = self.get_sounds_index().search(**query_as_kwargs)
+                results_extra_query = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
                 if not group_counts_as_one_in_facets:
                     results.facets = results_extra_query.facets
                 results.non_grouped_number_of_results = results_extra_query.num_found
             else:
                 # If we are not using collapse and expand query parser (and/or not grouping by pack), just run the query.
-                results = self.get_sounds_index().search(**query_as_kwargs)
+                results = self.get_sounds_index(timeout=timeout, search_handler=search_handler).search(
+                    **query_as_kwargs
+                )
 
             # Facets returned in results use the corresponding solr fieldnames as keys. We want to convert them to the
             # original fieldnames so that the rest of the code can use them without knowing about the solr fieldnames.
@@ -825,8 +925,11 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             # Solr uses a string for the id field, but django uses an int. Convert the id in all results to int
             # before use to avoid issues
             for d in results.docs:
-                # Get the sound ids from the results
-                d["id"] = int(d["id"] if similar_to is None else d["id"].split("/")[0])
+                if similar_to is not None and not USE_BLOCK_JOIN_PARENT_QUERY_PARSER_FOR_VECTOR_SEARCH:
+                    # In that case doc IDs will correspond to similarity vector document, will look like "485987/similarity_vectors#0"
+                    d["id"] = int(d["id"].split("/")[0])
+                else:
+                    d["id"] = int(d["id"])
 
             return SearchResults(
                 docs=results.docs,
@@ -839,7 +942,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 q_time=results.q_time,
             )
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def get_random_sound_id(self):
         query = SolrQuery()
@@ -855,25 +958,46 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 return int(docs[0]["id"])
             return 0
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def get_num_sim_vectors_indexed_per_similarity_space(self):
         results = {}
         for similarity_space_name in settings.SIMILARITY_SPACES.keys():
-            query = SolrQuery()
+            query = SolrQuery(time_allowed=None)
             filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
             query.set_query("*:*")
             query.set_query_options(start=0, rows=1, field_list=["id"], filter_query=filter_query)
             query.set_group_field("_nest_parent_")
             query.set_group_options()
             try:
-                response = self.get_sounds_index().search(search_handler="select", **query.as_kwargs())
+                response = self.get_sounds_index(timeout=60).search(search_handler="select", **query.as_kwargs())
                 results[similarity_space_name] = {
                     "num_sounds": response.num_found,
                     "num_vectors": response.non_grouped_number_of_results,
                 }
             except pysolr.SolrError as e:
-                raise SearchEngineException(e)
+                _raise_search_engine_exception(e)
+        return results
+
+    def get_all_sim_vector_document_ids_per_similarity_space(self):
+        page_size = 2000
+        results = {}
+        for similarity_space_name in settings.SIMILARITY_SPACES.keys():
+            solr_ids = []
+            solr_count = None
+            current_page = 1
+            while solr_count is None or len(solr_ids) < solr_count:
+                query = SolrQuery(time_allowed=None)
+                filter_query = f'similarity_space:"{similarity_space_name}" content_type:"v"'
+                query.set_query("*:*")
+                query.set_query_options(
+                    start=(current_page - 1) * page_size, rows=page_size, field_list=["id"], filter_query=filter_query
+                )
+                response = self.get_sounds_index(timeout=60).search(search_handler="select", **query.as_kwargs())
+                solr_ids += [element["id"] for element in response.docs]
+                solr_count = response.num_found
+                current_page += 1
+            results[similarity_space_name] = solr_ids
         return results
 
     # Forum posts methods
@@ -881,9 +1005,9 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         documents = [self.convert_post_to_search_engine_document(p) for p in forum_post_objects]
         documents = [d for d in documents if d is not None]
         try:
-            self.get_forum_index().add(documents)
+            self.get_forum_index(timeout=60).add(documents)
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_forum_posts_from_index(self, forum_post_objects_or_ids):
         try:
@@ -893,15 +1017,15 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 else:
                     post_id = post_object_or_id.id
 
-                self.get_forum_index().delete(id=str(post_id))
+                self.get_forum_index(timeout=60).delete(id=str(post_id))
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def remove_all_forum_posts(self):
         try:
-            self.get_forum_index().delete(q="*:*")
+            self.get_forum_index(timeout=60).delete(q="*:*")
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def forum_post_exists_in_index(self, forum_post_object_or_id):
         if not isinstance(forum_post_object_or_id, Post):
@@ -983,7 +1107,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 q_time=results.q_time,
             )
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     # Tag clouds methods
     def get_user_tags(self, username):
@@ -1000,7 +1124,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             results = self.get_sounds_index().search(**self.force_sounds(query.as_kwargs()))
             return results.facets[tag_facet_field_name]
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)
 
     def get_pack_tags(self, username, pack_name):
         query = SolrQuery()
@@ -1016,4 +1140,4 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             results = self.get_sounds_index().search(**self.force_sounds(query.as_kwargs()))
             return results.facets[tag_facet_field_name]
         except pysolr.SolrError as e:
-            raise SearchEngineException(e)
+            _raise_search_engine_exception(e)

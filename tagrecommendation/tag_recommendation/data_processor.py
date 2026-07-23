@@ -28,14 +28,57 @@ from builtins import str
 from builtins import range
 from builtins import object
 from past.utils import old_div
-from tagrecommendation_settings import RECOMMENDATION_TMP_DATA_DIR, RECOMMENDATION_DATA_DIR
 import sys, os
-from utils import saveToJson, mtx2npy, loadFromJson
 from numpy import save, load, where, in1d
 from math import sqrt
 from pysparse import spmatrix
 from .community_tag_recommender import CommunityDetector
 import datetime
+import json
+from numpy import zeros
+
+ # NOTE: This code not been tested in the new hetnzer infrastructure (and actually has not been run for many years...). 
+ # We should re-think how to handle re-training of the tag recommendaiton models
+
+
+RECOMMENDATION_TMP_DATA_DIR = None 
+RECOMMENDATION_DATA_DIR = None
+
+
+def loadFromJson(path, verbose=False):
+    with open(path, 'r') as f:
+        if verbose:
+            print("Loading data from '" + path + "'")
+        return json.load(f)
+
+def saveToJson(path="", data="", verbose=True):
+    with open(path, mode='w') as f:
+        if verbose:
+            print("Saving data to '" + path + "'")
+        json.dump(data,f,indent=4)
+
+def mtx2npy(M, verbose = True):
+    n = M.shape[0]
+    m = M.shape[1]
+    npy = zeros((n, m) , 'float32')
+    #non_zero_index = M.keys()
+    items = list(M.items())
+    nItems = len(M.items())
+    done = 0
+    #for index in non_zero_index :
+    for index, value in items:
+        npy[ index[0] ][ index[1] ] = value #M[ index[0] , index[1] ]
+
+        done += 1
+        if verbose:
+            sys.stdout.write("\rConverting to npy... " + '%.2f'%((float(done)*100)/float(nItems)) + "% ")
+            sys.stdout.flush()
+
+    if verbose:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+    return npy
+
 
 
 class RecommendationDataProcessor(object):

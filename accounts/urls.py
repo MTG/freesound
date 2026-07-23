@@ -86,6 +86,7 @@ urlpatterns = [
     path("", accounts.home, name="accounts-home"),
     path("edit/", accounts.edit, name="accounts-edit"),
     path("email-settings/", accounts.edit_email_settings, name="accounts-email-settings"),
+    path("ai-preferences/", accounts.edit_ai_preferences, name="accounts-ai-preferences"),
     path("delete/", accounts.delete, name="accounts-delete"),
     path("attribution/", accounts.attribution, name="accounts-attribution"),
     path("download-attribution/", accounts.download_attribution, name="accounts-download-attribution"),

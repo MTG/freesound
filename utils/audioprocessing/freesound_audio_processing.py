@@ -18,6 +18,7 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
 
 import json
 import logging
@@ -47,11 +48,11 @@ class WorkerException(Exception):
     """
 
 
-def set_timeout_alarm(time, msg):
+def set_timeout_alarm(time: int, msg: str):
     """
     Sets a timeout alarm which raises a WorkerException after a number of seconds.
-    :param float time: seconds until WorkerException is raised
-    :param str msg: message to add to WorkerException when raised
+    :param time: seconds until WorkerException is raised
+    :param msg: message to add to WorkerException when raised
     :raises WorkerException: when timeout is reached
     """
 
@@ -70,13 +71,14 @@ def cancel_timeout_alarm():
 
 
 def check_if_free_space(
-    directory=settings.PROCESSING_TEMP_DIR, min_disk_space_percentage=settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE
+    directory: str = settings.PROCESSING_TEMP_DIR,
+    min_disk_space_percentage: float = settings.WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE,
 ):
     """
     Checks if there is free disk space in the volume of the given 'directory'. If percentage of free disk space in this
     volume is lower than 'min_disk_space_percentage', this function raises WorkerException.
-    :param str directory: path of the directory whose volume will be checked for free space
-    :param float min_disk_space_percentage: free disk space percentage to check against
+    :param directory: path of the directory whose volume will be checked for free space
+    :param min_disk_space_percentage: free disk space percentage to check against
     :raises WorkerException: if available percentage of free space is below the threshold
     """
     stats = os.statvfs(directory)
@@ -332,32 +334,18 @@ class FreesoundAudioProcessor(FreesoundAudioProcessorBase):
                 # Generate display images, M and L sizes for NG and BW front-ends
                 for width, height, color_scheme, waveform_path, spectral_path in [
                     (
-                        120,
-                        71,
-                        color_schemes.FREESOUND2_COLOR_SCHEME,
-                        self.sound.locations("display.wave.M.path"),
-                        self.sound.locations("display.spectral.M.path"),
-                    ),
-                    (
-                        900,
-                        201,
-                        color_schemes.FREESOUND2_COLOR_SCHEME,
-                        self.sound.locations("display.wave.L.path"),
-                        self.sound.locations("display.spectral.L.path"),
-                    ),
-                    (
                         195,
                         101,
                         color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-                        self.sound.locations("display.wave_bw.M.path"),
-                        self.sound.locations("display.spectral_bw.M.path"),
+                        self.sound.locations("display.wave.M.path"),
+                        self.sound.locations("display.spectral.M.path"),
                     ),
                     (
                         780,
                         301,
                         color_schemes.BEASTWHOOSH_COLOR_SCHEME,
-                        self.sound.locations("display.wave_bw.L.path"),
-                        self.sound.locations("display.spectral_bw.L.path"),
+                        self.sound.locations("display.wave.L.path"),
+                        self.sound.locations("display.spectral.L.path"),
                     ),
                 ]:
                     try:

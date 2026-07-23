@@ -19,13 +19,14 @@
 #
 
 from django import forms
+from django.db import models
 from django.utils.safestring import mark_safe
 
 from utils.forms import HtmlCleaningCharField
 
 
 class ModeratorMessageForm(forms.Form):
-    message = HtmlCleaningCharField(widget=forms.Textarea, label=False)
+    message = HtmlCleaningCharField(widget=forms.Textarea, label=None)
     moderator_only = forms.BooleanField(required=False, label="Make this message only visible to other moderators")
 
     def __init__(self, *args, **kwargs):
@@ -42,7 +43,12 @@ class UserMessageForm(forms.Form):
 
 
 # Sound moderation forms
-MODERATION_CHOICES = [(x, x) for x in ["Approve", "Delete", "Defer", "Return", "Whitelist"]]
+class ModerationChoices(models.TextChoices):
+    APPROVE = "Approve", "Approve"
+    DELETE = "Delete", "Delete"
+    DEFER = "Defer", "Defer"
+    RETURN = "Return", "Return"
+
 
 IS_EXPLICIT_KEEP_USER_PREFERENCE_KEY = "K"
 IS_EXPLICIT_ADD_FLAG_KEY = "A"
@@ -55,7 +61,7 @@ IS_EXPLICIT_FLAG_CHOICES = (
 
 
 class SoundModerationForm(forms.Form):
-    action = forms.ChoiceField(choices=MODERATION_CHOICES, required=True, widget=forms.RadioSelect(), label="")
+    action = forms.ChoiceField(choices=ModerationChoices.choices, required=True, widget=forms.RadioSelect(), label="")
 
     ticket = forms.CharField(widget=forms.widgets.HiddenInput, error_messages={"required": "No sound selected..."})
 
@@ -72,7 +78,7 @@ class SoundModerationForm(forms.Form):
 
 
 class ModerationMessageForm(forms.Form):
-    message = HtmlCleaningCharField(widget=forms.Textarea, required=False, label=False)
+    message = HtmlCleaningCharField(widget=forms.Textarea, required=False, label=None)
     moderator_only = forms.BooleanField(required=False, label="Make this message only visible to moderators")
 
     def __init__(self, *args, **kwargs):
@@ -95,4 +101,4 @@ class UserAnnotationForm(forms.Form):
 
 
 class SoundStateForm(forms.Form):
-    action = forms.ChoiceField(choices=MODERATION_CHOICES, required=False, label="Action:")
+    action = forms.ChoiceField(choices=ModerationChoices.choices, required=False, label="Action:")

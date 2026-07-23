@@ -49,7 +49,7 @@ def copy_files_to_mirror_locations(object, source_location_keys, source_base_pat
         for location_path in source_location_keys:
             source_path = object.locations(location_path)
             source_destination_tuples.append(
-                (source_path, source_path.replace(source_base_path, destination_base_path))
+                (source_path, os.path.join(destination_base_path, os.path.relpath(source_path, source_base_path)))
             )
 
     copy_files(source_destination_tuples)  # Do the actual copying of the files
@@ -60,7 +60,10 @@ def copy_uploaded_file_to_mirror_locations(source_file_path):
     if settings.MIRROR_UPLOADS:
         for destination_base_path in settings.MIRROR_UPLOADS:
             source_destination_tuples.append(
-                (source_file_path, source_file_path.replace(settings.UPLOADS_PATH, destination_base_path))
+                (
+                    source_file_path,
+                    os.path.join(destination_base_path, os.path.relpath(source_file_path, settings.UPLOADS_PATH)),
+                )
             )
         copy_files(source_destination_tuples)
 
@@ -70,7 +73,10 @@ def remove_uploaded_file_from_mirror_locations(source_file_path):
     if settings.MIRROR_UPLOADS:
         for destination_base_path in settings.MIRROR_UPLOADS:
             source_destination_tuples.append(
-                (source_file_path, source_file_path.replace(settings.UPLOADS_PATH, destination_base_path))
+                (
+                    source_file_path,
+                    os.path.join(destination_base_path, os.path.relpath(source_file_path, settings.UPLOADS_PATH)),
+                )
             )
         for _, destination_path in source_destination_tuples:
             try:
@@ -83,7 +89,9 @@ def remove_uploaded_file_from_mirror_locations(source_file_path):
 def remove_empty_user_directory_from_mirror_locations(user_uploads_path):
     if settings.MIRROR_UPLOADS:
         for destination_base_path in settings.MIRROR_UPLOADS:
-            remove_directory_if_empty(user_uploads_path.replace(settings.UPLOADS_PATH, destination_base_path))
+            remove_directory_if_empty(
+                os.path.join(destination_base_path, os.path.relpath(user_uploads_path, settings.UPLOADS_PATH))
+            )
 
 
 def copy_sound_to_mirror_locations(sound):
@@ -107,10 +115,8 @@ def copy_displays_to_mirror_locations(sound):
             "display.spectral.M.path",
             "display.wave.L.path",
             "display.wave.M.path",
-            "display.spectral_bw.L.path",
-            "display.spectral_bw.M.path",
-            "display.wave_bw.L.path",
-            "display.wave_bw.M.path",
+            "display.spectral.L.path",
+            "display.spectral.M.path",
         ],
         settings.DISPLAYS_PATH,
         settings.MIRROR_DISPLAYS,

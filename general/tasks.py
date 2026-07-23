@@ -29,7 +29,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from tickets import TICKET_STATUS_CLOSED
-from tickets.models import Ticket, TicketComment, UserAnnotation
+from tickets.models import Ticket, UserAnnotation
 from utils.audioprocessing.freesound_audio_processing import (
     FreesoundAudioProcessor,
     FreesoundAudioProcessorBeforeDescription,
@@ -70,7 +70,7 @@ def whitelist_user(annotation_sender_id, ticket_ids=None, user_id=None):
             }
         )
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     count_done = 0
 
     users_to_whitelist_ids = set()
@@ -86,7 +86,7 @@ def whitelist_user(annotation_sender_id, ticket_ids=None, user_id=None):
     users_to_whitelist = User.objects.filter(id__in=users_to_whitelist_ids).select_related("profile")
     for whitelist_user in users_to_whitelist:
         if not whitelist_user.profile.is_whitelisted:
-            local_start_time = time.time()
+            local_start_time = time.monotonic()
             whitelist_user.profile.is_whitelisted = True
             whitelist_user.profile.save()
             pending_tickets = Ticket.objects.filter(sender=whitelist_user).exclude(status=TICKET_STATUS_CLOSED)
@@ -116,7 +116,7 @@ def whitelist_user(annotation_sender_id, ticket_ids=None, user_id=None):
                     {
                         "user_id": whitelist_user.id,
                         "username": whitelist_user.username,
-                        "work_time": round(time.time() - local_start_time),
+                        "work_time": round(time.monotonic() - local_start_time),
                     }
                 )
             )
@@ -133,23 +133,21 @@ def whitelist_user(annotation_sender_id, ticket_ids=None, user_id=None):
                 "task_name": WHITELIST_USER_TASK_NAME,
                 "n_tickets": len(ticket_ids) if ticket_ids is not None else 0,
                 "user_id": user_id if user_id is not None else "",
-                "work_time": round(time.time() - start_time),
+                "work_time": round(time.monotonic() - start_time),
             }
         )
     )
 
 
 @shared_task(name=POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, queue=settings.CELERY_ASYNC_TASKS_QUEUE_NAME)
-def post_moderation_assigned_tickets(
-    ticket_ids=[], notification=None, msg=False, moderator_only=False, users_to_update=None, packs_to_update=None
-):
+def post_moderation_assigned_tickets(ticket_ids=[], notification=None, users_to_update=None, packs_to_update=None):
     # Carry out post-processing tasks for the approved sounds like invalidating caches, sending packs to process, etc...
     # We do that in an async task to avoid moderation requests taking too long when approving sounds
     workers_logger.info(
         "Start post moderation assigned tickets (%s)"
         % json.dumps({"task_name": POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME, "n_tickets": len(ticket_ids)})
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     tickets = Ticket.objects.filter(id__in=ticket_ids)
 
     collect_users_and_packs = False
@@ -171,14 +169,9 @@ def post_moderation_assigned_tickets(
         invalidate_user_template_caches(ticket.sender.id)
         invalidate_all_moderators_header_cache()
 
-        # Add new comments to the ticket
-        if msg:
-            tc = TicketComment(sender=ticket.assignee, text=msg, ticket=ticket, moderator_only=moderator_only)
-            tc.save()
-
         # Send notification email to users
         if notification is not None:
-            ticket.send_notification_emails(notification, Ticket.USER_ONLY)
+            ticket.send_notification_email_user(notification)
 
     # Update number of sounds for each user
     Profile = apps.get_model("accounts.Profile")
@@ -196,7 +189,7 @@ def post_moderation_assigned_tickets(
             {
                 "task_name": POST_MODERATION_ASSIGNED_TICKETS_TASK_NAME,
                 "n_tickets": len(ticket_ids),
-                "work_time": round(time.time() - start_time),
+                "work_time": round(time.monotonic() - start_time),
             }
         )
     )
@@ -227,7 +220,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
             }
         )
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     try:
         if deletion_action in [
             FULL_DELETE_USER_ACTION_NAME,
@@ -269,7 +262,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
                         "user_id": user.id,
                         "username": username_before_deletion,
                         "deletion_reason": deletion_reason,
-                        "work_time": round(time.time() - start_time),
+                        "work_time": round(time.monotonic() - start_time),
                     }
                 )
             )
@@ -286,7 +279,7 @@ def delete_user(user_id, deletion_action, deletion_reason):
                     "username": username_before_deletion,
                     "deletion_reason": deletion_reason,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -307,7 +300,7 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
             }
         )
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     try:
         bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
         bulk.validate_csv_file()
@@ -317,7 +310,7 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
                 {
                     "task_name": VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME,
                     "bulk_upload_progress_id": bulk_upload_progress_object_id,
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -330,7 +323,7 @@ def validate_bulk_describe_csv(bulk_upload_progress_object_id):
                     "task_name": VALIDATE_BULK_DESCRIBE_CSV_TASK_NAME,
                     "bulk_upload_progress_id": bulk_upload_progress_object_id,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -346,7 +339,7 @@ def bulk_describe(bulk_upload_progress_object_id):
         "Starting describing sounds of BulkUploadProgress (%s)"
         % json.dumps({"task_name": BULK_DESCRIBE_TASK_NAME, "bulk_upload_progress_id": bulk_upload_progress_object_id})
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     try:
         bulk = BulkUploadProgress.objects.get(id=bulk_upload_progress_object_id)
         bulk.describe_sounds()
@@ -359,7 +352,7 @@ def bulk_describe(bulk_upload_progress_object_id):
                 {
                     "task_name": BULK_DESCRIBE_TASK_NAME,
                     "bulk_upload_progress_id": bulk_upload_progress_object_id,
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -372,7 +365,7 @@ def bulk_describe(bulk_upload_progress_object_id):
                     "task_name": BULK_DESCRIBE_TASK_NAME,
                     "bulk_upload_progress_id": bulk_upload_progress_object_id,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -410,7 +403,7 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
             }
         )
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     try:
         # Analysis happens in a different celery worker, here we just save the results in a SoundAnalysis object
         a = SoundAnalysis.objects.get(sound_id=sound_id, analyzer=analyzer)
@@ -430,7 +423,7 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                         "analyzer": analyzer,
                         "status": status,
                         "exception": str(exception),
-                        "work_time": round(time.time() - start_time),
+                        "work_time": round(time.monotonic() - start_time),
                     }
                 )
             )
@@ -458,12 +451,12 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                         "sound_id": sound_id,
                         "analyzer": analyzer,
                         "status": status,
-                        "work_time": round(time.time() - start_time),
+                        "work_time": round(time.monotonic() - start_time),
                     }
                 )
             )
 
-    except (SoundAnalysis.DoesNotExist, Exception) as e:
+    except SoundAnalysis.DoesNotExist as e:
         workers_logger.info(
             "Error processing analysis results (%s)"
             % json.dumps(
@@ -473,7 +466,21 @@ def process_analysis_results(sound_id, analyzer, status, analysis_time, exceptio
                     "analyzer": analyzer,
                     "status": status,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
+                }
+            )
+        )
+    except Exception as e:
+        workers_logger.info(
+            "Error processing analysis results (%s)"
+            % json.dumps(
+                {
+                    "task_name": PROCESS_ANALYSIS_RESULTS_TASK_NAME,
+                    "sound_id": sound_id,
+                    "analyzer": analyzer,
+                    "status": status,
+                    "error": str(e),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -497,7 +504,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
         "Starting processing of sound (%s)"
         % json.dumps({"task_name": SOUND_PROCESSING_TASK_NAME, "sound_id": sound_id})
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     try:
         check_if_free_space()
         result = FreesoundAudioProcessor(sound_id=sound_id).process(
@@ -511,7 +518,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
                         "task_name": SOUND_PROCESSING_TASK_NAME,
                         "sound_id": sound_id,
                         "result": "success",
-                        "work_time": round(time.time() - start_time),
+                        "work_time": round(time.monotonic() - start_time),
                     }
                 )
             )
@@ -523,7 +530,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
                         "task_name": SOUND_PROCESSING_TASK_NAME,
                         "sound_id": sound_id,
                         "result": "failure",
-                        "work_time": round(time.time() - start_time),
+                        "work_time": round(time.monotonic() - start_time),
                     }
                 )
             )
@@ -542,7 +549,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
                     "task_name": SOUND_PROCESSING_TASK_NAME,
                     "sound_id": sound_id,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -562,7 +569,7 @@ def process_sound(sound_id, skip_previews=False, skip_displays=False):
                     "task_name": SOUND_PROCESSING_TASK_NAME,
                     "sound_id": sound_id,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -585,7 +592,7 @@ def process_before_description(audio_file_path):
         "Starting processing-before-describe of sound (%s)"
         % json.dumps({"task_name": PROCESS_BEFORE_DESCRIPTION_TASK_NAME, "audio_file_path": audio_file_path})
     )
-    start_time = time.time()
+    start_time = time.monotonic()
     try:
         check_if_free_space()
         result = FreesoundAudioProcessorBeforeDescription(audio_file_path=audio_file_path).process()
@@ -597,7 +604,7 @@ def process_before_description(audio_file_path):
                         "task_name": PROCESS_BEFORE_DESCRIPTION_TASK_NAME,
                         "audio_file_path": audio_file_path,
                         "result": "success",
-                        "work_time": round(time.time() - start_time),
+                        "work_time": round(time.monotonic() - start_time),
                     }
                 )
             )
@@ -609,7 +616,7 @@ def process_before_description(audio_file_path):
                         "task_name": PROCESS_BEFORE_DESCRIPTION_TASK_NAME,
                         "audio_file_path": audio_file_path,
                         "result": "failure",
-                        "work_time": round(time.time() - start_time),
+                        "work_time": round(time.monotonic() - start_time),
                     }
                 )
             )
@@ -622,7 +629,7 @@ def process_before_description(audio_file_path):
                     "task_name": PROCESS_BEFORE_DESCRIPTION_TASK_NAME,
                     "audio_file_path": audio_file_path,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )
@@ -636,7 +643,7 @@ def process_before_description(audio_file_path):
                     "task_name": PROCESS_BEFORE_DESCRIPTION_TASK_NAME,
                     "audio_file_path": audio_file_path,
                     "error": str(e),
-                    "work_time": round(time.time() - start_time),
+                    "work_time": round(time.monotonic() - start_time),
                 }
             )
         )

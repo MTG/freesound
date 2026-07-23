@@ -38,20 +38,20 @@ Parameters
 Search queries are defined using the following parameters:
 
 .. rst-class:: fieldstable
-=====================================  =========================  ======================
-Name                                   Type                       Description
-=====================================  =========================  ======================
-query                                  string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in the tags, etc. You'll find some examples below. Using an empty query (``query=`` or ``query=""``) will return all Freesound sounds.
-:ref:`filter <search-filter>`          string                     Allows filtering query results. See below for more information.
-:ref:`sort <search-sort>`              string                     Indicates how query results should be sorted. See below for a list of the sorting options. By default ``sort=score``.
-:ref:`similar_to <search-similar>`     integer or array[float]    Allows finding sounds similar to a given sound. You can pass the ID of a sound (integer) or a similarity vector (array of floats separated by commas) and the results will be sorted by their similarity to this sound.
-:ref:`similar_space <search-similar>`  string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
-group_by_pack                          bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
-:ref:`weights <search-weights>`        string                     Allows definition of custom weights when matching queries with sound metadata fields. You should most likely never use that :)
-:ref:`fields <search-fields>`          strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
-page                                   string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
-page_size                              string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
-=====================================  =========================  ======================
+========================================  =========================  ======================
+Name                                      Type                       Description
+========================================  =========================  ======================
+query                                     string                     The query! The ``query`` is the main parameter used to define a query. You can type several terms separated by spaces or phrases wrapped inside quote '"' characters. For every term, you can also use '+' and '-' modifier characters to indicate that a term is "mandatory" or "prohibited" (by default, terms are considered to be "mandatory"). For example, in a query such as ``query=term_a -term_b``, sounds including ``term_b`` will not match the search criteria. The query does a weighted search over some sound properties including sound tags, the sound name, its description, pack name and the sound id. Therefore, searching for ``query=123`` will find you sounds with id 1234, sounds that have 1234 in the description, in the tags, etc. You'll find some examples below. Using an empty query (``query=`` or ``query=""``) will return all Freesound sounds.
+:ref:`filter <search-filter>`             string                     Allows filtering query results. See below for more information.
+:ref:`sort <search-sort>`                 string                     Indicates how query results should be sorted. See below for a list of the sorting options. By default ``sort=score``.
+:ref:`similar_to <search-similar>`        integer or array[float]    Allows finding sounds similar to a given sound. You can pass the ID of a sound (integer) or a similarity vector (array of floats separated by commas) and the results will be sorted by their similarity to this sound.
+:ref:`similarity_space <search-similar>`  string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
+group_by_pack                             bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
+:ref:`weights <search-weights>`           string                     Allows definition of custom weights when matching queries with sound metadata fields. You should most likely never use that :)
+:ref:`fields <search-fields>`             strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
+page                                      string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
+page_size                                 string                     Indicates the number of sounds per page to include in the result. By default ``page_size=15``, and the maximum is ``page_size=150``. Note that with bigger ``page_size``, more data will need to be transferred.
+========================================  =========================  ======================
 
 
 .. _search-filter:
@@ -158,6 +158,13 @@ rating_desc     Sort by the average rating given to the sounds, highest rated fi
 rating_asc      Same as above, but lowest rated sounds first.
 ==============  ====================================================================
 
+Alternatively, the ``sort`` parameter can also be set as a **sorting target for numeric fields**. In that case, the results will be sorted according to **euclidean distance** between a set 
+of target field values and the corresponding field values of every sound in the results. To that end, any of the ``field names`` listed in the tables of the :ref:`sound-sound` resource that 
+are marked with "yes" in the ``filtering`` column and are of type ``numeric`` or ``integer`` can be used. Sorting target can be defined using the following syntax::
+
+  sort=field_name:value,field_name2:value2
+
+
 
 .. _search-similar:
 
@@ -248,207 +255,6 @@ Examples
 {{examples_Search}}
 
 
-.. _sound-content-search:
-
-Content Search (deprecated)
-=========================================================
-
-::
-
-  GET /apiv2/search/content/
-  POST /apiv2/search/content/
-
-This resource allows searching sounds in Freesound based on their content descriptors.
-
-.. warning:: As of December 2023, this resource is deprecated and will be removed in the comming months. Similar functionality
-  will be achievable using the :ref:`sound-search` resource. Documentation about how to do this will be added in due time
-  but in the meantime, please contact us if you need help with this.
-
-.. _sound-content-search-parameters:
-
-Parameters (content search parameters)
-----------------------------------------------
-
-Content search queries are defined using the following request parameters:
-
-.. rst-class:: fieldstable
-=========================  =========================  ======================
-Name                       Type                       Description
-=========================  =========================  ======================
-target                     string or numeric           This parameter defines a target based on content-based descriptors to sort the search results. It can be set as a number of descriptor name and value pairs, or as a sound id. See below.
-analysis_file              file                       **Experimental** - Alternatively, targets can be specified by uploading a file with the output of the Essentia Freesound Extractor analysis of any sound that you analyzed locally (see below). This parameter overrides ``target``, and requires the use of POST method.
-descriptors_filter         string                     This parameter allows filtering query results by values of the content-based descriptors. See below for more information.
-=========================  =========================  ======================
-
-**The 'target' and 'analysis_file' parameters**
-
-The ``target`` parameter can be used to specify a content-based sorting of your search results.
-Using ``target`` you can sort the query results so that the first results will be the sounds featuring the most similar descriptors to the given target.
-To specify a target you must use a syntax like ``target=descriptor_name:value``.
-You can also set multiple descriptor/value pairs in a target separating them with spaces (``target=descriptor_name:value descriptor_name:value``).
-Descriptor names must be chosen from those listed in :ref:`analysis-docs`.  
-Only numerical descriptors are allowed.
-Multidimensional descriptors with fixed-length (that always have the same number of dimensions) are allowed too (see below).
-Consider the following two ``target`` examples::
-
-  (A) target=lowlevel.pitch.mean:220
-  (B) target=lowlevel.pitch.mean:220 lowlevel.pitch.var:0
-
-Example A will sort the query results so that the first results will have a mean pitch as close to 220Hz as possible.
-Example B will sort the query results so that the first results will have a mean pitch as close to 220Hz as possible and a pitch variance as close as possible to 0.
-In that case example B will promote sounds that have a steady pitch close to 220Hz.
-
-Multidimensional descriptors can also be used in the ``target`` parameter::
-
-  target=sfx.tristimulus.mean:0,1,0
-
-Alternatively, ``target`` can also be set to point to a Freesound sound.
-In that case the descriptors of the sound will be used as the target for the query, therefore query results will be sorted according to their similarity to the targeted sound.
-To set a sound as a target of the query you must use the sound id. For example, to use sound with id 1234 as target::
-
-  target=1234
-
-
-There is even another way to specify a target for the query, which is by uploading an analysis file generated using the Essentia Freesound Extractor.
-For doing that you will need to download and compile Essentia (we recommend using release 2.0.1), an open source feature extraction library developed at the Music Technology Group (https://github.com/mtg/essentia/tree/2.0.1),
-and use the 'streaming_extractor_freesound' example to analyze any sound you have in your local computer.
-As a result, the extractor will create a JSON file that you can use as target in your Freesound API content search queries.
-To use this file as target you will need to use the POST method (instead of GET) and attach the file as an ``analysis_file`` POST parameter (see example below).
-Setting the target as an ``analysis_file`` allows you to to find sounds in Freesound that are similar to any other sound that you have in your local computer and that it is not part of Freesound.
-When using ``analysis_file``, the contents of ``target`` are ignored. Note that **this feature is experimental**. Some users reported not being able to generate compatible analysis files.
-
-Note that if ``target`` (or ``analysis_file``) is not used in combination with ``descriptors_filter``, the results of the query will
-include all sounds from Freesound indexed in the similarity server, sorted by similarity to the target.
-
-
-**The 'descriptors_filter' parameter**
-
-The ``descriptors_filter`` parameter is used to restrict the query results to those sounds whose content descriptor values match with the defined filter.
-To define ``descriptors_filter`` parameter you can use the same syntax as for the normal ``filter`` parameter, including numeric ranges and simple logic operators.
-For example, ``descriptors_filter=lowlevel.pitch.mean:220`` will only return sounds that have an EXACT pitch mean of 220hz.
-Note that this would probably return no results as a sound will rarely have that exact pitch (might be very close like 219.999 or 220.000001 but not exactly 220).
-For this reason, in general it might be better to indicate ``descriptors_filter`` using ranges.
-Descriptor names must be chosen from those listed in :ref:`analysis-docs`.
-Note that most of the descriptors provide several statistics (var, mean, min, max...). In that case, the descriptor name must include also the desired statistic (see examples below).
-Non fixed-length descriptors are not allowed.
-Some examples of ``descriptors_filter`` for numerical descriptors::
-
-  descriptors_filter=lowlevel.pitch.mean:[219.9 TO 220.1]
-  descriptors_filter=lowlevel.pitch.mean:[219.9 TO 220.1] AND lowlevel.pitch_salience.mean:[0.6 TO *]
-  descriptors_filter=lowlevel.mfcc.mean[0]:[-1124 TO -1121]
-  descriptors_filter=lowlevel.mfcc.mean[1]:[17 TO 20] AND lowlevel.mfcc.mean[4]:[0 TO 20]
-
-Note how in the last two examples the filter operates in a particular dimension of a multidimensional descriptor (with dimension index starting at 0).
-
-``descriptors_filter`` can also be defined using non numerical descriptors such as 'tonal.key_key' or 'tonal.key_scale'.
-In that case, the value must be enclosed in double quotes '"', and the character '#' (for example for an A# key) must be indicated with the string 'sharp'.
-Non numerical descriptors can not be indicated using ranges.
-For example::
-
-  descriptors_filter=tonal.key_key:"Asharp"
-  descriptors_filter=tonal.key_scale:"major"
-  descriptors_filter=(tonal.key_key:"C" AND tonal.key_scale:"major") OR (tonal.key_key:"A" AND tonal.key_scale:"minor")
-
-You can combine both numerical and non numerical descriptors as well::
-
-  descriptors_filter=tonal.key_key:"C" tonal.key_scale="major" tonal.key_strength:[0.8 TO *]
-
-
-Response
---------
-
-The Content Search resource returns a sound list just like :ref:`sound-list-response`.
-The same extra request parameters apply (``page``, ``page_size``, ``fields``, ``descriptors`` and ``normalized``).
-
-
-Examples
---------
-
-{{examples_ContentSearch}}
-
-
-.. _sound-combined-search:
-
-Combined Search (deprecated)
-=========================================================
-
-::
-
-  GET /apiv2/search/combined/
-  POST /apiv2/search/combined/
-
-This resource is a combination of :ref:`sound-search` and :ref:`sound-content-search`, and allows searching sounds in Freesound based on their tags, metadata and content-based descriptors.
-
-.. warning:: As of December 2023, this resource is deprecated and will be removed in the comming months. Similar functionality
-  will be achievable using the :ref:`sound-search` resource. Documentation about how to do this will be added in due time
-  but in the meantime, please contact us if you need help with this.
-
-Parameters
-------------------
-
-Combined Search request parameters can include any of the parameters from text-based search queries (``query``, ``filter`` and ``sort``, :ref:`sound-search-parameters`)
-and content-based search queries (``target``, ``analysis_file`` and ``descriptors_filter`` and, :ref:`sound-content-search-parameters`).
-Note that ``group_by_pack`` **is not** available in combined search queries.
-
-In Combined Search, queries can be defined both like a standard textual query or as a target of content-descriptors, and
-query results can be filtered by values of sounds' metadata and sounds' content-descriptors... all at once!
-
-To perform a Combined Search query you must at least specify a ``query`` or a ``target`` parameter (as you would do in text-based and content-based searches respectively),
-and at least one text-based or content-based filter (``filter`` and ``descriptors_filter``).
-Request parameters ``query`` and ``target`` can not be used at the same time, but ``filter`` and ``descriptors_filter`` can both be present in a single Combined Search query.
-In any case, you must always use at least one text-based search request parameter and one content-based search request parameter.
-Note that ``sort`` parameter must always be accompanied by a ``query`` or ``filter`` parameter (or both), otherwise it is ignored.
-``sort`` parameter will also be ignored if parameter ``target`` (or ``analysis_file``) is present in the query.
-
-Combined Search requests might **require significant computational resources** on our servers depending on the particular
-query that is made. Therefore, responses might take longer than usual. Fortunately, response times can vary a lot
-with some small modifications in the query, and this is in your hands ;).
-As a general rule, we recommend not to use the text-search parameter ``query``, and instead define metadata stuff in a ``filter``.
-For example, instead of setting the parameter ``query=loop``, try filtering results to sounds that have the tag loop (``filter=tag:loop``).
-Furthermore, you can try narrowing down your filter or filters (``filter`` and ``descriptors_filter``) and possibly make the queries faster.
-Best response times are normally obtained by specifying a content-based ``target`` in combination with text-based and
-content-based filters (``filter`` and ``descriptors_filter``).
-
-
-Response
---------
-
-The Combined Search resource **returns a variation** of the standard sound list response :ref:`sound-list-response`.
-Combined Search responses are dictionaries with the following structure:
-
-::
-
-  {
-    "results": [
-        <sound result #1 info>,
-        <sound result #2 info>,
-        ...
-    ],
-    "more": <link to get more results (null if there are no more results)>,
-  }
-
-The ``results`` field will include a list of sounds just like in the normal sound list response.
-The length of this list can be defined using the ``page_size`` request parameter like in normal sound list responses.
-However, Combined Search responses **do not guarantee** that the number of elements inside ``results`` will be equal to
-the number specified in ``page_size``. In some cases, you might find less results, so **you should verify the length of the list**.
-
-Furthermore, instead of the ``next`` and ``previous`` links to navigate among results, Combined Search responses
-only offer a ``more`` link that you can use to obtain more results. You can think of the ``more`` link as a
-rough equivalent to ``next``, but it does not work by indicating page numbers as in normal sound list responses.
-
-Also, note that ``count`` field is not present in the Combined Search response, therefore you do not know in advance the total
-amount of results that a query can return.
-
-Finally, Combined Search responses does allow you to use the ``fields``, ``descriptors`` and ``normalized``
-parameters just like you would do in standard sound list responses.
-
-
-Examples
---------
-
-{{examples_CombinedSearch}}
-
-
 Sound resources
 >>>>>>>>>>>>>>>
 
@@ -493,6 +299,7 @@ geotag                     string            yes*       Latitude and longitude o
 is_geotagged               boolean           yes        Whether the sound has geotag information.
 created                    string            yes        The date when the sound was uploaded (e.g. "2014-04-16T20:07:11.145").
 license                    string            yes        The Creative Commons license under which the sound is available to you ("Attribution", "Attribution NonCommercial", "Creative Commons 0").
+gen_ai_preference          string            yes        The user preference regarding the use of the sound for training generative AI models ("no-additional-preferences", "open-source-models", "noncommercial-open-source-models", "no-gen-ai"). Please check `our help section about generative AI training preferences <https://freesound.org/help/faq/#can-my-sounds-be-used-to-train-artificial-intelligence-ai-models>`_ for more information about the meaning of these values.
 type                       string            yes        The original type of the sound (wav, aif, aiff, ogg, mp3, m4a, or flac).
 channels                   integer           yes        The number of sound channels (mostly 1 or 2).
 filesize                   integer           yes        The size of the file in bytes.
@@ -518,7 +325,6 @@ comments                   URI               yes*       The URI of a paginated l
 num_comments               integer           yes        The number of times the sound was commented.
 comment                    URI               no         The URI to comment the sound.
 similar_sounds             URI               no         URI pointing to the :ref:`similar-sounds` resource (to get a list of similar sounds).
-analysis_files             URIs              no         List of URIs for retrieving files with analysis information for each frame of the sound (see :ref:`analysis-docs`).
 =========================  ================  =========  ====================================================================================
 
 Additionally, content-based audio descriptors extracted from the sound signal can be used as fields. 
@@ -529,69 +335,70 @@ The available descriptors, whose names are valid as field names, are:
 .. _AudioCommons: http://www.audiocommons.org/
 
 .. rst-class:: fieldstable
-=========================  ==============  =========  ===============================================================================================================================================================================================================================================================================================================================================================
-Field name                 Type            Filtering  Description                                                                                                                                                                                                                                                                                                                                                    
-=========================  ==============  =========  ===============================================================================================================================================================================================================================================================================================================================================================
-amplitude_peak_ratio_      numeric         yes        Ratio between the position of the peak in the amplitude envelope and the total envelope duration, indicating whether the maximum magnitude of the audio signal occurs early (impulsive or decrescendo) or late (crescendo).                                                                                                                                    
-beat_count_                integer         yes        Number of beats in the audio signal, derived from the total detected beat positions and expresses a measure of rhythmic density or tempo-related activity.                                                                                                                                                                                                     
-beat_loudness_             numeric         yes        Spectral energy measured at the beat positions of the audio signal.                                                                                                                                                                                                                                                                                            
-beat_times_                array[numeric]  no         Beat timestamps (in seconds) for the audio signal, which can vary according to the amount (count) of beats identified in the audio.                                                                                                                                                                                                                            
-boominess_                 numeric         yes        Boominess of the audio signal. A boomy sound is one that conveys a sense of loudness, depth and resonance.                                                                                                                                                                                                                                                     
-bpm_                       integer         yes        BPM value estimated by beat tracking algorithm.                                                                                                                                                                                                                                                                                                                
-bpm_confidence_            numeric         yes        Confidence score on how reliable the tempo (BPM) estimation is.                                                                                                                                                                                                                                                                                                
-brightness_                numeric         yes        Brightness of the audio signal. A bright sound is one that is clear/vibrant and/or contains significant high-pitched elements.                                                                                                                                                                                                                                 
-chord_count_               integer         yes        Number of chords in the audio signal based on the number of detected chords by the chord_progression descriptor.                                                                                                                                                                                                                                               
-chord_progression_         array[string]   no         Chords estimated from the harmonic pitch class profiles (HPCPs) across the audio signal. Using the pitch classes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], it finds the best-matching major or minor triad and outputs a time-varying chord sequence as a sequence of labels (e.g. A#, Bm). Note, chords are major if no minor symbol.
-decay_strength_            numeric         yes        Rate at which the audio signal's energy decays (i.e. how quickly it decreases) after the initial attack. It is computed from a non-linear combination of the signal's energy and its temporal centroid (the balance point of the signal's absolute amplitude).                                                                                                 
-depth_                     numeric         yes        Depth of the audio signal. A deep sound is one that conveys the sense of having been made far down below the surface of its source.                                                                                                                                                                                                                            
-dissonance_                numeric         yes        Sensory dissonance of the audio signal given its spectral peaks.                                                                                                                                                                                                                                                                                               
-duration_effective_        numeric         yes        Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and ?90?dB), e.g. for distinguishing short/percussive from sustained sounds.                                                                                                                                                      
-dynamic_range_             numeric         yes        Loudness range (dB, LU) of the audio signal measured using the EBU R128 standard.                                                                                                                                                                                                                                                                              
-hardness_                  numeric         yes        Hardness of the audio signal. A hard sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.                                                                                                                                                                                        
-hpcp_                      array[numeric]  no         Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).                                                                                                                                                                          
-hpcp_crest_                numeric         yes        Dominance of the strongest pitch class (crest) compared to the rest, computed as the ratio between the maximum HPCP value and the mean HPCP value (computed by the hpcp descriptor).                                                                                                                                                                           
-hpcp_entropy_              numeric         yes        Uniformity of the pitch-class distribution, computed as the Shannon entropy of the HPCP (computed by the hpcp descriptor).                                                                                                                                                                                                                                     
-inharmonicity_             numeric         yes        Deviation of spectral components from perfect harmonicity, computed as the energy-weighted divergence from their closest multiples of the fundamental frequency.                                                                                                                                                                                               
-log_attack_time_           numeric         yes        Log (base 10) of the attack time of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.                                                                                                                                              
-loopable_                  boolean         yes        Whether the audio signal is loopable, i.e. it begins and ends in a way that sounds smooth when repeated.                                                                                                                                                                                                                                                       
-loudness_                  numeric         yes        Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.                                                                                                                                                                                                                                                                              
-mfcc_                      array[numeric]  no         13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).                                                                                                                                                                                                                                                                                              
-note_confidence_           numeric         yes        Confidence score on how reliable the note name/MIDI estimation is.                                                                                                                                                                                                                                                                                             
-note_midi_                 integer         yes        MIDI value corresponding to the estimated note (computed by the note_name descriptor).                                                                                                                                                                                                                                                                         
-note_name_                 string          yes        Pitch note name that includes one of the 12 western notes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number, e.g. "A4", "E#7". It is computed by the median of the estimated fundamental frequency.                                                                                                                      
-onset_count_               integer         yes        Number of detected onsets in the audio signal.                                                                                                                                                                                                                                                                                                                 
-onset_times_               array[numeric]  no         Timestamps for the detected onsets in the audio signal in seconds, which can vary according to the amount of onsets (computed by the onset_count descriptor).                                                                                                                                                                                                  
-pitch_                     numeric         yes        Mean (average) fundamental frequency derived from the audio signal, computed with the YinFFT algorithm.                                                                                                                                                                                                                                                        
-pitch_max_                 numeric         yes        Maximum fundamental frequency observed throughout the audio signal.                                                                                                                                                                                                                                                                                            
-pitch_min_                 numeric         yes        Minimum fundamental frequency observed throughout the audio signal.                                                                                                                                                                                                                                                                                            
-pitch_salience_            numeric         yes        Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.                                                                                                                                                
-pitch_var_                 numeric         yes        Variance of the fundamental frequency of the audio signal.                                                                                                                                                                                                                                                                                                     
-reverbness_                boolean         yes        Whether the signal is reverberated or not.                                                                                                                                                                                                                                                                                                                     
-roughness_                 numeric         yes        Roughness of the audio signal. A rough sound is one that has an uneven or irregular sonic texture.                                                                                                                                                                                                                                                             
-sharpness_                 numeric         yes        Sharpness of the audio signal. A sharp sound is one that suggests it might cut if it were to take on physical form.                                                                                                                                                                                                                                            
-silence_rate_              numeric         yes        Amount of silence in the audio signal, computed by the fraction of frames with instant power below ?30?dB.                                                                                                                                                                                                                                                     
-single_event_              boolean         yes        Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.                                                                                                                                                                                     
-spectral_centroid_         numeric         yes        Spectral centroid of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.                                              
-spectral_complexity_       numeric         yes        Spectral complexity of the audio signal's spectrum, based on the number of peaks in the spectrum.                                                                                                                                                                                                                                                              
-spectral_crest_            numeric         yes        Dominance of the strongest spectral peak (crest) compared to the rest, computed as the ratio between the maximum and mean spectral magnitudes.                                                                                                                                                                                                                 
-spectral_energy_           numeric         yes        Energy in the spectrum of the audio signal. It represents the total magnitude of all frequency components and indicates how much power is present across the spectrum.                                                                                                                                                                                         
-spectral_entropy_          numeric         yes        Shannon entropy in the frequency domain of the audio signal, measuring the unpredictability in the spectrum.                                                                                                                                                                                                                                                   
-spectral_flatness_         numeric         yes        Flatness of the spectrum measured as the ratio of its geometric mean to its arithmetic mean (in dB). High values indicate a noise-like, flat spectrum with evenly distributed power, while low values indicate a tone-like, spiky spectrum with power concentrated in a few frequency bands.                                                                   
-spectral_rolloff_          numeric         yes        Roll-off frequency of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).                                                                                                         
-spectral_skewness_         numeric         yes        Skewness of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                                                               
-spectral_spread_           numeric         yes        Spread (variance) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                                                      
-start_time_                numeric         yes        The moment at which sound begins in seconds, i.e. when the audio signal first rises above silence.                                                                                                                                                                                                                                                             
-temporal_centroid_         numeric         yes        Temporal centroid of the audio signal, defined as the time point at which the temporal balancing position of the sound event energy.                                                                                                                                                                                                                           
-temporal_centroid_ratio_   numeric         yes        Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is �balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).                                                             
-temporal_decrease_         numeric         yes        Overall decrease of the audio signal's amplitude over time, computed as the linear regression coefficient.                                                                                                                                                                                                                                                     
-temporal_skewness_         numeric         yes        Skewness of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                                
-temporal_spread_           numeric         yes        Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                                       
-tonality_                  string          yes        Key (tonality) estimated by a key detection algorithm. The key name includes the root note of the scale, which is one of ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], and the scale mode, which is one of ["major", "minor"], e.g. "C minor", "F# major".                                                                                
-tonality_confidence_       numeric         yes        Confidence score on how reliable the key estimation is (computed by the tonality descriptor).                                                                                                                                                                                                                                                                  
-tristimulus_               array[numeric]  no         Tristimulus of the audio signal given its harmonic peaks. It measures the relative contribution of harmonic groups in a signal's spectrum, where the first value captures the first harmonic, the second captures harmonics 2-4, and the third captures all remaining harmonics. It is a timbre equivalent to the color attributes in the vision.              
-warmth_                    numeric         yes        Warmth of the audio signal. A warm sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.                                                                                                                                                                                                                      
-zero_crossing_rate_        numeric         yes        Zero-crossing rate of the audio signal. It is the number of sign changes between consecutive samples divided by the total number of samples. Noisy signals tend to have a higher value. For monophonic tonal signals, it can be used as a primitive pitch detection algorithm.                                                                                 
-=========================  ==============  =========  ===============================================================================================================================================================================================================================================================================================================================================================
+=========================  ==============  =========  =================================================================================================================================================================================================================================================================================================================================================
+Field name                 Type            Filtering  Description                                                                                                                           
+=========================  ==============  =========  =================================================================================================================================================================================================================================================================================================================================================
+amplitude_peak_ratio_      numeric         yes        Ratio between the position of the peak in the amplitude envelope and the total envelope duration, indicating whether the maximum magnitude of the audio signal occurs early (impulsive or decrescendo) or late (crescendo).                                                                                                                      
+beat_count_                integer         yes        Number of beats in the audio signal, derived from the total detected beat positions and expresses a measure of rhythmic density or tempo-related activity.                                                                                                                           
+beat_loudness_             numeric         yes        Spectral energy measured at the beat positions of the audio signal. It measures the strength of the rhythmic beats of the sound.                                                                                                                           
+beat_times_                array[numeric]  no         Beat timestamps (in seconds) for the audio signal, which can vary according to the amount (count) of beats identified in the audio.                                                                                                                           
+boominess_                 numeric         yes        Boominess of the audio signal. A boomy sound is one that conveys a sense of loudness, depth and resonance.                                                                                                                           
+bpm_                       integer         yes        BPM value estimated by beat tracking algorithm.                                                                                                                           
+bpm_confidence_            numeric         yes        Confidence score on how reliable the tempo (BPM) estimation is.                                                                                                                           
+brightness_                numeric         yes        Brightness of the audio signal. A bright sound is one that is clear/vibrant and/or contains significant high-pitched elements.                                                                                                                           
+decay_strength_            numeric         yes        Rate at which the audio signal's energy decays (i.e. how quickly it decreases) after the initial attack. It is computed from a non-linear combination of the signal's energy and its temporal centroid (the balance point of the signal's absolute amplitude).                                                                                   
+depth_                     numeric         yes        Depth of the audio signal. A deep sound is one that conveys the sense of having been made far down below the surface of its source.                                                                                                                           
+dissonance_                numeric         yes        Sensory dissonance of the audio signal given its spectral peaks.                                                                                                                           
+duration_effective_        numeric         yes        Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and 90dB), e.g. for distinguishing short/percussive from sustained sounds.                                                                                                                           
+dynamic_range_             numeric         yes        Loudness range (dB, LU) of the audio signal measured using the EBU R128 standard.                                                                                                                           
+hardness_                  numeric         yes        Hardness of the audio signal. A hard sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.                                                                                                                           
+hpcp_                      array[numeric]  no         Frame by frame average of the Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).                                                                                                                           
+hpcp_var_                  array[numeric]  no         Frame by frame variance of the Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).                                                                                                                           
+hpcp_crest_                numeric         yes        Dominance of the strongest pitch class (crest) compared to the rest, computed as the ratio between the maximum HPCP value and the mean HPCP value (computed by the hpcp descriptor).                                                                                                                           
+hpcp_entropy_              numeric         yes        Uniformity of the pitch-class distribution, computed as the Shannon entropy of the HPCP (computed by the hpcp descriptor).                                                                                                                           
+inharmonicity_             numeric         yes        Deviation of spectral components from perfect harmonicity, computed as the energy-weighted divergence from their closest multiples of the fundamental frequency.                                                                                                                           
+log_attack_time_           numeric         yes        Log (base 10) of the attack time of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.                                                                                                                           
+loopable_                  boolean         yes        Whether the audio signal is loopable, i.e. it begins and ends in a way that sounds smooth when repeated.                                                                                                                           
+loudness_                  numeric         yes        Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.                                                                                                                           
+mfcc_                      array[numeric]  no         Frame by frame average of the 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).                                                                                                                           
+mfcc_var_                  array[numeric]  no         Frame by frame variance of the 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).                                                                                                                           
+note_confidence_           numeric         yes        Confidence score on how reliable the note name/MIDI estimation is.                                                                                                                           
+note_midi_                 integer         yes        MIDI value corresponding to the estimated note (computed by the note_name descriptor).                                                                                                                           
+note_name_                 string          yes        Pitch note name that includes one of the 12 western notes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number, e.g. "A4", "E#7". It is computed by the median of the estimated fundamental frequency.                                                                                                        
+onset_count_               integer         yes        Number of detected onsets in the audio signal.                                                                                                                           
+onset_times_               array[numeric]  no         Timestamps for the detected onsets in the audio signal in seconds, which can vary according to the amount of onsets (computed by the onset_count descriptor).                                                                                                                           
+pitch_                     numeric         yes        Mean (average) fundamental frequency derived from the audio signal, computed with the YinFFT algorithm.                                                                                                                           
+pitch_max_                 numeric         yes        Maximum fundamental frequency observed throughout the audio signal.                                                                                                                           
+pitch_min_                 numeric         yes        Minimum fundamental frequency observed throughout the audio signal.                                                                                                                           
+pitch_salience_            numeric         yes        Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.                                                                                                                           
+pitch_confidence_          numeric         yes        A measure of the confidence with which the pitch was estimated. If the output is near 1, there exist just one pitch in the mixture, an output near 0 indicates multiple, not distinguishable pitches.                                                                                                                           
+pitch_var_                 numeric         yes        Variance of the fundamental frequency of the audio signal.                                                                                                                           
+reverbness_                boolean         yes        Whether the signal is reverberated or not.                                                                                                                           
+roughness_                 numeric         yes        Roughness of the audio signal. A rough sound is one that has an uneven or irregular sonic texture.                                                                                                                           
+sharpness_                 numeric         yes        Sharpness of the audio signal. A sharp sound is one that suggests it might cut if it were to take on physical form.                                                                                                                           
+silence_rate_              numeric         yes        Amount of silence in the audio signal, computed by the fraction of frames with instant power below 30dB.                                                                                                                           
+single_event_              boolean         yes        Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.                                                                                                                           
+spectral_centroid_         numeric         yes        Spectral centroid of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. Itis computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.                                
+spectral_complexity_       numeric         yes        Spectral complexity of the audio signal's spectrum, based on the number of peaks in the spectrum.                                                                                                                           
+spectral_crest_            numeric         yes        Dominance of the strongest spectral peak (crest) compared to the rest, computed as the ratio between the maximum and mean spectral magnitudes.                                                                                                                           
+spectral_energy_           numeric         yes        Energy in the spectrum of the audio signal. It represents the total magnitude of all frequency components and indicates how much power is present across the spectrum.                                                                                                                           
+spectral_entropy_          numeric         yes        Shannon entropy in the frequency domain of the audio signal, measuring the unpredictability in the spectrum.                                                                                                                           
+spectral_flatness_         numeric         yes        Flatness of the spectrum measured as the ratio of its geometric mean to its arithmetic mean (in dB). High values indicate a noise-like, flat spectrum with evenly distributed power, while low values indicate a tone-like, spiky spectrum with power concentrated in a few frequency bands.                                                     
+spectral_rolloff_          numeric         yes        Roll-off frequency of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).                                                                                           
+spectral_skewness_         numeric         yes        Skewness of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                           
+spectral_spread_           numeric         yes        Spread (variance) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                           
+start_time_                numeric         yes        The moment at which sound begins in seconds, i.e. when the audio signal first rises above silence.                                                                                                                           
+temporal_centroid_         numeric         yes        Temporal centroid of the audio signal, defined as the time point at which the temporal balancing position of the sound event energy.                                                                                                                           
+temporal_centroid_ratio_   numeric         yes        Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is ‘balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).                                               
+temporal_decrease_         numeric         yes        Overall decrease of the audio signal's amplitude over time, computed as the linear regression coefficient.                                                                                                                           
+temporal_skewness_         numeric         yes        Skewness of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                           
+temporal_spread_           numeric         yes        Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.                                                                                                                         
+tonality_                  string          yes        Key (tonality) estimated by a key detection algorithm. The key name includes the root note of the scale, which is one of ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], and the scale mode, whichis one of ["major", "minor"], e.g. "C minor", "F# major".                                                                  
+tonality_confidence_       numeric         yes        Confidence score on how reliable the key estimation is (computed by the tonality descriptor).                                                                                                                           
+tristimulus_               array[numeric]  no         Tristimulus of the audio signal given its harmonic peaks. It measures the relative contribution of harmonic groups in a signal's spectrum, where the first value captures the first harmonic, the second captures harmonics 2-4, and the third captures all remaining harmonics. It is a timbre equivalent to the color attributes in the vision.
+warmth_                    numeric         yes        Warmth of the audio signal. A warm sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.                                                                                                                           
+zero_crossing_rate_        numeric         yes        Zero-crossing rate of the audio signal. It is the number of sign changes between consecutive samples divided by the total number of samples. Noisy signals tend to have a higher value. For monophonic tonal signals,it can be used as a primitive pitch detection algorithm.                                                                   
+=========================  ==============  =========  =================================================================================================================================================================================================================================================================================================================================================
 
 .. _amplitude_peak_ratio: https://freesound.org/docs/api/analysis_docs.html#amplitude-peak-ratio
 .. _beat_count: https://freesound.org/docs/api/analysis_docs.html#beat-count
@@ -601,8 +408,6 @@ zero_crossing_rate_        numeric         yes        Zero-crossing rate of the 
 .. _bpm: https://freesound.org/docs/api/analysis_docs.html#bpm
 .. _bpm_confidence: https://freesound.org/docs/api/analysis_docs.html#bpm-confidence
 .. _brightness: https://freesound.org/docs/api/analysis_docs.html#brightness
-.. _chord_count: https://freesound.org/docs/api/analysis_docs.html#chord-count
-.. _chord_progression: https://freesound.org/docs/api/analysis_docs.html#chord-progression
 .. _decay_strength: https://freesound.org/docs/api/analysis_docs.html#decay-strength
 .. _depth: https://freesound.org/docs/api/analysis_docs.html#depth
 .. _dissonance: https://freesound.org/docs/api/analysis_docs.html#dissonance
@@ -610,6 +415,7 @@ zero_crossing_rate_        numeric         yes        Zero-crossing rate of the 
 .. _dynamic_range: https://freesound.org/docs/api/analysis_docs.html#dynamic-range
 .. _hardness: https://freesound.org/docs/api/analysis_docs.html#hardness
 .. _hpcp: https://freesound.org/docs/api/analysis_docs.html#hpcp
+.. _hpcp_var: https://freesound.org/docs/api/analysis_docs.html#hpcp-var
 .. _hpcp_crest: https://freesound.org/docs/api/analysis_docs.html#hpcp-crest
 .. _hpcp_entropy: https://freesound.org/docs/api/analysis_docs.html#hpcp-entropy
 .. _inharmonicity: https://freesound.org/docs/api/analysis_docs.html#inharmonicity
@@ -617,6 +423,7 @@ zero_crossing_rate_        numeric         yes        Zero-crossing rate of the 
 .. _loopable: https://freesound.org/docs/api/analysis_docs.html#loopable
 .. _loudness: https://freesound.org/docs/api/analysis_docs.html#loudness
 .. _mfcc: https://freesound.org/docs/api/analysis_docs.html#mfcc
+.. _mfcc_var: https://freesound.org/docs/api/analysis_docs.html#mfcc-var
 .. _note_confidence: https://freesound.org/docs/api/analysis_docs.html#note-confidence
 .. _note_midi: https://freesound.org/docs/api/analysis_docs.html#note-midi
 .. _note_name: https://freesound.org/docs/api/analysis_docs.html#note-name
@@ -626,6 +433,7 @@ zero_crossing_rate_        numeric         yes        Zero-crossing rate of the 
 .. _pitch_max: https://freesound.org/docs/api/analysis_docs.html#pitch-max
 .. _pitch_min: https://freesound.org/docs/api/analysis_docs.html#pitch-min
 .. _pitch_salience: https://freesound.org/docs/api/analysis_docs.html#pitch-salience
+.. _pitch_confidence: https://freesound.org/docs/api/analysis_docs.html#pitch-confidence
 .. _pitch_var: https://freesound.org/docs/api/analysis_docs.html#pitch-var
 .. _reverbness: https://freesound.org/docs/api/analysis_docs.html#reverbness
 .. _roughness: https://freesound.org/docs/api/analysis_docs.html#roughness

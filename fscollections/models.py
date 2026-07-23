@@ -18,22 +18,28 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 from urllib.parse import quote
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import F, Sum
+from django.db.models import Avg, Count, F, Sum
 from django.db.models.functions import Greatest
-from django.db.models.signals import m2m_changed, post_delete, post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.text import slugify
 
-from sounds.models import License, Sound
+from freesound import settings
+from sounds.models import License, LicenseSummaryMixin, Sound
+from tags.models import Tag
 
 
-class Collection(models.Model):
+class Collection(LicenseSummaryMixin, models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -41,11 +47,16 @@ class Collection(models.Model):
     # TODO: description should be required (check how to display it in edit form + collectionsound form)
     description = models.TextField(blank=True)
     maintainers = models.ManyToManyField(User, related_name="collection_maintainer")
-    sounds = models.ManyToManyField(Sound, through="CollectionSound", related_name="collections", blank=True)
+    sounds: models.ManyToManyField[Sound, "CollectionSound"] = models.ManyToManyField(
+        Sound, through="CollectionSound", related_name="collections", blank=True
+    )
     num_sounds = models.PositiveIntegerField(default=0)
     num_downloads = models.PositiveIntegerField(default=0)
     public = models.BooleanField(default=False)
     is_default_collection = models.BooleanField(default=False)
+    featured_sound_ids = ArrayField(
+        models.IntegerField(), size=settings.MAX_FEATURED_SOUNDS_PER_COLLECTION, blank=True, default=list
+    )
 
     def __str__(self):
         return f"{self.name}"
@@ -56,12 +67,70 @@ class Collection(models.Model):
     def get_collection_sounds_in_search_url(self):
         return f"{reverse('sounds-search')}?f=collection:{self.collection_filter_value()}"
 
+    @property
+    def url_kwargs(self):
+        return {"collection_id": self.id, "collection_name": slugify(self.name)}
+
+    def get_url(self, url_name="collection"):
+        return reverse(url_name, kwargs=self.url_kwargs)
+
+    def get_absolute_url(self):
+        return self.get_url()
+
+    @property
+    def edit_url(self):
+        return self.get_url("edit-collection")
+
+    @property
+    def delete_url(self):
+        return self.get_url("delete-collection")
+
+    @property
+    def download_url(self):
+        return self.get_url("download-collection")
+
+    @property
+    def licenses_url(self):
+        return self.get_url("collection-licenses")
+
+    @property
+    def add_sounds_modal_url(self):
+        return self.get_url("add-sounds-modal-collection")
+
+    @property
+    def add_maintainers_modal_url(self):
+        return self.get_url("add-maintainers-modal")
+
+    def user_is_owner_or_maintainer(self, user):
+        if not user or not user.is_authenticated:
+            return False
+        return user == self.user or self.maintainers.filter(id=user.id).exists()
+
+    def update_num_sounds(self):
+        # Single source of truth for the num_sounds recount
+        self.num_sounds = Sound.objects.sounds_for_collection(self.id).count()
+        Collection.objects.filter(id=self.id).update(num_sounds=self.num_sounds)
+
+    def add_sound(self, sound, user, feature=False):
+        """Add `sound` to this collection (idempotent), optionally featuring it.
+
+        Returns True when featuring was requested but skipped because the collection already
+        holds settings.MAX_FEATURED_SOUNDS_PER_COLLECTION featured sounds (the sound is still
+        added in that case); returns False otherwise.
+        """
+        CollectionSound.objects.get_or_create(user=user, collection=self, sound=sound, defaults={"status": "OK"})
+        if not feature or sound.id in self.featured_sound_ids:
+            return False
+        if len(self.featured_sound_ids) >= settings.MAX_FEATURED_SOUNDS_PER_COLLECTION:
+            return True
+        self.featured_sound_ids = self.featured_sound_ids + [sound.id]
+        self.save(update_fields=["featured_sound_ids"])
+        return False
+
     def get_attribution(self, sound_qs=None):
         # If no queryset of sounds is provided, take it from the collection
         if sound_qs is None:
-            sound_qs = self.sounds.filter(processing_state="OK", moderation_state="OK").select_related(
-                "user", "license"
-            )
+            sound_qs = Sound.objects.bulk_sounds_for_collection(self.id)
 
         users = User.objects.filter(sounds__in=sound_qs).distinct()
         # Generate text file with license info
@@ -79,16 +148,47 @@ class Collection(models.Model):
         return "%d__%s__%s.zip" % (self.id, username_slug, name_slug)
 
     def get_total_collection_sounds_length(self):
-        result = self.sounds.aggregate(total_duration=Sum("duration"))
+        result = Sound.objects.sounds_for_collection(self.id).aggregate(total_duration=Sum("duration"))
         return result["total_duration"] or 0
 
+    @cached_property
+    def ratings_data(self):
+        # (avg rating, num sounds) of the collection sounds with at least MIN_NUMBER_RATINGS ratings
+        result = (
+            Sound.objects.sounds_for_collection(self.id)
+            .filter(num_ratings__gte=settings.MIN_NUMBER_RATINGS)
+            .aggregate(avg=Avg("avg_rating"), count=Count("id"))
+        )
+        return result["avg"] or 0, result["count"]
+
+    @property
+    def avg_rating(self):
+        return self.ratings_data[0]
+
+    @property
+    def num_ratings(self):
+        return self.ratings_data[1]
+
+    @cached_property
+    def licenses_data(self):
+        licenses_data = list(Sound.objects.sounds_for_collection(self.id).values_list("license__name", "license_id"))
+        license_ids = [lid for _, lid in licenses_data]
+        license_names = [lname for lname, _ in licenses_data]
+        return license_ids, license_names
+
+    def get_collection_tags_bw(self):
+        tags = (
+            Tag.objects.filter(soundtag__sound__in=Sound.objects.sounds_for_collection(self.id))
+            .annotate(count=Count("soundtag"))
+            .order_by("-count")[:10]
+        )
+        return [{"name": tag.name, "count": tag.count, "browse_url": reverse("tags", args=[tag.name])} for tag in tags]
+
     def save(self, *args, **kwargs):
-        self.num_sounds = CollectionSound.objects.filter(collection=self).count()
-        if self.num_sounds > 0:
-            # this need to be reviewed, featured_sound feature is not fully developed
-            csound = CollectionSound.objects.filter(collection=self, status="OK").first()
-            csound.featured_sound = True
-            csound.save()
+        # Update num_sounds count
+        if self.pk:
+            self.num_sounds = Sound.objects.sounds_for_collection(self.id).count()
+
         super().save(*args, **kwargs)
 
 
@@ -97,7 +197,6 @@ class CollectionSound(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     collection = models.ForeignKey(Collection, related_name="collectionsound", on_delete=models.CASCADE)
-    featured_sound = models.BooleanField(default=False)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     STATUS_CHOICES = (
@@ -112,16 +211,26 @@ class CollectionSound(models.Model):
         unique_together = ("sound", "collection")
 
 
-@receiver(post_save, sender=CollectionSound)
+@receiver([post_save, post_delete], sender=CollectionSound)
 def update_collection_num_sounds(sender, instance, **kwargs):
-    if instance:
-        Collection.objects.filter(collectionsound=instance).update(num_sounds=Greatest(F("num_sounds") + 1, 0))
+    if instance and instance.collection_id:
+        instance.collection.update_num_sounds()
 
 
-@receiver(m2m_changed, sender=CollectionSound)
-def update_collection_num_sounds_bulk_changes(sender, instance, **kwargs):
-    if instance:
-        Collection.objects.filter(collectionsound=instance).update(num_sounds=Greatest(F("num_sounds") - 1, 0))
+@receiver(post_delete, sender=CollectionSound)
+def remove_not_valid_featured_sounds(sender, instance, **kwargs):
+    """Remove featured_sound_ids that are no longer part of the collection."""
+    if instance and instance.collection_id:
+        collection = instance.collection
+        if collection.featured_sound_ids:
+            # Get current accepted sound IDs in the collection
+            valid_sound_ids = set(
+                CollectionSound.objects.filter(collection=collection, status="OK").values_list("sound_id", flat=True)
+            )
+            # Filter out any featured_sound_ids that are not in the collection
+            valid_featured_ids = [sid for sid in collection.featured_sound_ids if sid in valid_sound_ids]
+            if valid_featured_ids != collection.featured_sound_ids:
+                Collection.objects.filter(id=collection.id).update(featured_sound_ids=valid_featured_ids)
 
 
 @receiver(post_save, sender=CollectionSound)

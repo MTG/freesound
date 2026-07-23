@@ -24,13 +24,14 @@ from collections import Counter
 import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, User
 from django.core.cache import caches
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
+from prometheus_client import Counter as PrometheusCounter
 
 import tickets
 from freesound.celery import get_queues_task_counts
@@ -38,9 +39,18 @@ from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from tickets import TICKET_STATUS_CLOSED
 from utils.search import SearchEngineException, get_search_engine
 
+MONITOR_HOME_VIEWS = PrometheusCounter(
+    "freesound_monitor_home_views_total",
+    "Number of times the staff monitor home page has been viewed (test metric)",
+)
+
+
+def user_is_staff(user: AbstractBaseUser | AnonymousUser) -> bool:
+    return isinstance(user, User) and user.is_staff
+
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def get_queues_status(request):
     try:
         celery_task_counts = get_queues_task_counts()
@@ -50,13 +60,15 @@ def get_queues_status(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_home(request):
+    # Test instrumentation: bump a counter so we can confirm it appears on /metrics.
+    MONITOR_HOME_VIEWS.inc()
     return HttpResponseRedirect(reverse("monitor-stats"))
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_processing(request):
     # Processing
     sounds_queued_count = Sound.objects.filter(processing_ongoing_state="QU").count()
@@ -82,7 +94,7 @@ def monitor_processing(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_analysis(request):
     # Analysis
     analyzers_data = {}
@@ -118,22 +130,8 @@ def monitor_analysis(request):
         analyzer=settings.CONSOLIDATED_ANALYZER_NAME, analysis_status="QU"
     ).count()
 
-    # Get stats about similarity vectors indexed in Solr
-    try:
-        sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_similarity_space()
-    except SearchEngineException:
-        sim_vector_stats = {}
-
-    # Add sim vector stats from DB
-    for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
-        num_vectors_in_db = SoundSimilarityVector.objects.filter(similarity_space_name=similarity_space_name).count()
-        if similarity_space_name not in sim_vector_stats:
-            sim_vector_stats[similarity_space_name] = {}
-        sim_vector_stats[similarity_space_name]["num_vectors_in_db"] = num_vectors_in_db
-
     tvars = {
         "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
-        "sim_vector_stats": sim_vector_stats,
         "queues_stats_url": reverse("queues-stats"),
         "activePage": "analysis",
         "consolidated": {
@@ -148,7 +146,34 @@ def monitor_analysis(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
+def monitor_similarity(request):
+    # Get stats about similarity vectors indexed in Solr
+    try:
+        sim_vector_stats = get_search_engine().get_num_sim_vectors_indexed_per_similarity_space()
+    except SearchEngineException:
+        sim_vector_stats = {}
+
+    # Add sim vector stats from DB
+    for similarity_space_name in settings.SIMILARITY_SPACES_NAMES:
+        num_vectors_in_db = SoundSimilarityVector.objects.filter(
+            similarity_space_name=similarity_space_name,
+            sound__processing_state="OK",
+            sound__moderation_state="OK",
+        ).count()
+        if similarity_space_name not in sim_vector_stats:
+            sim_vector_stats[similarity_space_name] = {}
+        sim_vector_stats[similarity_space_name]["num_vectors_in_db"] = num_vectors_in_db
+
+    tvars = {
+        "sim_vector_stats": sim_vector_stats,
+        "activePage": "similarity",
+    }
+    return render(request, "monitor/similarity.html", tvars)
+
+
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_moderation(request):
     sounds_in_moderators_queue_count = tickets.views._get_sounds_in_moderators_queue_count(request.user)
     new_upload_count = tickets.views.new_sound_tickets_count()
@@ -177,14 +202,14 @@ def monitor_moderation(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_stats(request):
     tvars = {"activePage": "stats"}
     return render(request, "monitor/stats.html", tvars)
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def moderators_stats(request):
     return HttpResponseRedirect(reverse("monitor-moderation"))
 
@@ -245,7 +270,7 @@ def totals_stats_ajax(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def process_sounds(request):
     # Send sounds to processing according to their processing_state
     processing_status = request.GET.get("prs", None)

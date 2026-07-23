@@ -21,7 +21,7 @@
 import ipaddress
 import json
 import logging
-import urllib
+import urllib.parse
 
 import sentry_sdk
 from django.conf import settings

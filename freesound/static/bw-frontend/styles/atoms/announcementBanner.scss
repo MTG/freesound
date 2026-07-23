@@ -1,23 +1,23 @@
 .bw-announcement_banner {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
 
-    padding: $small-spacing;
-    background-color: $red;
-    border-radius: 2px;
+  padding: $small-spacing;
+  background-color: $red;
+  border-radius: 2px;
+  color: #ffffff;
+
+  a {
     color: #ffffff;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    text-decoration-color: currentColor;
+    text-decoration-skip-ink: none;
 
-    a {
-        color: #ffffff;
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 3px;
-        text-decoration-color: currentColor;
-        text-decoration-skip-ink: none;
-
-        &:hover {
-            color: black;
-        }
+    &:hover {
+      color: black;
     }
+  }
 }

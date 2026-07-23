@@ -1,25 +1,25 @@
 .tickets-table {
-    width: 100%;
-    user-select: none;
-    -webkit-user-select: none;
-    
-    td {
-        max-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        padding: 3px 3px 3px 8px;
-    }
+  width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
 
-    tr.deferred td {
-        background-color: $almost-white-less-white!important;        
-    }
+  td {
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 3px 3px 3px 8px;
+  }
 
-    tr.selected td {
-        background-color: $yellow!important;
-        
-        label {
-            color: #141424!important;
-        }
+  tr.deferred td {
+    background-color: $almost-white-less-white !important;
+  }
+
+  tr.selected td {
+    background-color: $yellow !important;
+
+    label {
+      color: #141424 !important;
     }
+  }
 }

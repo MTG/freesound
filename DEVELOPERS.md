@@ -64,6 +64,22 @@ that were made, and allow feedback if necessary
 
 ## Specific notes
 
+### Template tag optional arguments
+
+Optional arguments in template tags must always be keyword-only:
+
+```py
+@register.inclusion_tag("atoms/avatar.html")
+def bw_user_avatar(avatar_url, username, *, size=40, extra_class=""):
+```
+
+and templates need to specify the keywords in order to change the default:
+
+```html
+{% bw_user_avatar url username size=32 %}
+```
+
+
 ### Custom Django permissions
 
 If there is a need for defining custom permissions we should define them in the corresponding model's `Meta` class
@@ -193,6 +209,10 @@ the implementation of a search backend. You can run it like:
 
     docker compose run --rm web pytest -m "search_engine" --search-engine-backend utils.search.backends.solr9pysolr.Solr9PySolrSearchEngine
 
+To run a specific test form the search engine tests suite, you can do something like this:
+
+    docker compose run --rm web pytest -m "search_engine" utils/search/backends/test_search_engine_backend.py::test_remove_sounds
+
 
 ### Freesound analysis pipeline
 
@@ -299,6 +319,15 @@ When consolidated analyses are loaded in `SoundAnalysis` objects in the DB, addi
 descriptors and therefore these will be available for filtering in search queries. Note that multi-dimensional descriptors will not be indexed
 (they are not useful for filtering), and also descriptors marked with `index: False` will be skipped.
 
+When new analyzers are added to the pipeline and/or the descriptors listed in `settings.CONSOLIDATED_AUDIO_DESCRIPTORS` changes, the existing `consolidated`
+`SoundAnalysis` objects need to be updated. To that end, the following management command can be used:
+
+    docker compose run --rm web python manage.py create_consolidated_analysis
+
+Note that this command will update existing objects and create new ones if missing. 
+Running this command will also mark sounds as index dirty and invalidate template caches so search index is updated accordingly.
+The command has a number of options that can be set to skip some of the steps if needed, or run it only for a specific set of sound IDs.
+
 
 ### Similarity search and similarity spaces
 
@@ -314,6 +343,25 @@ a sound, therefore vectors should be automatically loaded (and also indexed in t
 new similarity vector objects are created). The management command `create_consolidated_sound_analysis_and_sim_vectors` can be used to help creating 
 `SoundSimilarityVector` objects in bulk.
 
+When new a new similarity space is added and new `SoundSimilarityVector` objects need to be created (or the existing ones updated), 
+the following management command can be used:
+
+    docker compose run --rm web python manage.py create_similarity_vectors  # for running over all similarity spaces
+    docker compose run --rm web python manage.py create_similarity_vectors --similarity-space SIM_SPACE_NAME
+
+Note that this command will update existing objects and create new ones if missing. 
+Running this command will also mark sounds as index dirty so search index is updated accordingly.
+The command has a number of options that can be set to skip some of the steps if needed, or run it only for a specific set of sound IDs.
+
+
+### Prometheus metrics
+
+From freesound you can count metrics by defining a `prometheus_client.Counter` and then calling `.inc()` on it.
+We prefer to define metrics close to the location where they are defined, especially if they are only emitted
+in that one place. A metric incremented from several modules should be defined in a generic "domain" module
+
+Metrics are periodically pulled from freesound by Prometheus. Freesound automatically serves an internal /metrics
+endpoint when running in production. 
 
 ### Considerations when updating Django version
 

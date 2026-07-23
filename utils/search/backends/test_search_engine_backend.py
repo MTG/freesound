@@ -29,8 +29,10 @@ import datetime
 import json
 import logging
 import os
+import random
 import time
-import urllib
+import urllib.parse
+from datetime import timedelta
 
 import pytest
 from django.conf import settings
@@ -246,7 +248,7 @@ def test_sounds_qs(
         SoundAnalysis,
         "get_analysis_data_from_file_without_db",
         lambda sid, analyzer_name: {
-            "feature_float": 1.0,
+            "feature_float": random.random(),  # noqa: S311
             "feature_int": 1,
             "feature_string": "a",
             "feature_list_string": ["a", "b", "c"],
@@ -328,7 +330,7 @@ def test_posts(test_users, db):
         thread.refresh_from_db()
 
     all_posts = []
-    base_time = timezone.now() - timezone.timedelta(days=30)
+    base_time = timezone.now() - timedelta(days=30)
 
     post_content = [
         "Welcome everyone! This is a great place to discuss audio and sound design.",
@@ -345,7 +347,7 @@ def test_posts(test_users, db):
                 author=test_users[i % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=i * 2),
+                created=base_time + timedelta(hours=i * 2),
             )
         )
 
@@ -364,7 +366,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 2) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=24 + i * 3),
+                created=base_time + timedelta(hours=24 + i * 3),
             )
         )
 
@@ -383,7 +385,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 1) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=48 + i * 2.5),
+                created=base_time + timedelta(hours=48 + i * 2.5),
             )
         )
 
@@ -402,7 +404,7 @@ def test_posts(test_users, db):
                 author=test_users[i % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=72 + i * 1.8),
+                created=base_time + timedelta(hours=72 + i * 1.8),
             )
         )
 
@@ -422,7 +424,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 1) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=96 + i * 2.2),
+                created=base_time + timedelta(hours=96 + i * 2.2),
             )
         )
 
@@ -442,7 +444,7 @@ def test_posts(test_users, db):
                 author=test_users[(i + 2) % len(test_users)],
                 body=content,
                 moderation_state="OK",
-                created=base_time + timezone.timedelta(hours=120 + i * 1.5),
+                created=base_time + timedelta(hours=120 + i * 1.5),
             )
         )
 
@@ -846,14 +848,18 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     )
     assert results.docs[0]["id"] == test_sounds[0].id, "Searching in the 'name' field did not return the expected sound"
 
-    # Test partial matching in the original_filename also works
+    # Test partial matching in the original_filename also works.
+    # There are three sounds with "Glass E1" in the name, so they all score equally and should all
+    # appear as the first 3 results (no guarantees as to ordering within this group)
     results = run_sounds_query_and_save_results(
         search_engine_sounds_backend,
         output_file_handle,
         dict(textual_query="Glass E1", query_fields={settings.SEARCH_SOUNDS_FIELD_NAME: 1}),
     )
-    assert results.docs[0]["id"] == test_sounds[0].id, (
-        "Searching in the 'name' field (partial match) did not return the expected sound"
+    expected_top_ids = {s.id for s in test_sounds if s.original_filename.startswith("Glass E1")}
+    assert len(expected_top_ids) == 3, "Expected exactly three 'Glass E1' sounds in the test fixture"
+    assert {r["id"] for r in results.docs[:3]} == expected_top_ids, (
+        "Searching in the 'name' field (partial match) did not return the expected sounds"
     )
 
     # Test searching in the tags field...
@@ -878,16 +884,16 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
     result_sids = [s["id"] for s in results.docs]
     assert sound_with_tags.id in result_sids, "Searching in the 'tags' field did not return the expected sound"
 
-    # Test searching in the description field...
+    # Test searching in the description field. Many fixture sounds share an identical description,
+    # so the expected sound should appear somewhere in the first results, not necessarily at the top.
     # ...first with full description
     results = run_sounds_query_and_save_results(
         search_engine_sounds_backend,
         output_file_handle,
         dict(textual_query=test_sounds[0].description, query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1}),
     )
-    assert results.docs[0]["id"] == test_sounds[0].id, (
-        "Searching in the 'description' field did not return the expected sound"
-    )
+    result_sids = [s["id"] for s in results.docs]
+    assert test_sounds[0].id in result_sids, "Searching in the 'description' field did not return the expected sound"
 
     # ...then with a partial description
     results = run_sounds_query_and_save_results(
@@ -898,7 +904,8 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
             query_fields={settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: 1},
         ),
     )
-    assert results.docs[0]["id"] == test_sounds[0].id, (
+    result_sids = [s["id"] for s in results.docs]
+    assert test_sounds[0].id in result_sids, (
         "Searching in the 'description' field (partial match) did not return the expected sound"
     )
 
@@ -959,18 +966,18 @@ def test_sound_search_query_fields_parameter(search_engine_sounds_backend, outpu
 def test_sound_search_query_audio_descriptors(search_engine_sounds_backend, output_file_handle, test_sounds):
     """Test that audio descriptors are properly indexed and can be searched"""
 
-    expected_feature_values = {
-        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 1.0,
-        settings.AUDIO_DESCRIPTOR_TYPE_INT: 1,
-        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: True,
+    feature_match_all_filter_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: "[0.0 TO 1.0]",
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: "1",
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: "True",
         settings.AUDIO_DESCRIPTOR_TYPE_STRING: "a",
         settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: "a",  # filter by the first element of the list
     }
 
-    non_expected_feature_values = {
-        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: 0.5,
-        settings.AUDIO_DESCRIPTOR_TYPE_INT: 5,
-        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: False,
+    feature_no_match_filter_values = {
+        settings.AUDIO_DESCRIPTOR_TYPE_FLOAT: "[1.1 TO *]",
+        settings.AUDIO_DESCRIPTOR_TYPE_INT: "5",
+        settings.AUDIO_DESCRIPTOR_TYPE_BOOL: "False",
         settings.AUDIO_DESCRIPTOR_TYPE_STRING: "nonexistent_value",
         settings.AUDIO_DESCRIPTOR_TYPE_LIST_STRINGS: "z",  # filter by a non-existing first element of the list
     }
@@ -980,21 +987,23 @@ def test_sound_search_query_audio_descriptors(search_engine_sounds_backend, outp
             name = descriptor["name"]
 
             # All the sounds have the same value for every descriptor in our test dataset, so the query should return them all
-            expected_value = expected_feature_values[descriptor["type"]]
+            filter_value = feature_match_all_filter_values[descriptor["type"]]
             results = run_sounds_query_and_save_results(
-                search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{expected_value}"')
+                search_engine_sounds_backend, output_file_handle, dict(query_filter=f"{name}:{filter_value}")
             )
             assert results.num_found == len(test_sounds), (
-                f"Searching for audio descriptor {name} with value {expected_value} did not return the expected number of results"
+                f"Searching for audio descriptor {name} with filter value {filter_value} did not return the expected number of results"
             )
 
             # Now try with a value that is not present and should return 0 results
-            non_expected_value = non_expected_feature_values[descriptor["type"]]
+            non_matching_filter_value = feature_no_match_filter_values[descriptor["type"]]
             results = run_sounds_query_and_save_results(
-                search_engine_sounds_backend, output_file_handle, dict(query_filter=f'{name}:"{non_expected_value}"')
+                search_engine_sounds_backend,
+                output_file_handle,
+                dict(query_filter=f"{name}:{non_matching_filter_value}"),
             )
             assert results.num_found == 0, (
-                f"Searching for audio descriptor {name} with value {non_expected_value} returned results but none were expected"
+                f"Searching for audio descriptor {name} with filter value {non_matching_filter_value} returned results but none were expected"
             )
 
 
@@ -1288,6 +1297,35 @@ def test_num_queries_when_adding_sounds_to_search_index(search_engine_sounds_bac
 @pytest.mark.search_engine
 @pytest.mark.sounds
 @pytest.mark.django_db
+def test_remove_sounds(search_engine_sounds_backend, test_sounds):
+    """Test removing sounds does indeed remove the sounds"""
+
+    # Check that initially, sound objects are in the search engine
+    results = search_engine_sounds_backend.search_sounds()
+    assert results.num_found == len(test_sounds), "Initial number of sounds in search engine is incorrect"
+
+    # Also check that similarity vectors are returned as expected
+    sim_vector_ids = search_engine_sounds_backend.get_all_sim_vector_document_ids_per_similarity_space()
+    sim_space_name = list(sim_vector_ids.keys())[0]
+    vector_document_ids = sim_vector_ids[sim_space_name]
+    assert len(vector_document_ids) == len(test_sounds), (
+        "Initial number of similarity vectors in search engine is incorrect"
+    )
+
+    # Now remove sounds and check that they are no longer in the search engine
+    search_engine_sounds_backend.remove_sounds_from_index([s.id for s in test_sounds])
+    results_after_removal = search_engine_sounds_backend.search_sounds()
+    assert results_after_removal.num_found == 0, "Sounds were not removed from search engine"
+
+    # Also check that similarity vectors were removed
+    sim_vector_ids_after_removal = search_engine_sounds_backend.get_all_sim_vector_document_ids_per_similarity_space()
+    vector_document_ids_after_removal = sim_vector_ids_after_removal[sim_space_name]
+    assert len(vector_document_ids_after_removal) == 0, "Similarity vectors were not removed from search engine"
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
 def test_follow_utils_get_stream_sounds(search_engine_sounds_backend, output_file_handle, test_sounds):
     users = User.objects.all()
     test_user = users[0]
@@ -1436,6 +1474,27 @@ def test_sound_geotag_queries(search_engine_sounds_backend, output_file_handle):
     expected_ids = [40, 41, 42, 43, 44]
     for expected_id in expected_ids:
         assert expected_id in result_ids, f"Sound {expected_id} should be found when querying for geotagged sounds"
+
+
+@pytest.mark.search_engine
+@pytest.mark.sounds
+@pytest.mark.django_db
+def test_sound_sorting_target(search_engine_sounds_backend, output_file_handle):
+    """Test sorting target functionality works as exptected. This also tests that a "dist" field is returned in results when sorting with a target."""
+
+    target_value = 0.5
+    results = run_sounds_query_and_save_results(
+        search_engine_sounds_backend,
+        output_file_handle,
+        dict(sorting_target=f"test_feature_float:{target_value},test_feature_int:1", num_sounds=10),
+    )
+    previous_distance = None
+    for result in results.docs:
+        if previous_distance is not None:
+            assert result["dist"] >= previous_distance, (
+                "Results are not sorted correctly by distance to the sorting target value"
+            )
+        previous_distance = result["dist"]
 
 
 @pytest.mark.search_engine

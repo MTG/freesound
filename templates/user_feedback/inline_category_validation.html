@@ -1,3 +1,4 @@
+{% load bw_templatetags %}
 {# Inline "category validation" box; shown by sounds.views.sound only when the category_validation experiment is on. #}
 {# Neither answer saves on click: both open a modal where Send confirms it, so a misclick costs nothing. #}
 {# Bound in pages/sound.js (not the declarative data-toggle) because the modal needs an onLoaded hook to initialise the category field. #}
@@ -9,7 +10,11 @@
     /* Underline on hover to signal it is clickable. */
     #categoryValidationBox form button:hover { text-decoration: underline; }
 </style>
-<div id="categoryValidationBox" class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-bottom: 24px;">
+<div id="categoryValidationBox" class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-bottom: 24px; padding-right: 34px;">
+    {# Info sheet: circled "i" pinned top-right; opens the self-contained modal below (sound.js -> activateModal). #}
+    <button type="button" data-info-modal="categoryValidationInfoModal" title="About this study" aria-label="About this study"
+            class="cursor-pointer text-light-grey"
+            style="position: absolute; top: 8px; right: 10px; margin: 0; padding: 0; background: none; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
     <b class="h-spacing-3">{{ category_validation_form.answer.label }}</b>
     {# Buttons grouped in one inline-block so Yes+No stay together and wrap as a pair #}
     <span class="display-inline-block no-text-wrap">
@@ -26,3 +31,59 @@
         <button type="submit" class="no-border text-light-grey cursor-pointer" style="background: none; padding: 0; font-weight: normal; font-size: 11px;">don't ask again</button>
     </form>
 </div>
+
+{# Study information sheet. Self-contained modal (no view/URL), opened with the top-right "i". #}
+<div class="modal" id="categoryValidationInfoModal" tabindex="-1" role="dialog" aria-label="About this study" aria-hidden="true">
+    <div class="modal-wrapper">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close" data-dismiss="modal" aria-label="Close">{% bw_icon 'close' %}</span>
+                </div>
+                <div class="modal-body">
+                    <h4 class="v-spacing-5">About this study</h4>
+
+                    <p><b>Study:</b> Validating Sound Categorization in Freesound</p>
+
+                    <p>
+                        You are occasionally shown a short question asking whether a sound has been placed in the
+                        correct category according to the <a href="https://freesound.org/help/faq/#the-broad-sound-taxonomy" target="_blank" rel="noopener noreferrer">Broad Sound Taxonomy</a>.
+                        Your answers will help us evaluate sound categorization on Freesound and
+                        better understand how users perceive sound categories.
+                    </p>
+
+                    <p>
+                        <b>What we record:</b> your response, the sound being evaluated, the time of your
+                        response, your suggested category (if applicable), and any optional feedback you
+                        provide.
+                    </p>
+
+                    <p>
+                        <b>Privacy:</b> Responses are analyzed for research purposes only. No information
+                        that could directly identify your Freesound profile will be published in papers,
+                        datasets, or other public outputs. We may use aggregated statistics, such as the
+                        number of sounds you have uploaded, to analyze trends across groups of users.
+                    </p>
+
+                    <p>
+                        <b>Participation:</b> Taking part is entirely voluntary. You can ignore these
+                        questions, and selecting "don't ask again" will permanently stop them from
+                        appearing.
+                    </p>
+
+                    <p>
+                        <b>Institute:</b> Music Technology Group (MTG), Department of Engineering,
+                        Universitat Pompeu Fabra (UPF), Barcelona, Spain &mdash; the research group behind Freesound.
+                    </p>
+
+                    <p>
+                        <b>Contact:</b> If you would like further information about this research,
+                        please contact Panagiota Anastasopoulou (panagiota.anastasopoulou@upf.edu) 
+                        or Frederic Font (frederic.font@upf.edu).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

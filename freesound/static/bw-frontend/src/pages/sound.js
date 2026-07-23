@@ -2,7 +2,11 @@ import './page-polyfills';
 import { showToast } from '../components/toast';
 import { makePostRequest } from '../utils/postRequest';
 import { playAtTime } from '../components/player/utils';
-import { handleGenericModalWithForm, dismissModal } from '../components/modal';
+import {
+  handleGenericModalWithForm,
+  dismissModal,
+  activateModal,
+} from '../components/modal';
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload';
 import { prepareAfterDownloadSoundModals } from '../components/afterDownloadModal.js';
 import { prepareCategoryFormFields } from '../components/bstCategoryFormField';
@@ -54,6 +58,13 @@ prepareAfterDownloadSoundModals();
       () => showToast('Something went wrong, please try again.')
     );
   });
+});
+
+// Study info sheet: the button shows the self-contained modal already in the DOM.
+[...document.querySelectorAll('[data-info-modal]')].forEach(button => {
+  button.addEventListener('click', () =>
+    activateModal(button.dataset.infoModal)
+  );
 });
 
 const copyFromInputElement = inputElement => {

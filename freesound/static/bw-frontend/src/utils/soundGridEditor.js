@@ -1,236 +1,185 @@
-// Client-side sound grid for collection edit. Sort/search/paginate locally
-// against pending state in the store; card HTML for the current page is
-// fetched from ``render-cards`` and swapped in by htmx, with the paginator
-// arriving as an OOB block in the same response. Per-card button state is
-// restored from the store after each swap so the server stays unaware of
-// pending flags.
+// Sound grid for the collection/pack edit pages. Nothing is added or removed until the form is
+// submitted: the client holds a pending delta (`added`, `removed`, ordered `featured`) while the
+// server owns the saved set and does the searching/sorting/paginating, so every change re-fetches
+// the page from `render-cards`. Config comes from #sounds-section's data attributes.
 
-import debounce from 'lodash.debounce';
-
+import { wireAddSoundsModal } from '../components/addSoundsModal';
 import { initializeObjectSelectorActions } from '../components/objectSelector';
 
-export class SoundGridEditor {
-  // opts: { store, renderCardsUrl?, countEl?, searchInput? }. ``renderCardsUrl``
-  // falls back to #sounds-section's data-render-cards-url when omitted.
-  constructor(opts) {
-    const configEl = document.getElementById('page-config');
-    const config = configEl ? JSON.parse(configEl.textContent) : {};
+const idList = str => (str || '').split(',').filter(Boolean).map(Number);
 
-    this.store = opts.store;
-    this.renderCardsUrl =
-      opts.renderCardsUrl ||
-      (document.getElementById('sounds-section') || {}).dataset
-        ?.renderCardsUrl ||
-      '';
-    this.sectionEl = document.getElementById('sounds-section');
+// data-grid-value → the ids that field gets on submit
+const VALUE_SOURCES = {
+  added: e => [...e.added].filter(id => !e.removed.has(id)),
+  removed: e => [...e.removed],
+  featured: e => e.featured.filter(id => !e.removed.has(id)),
+};
+
+class SoundGridEditor {
+  constructor(sectionEl) {
+    this.sectionEl = sectionEl;
     this.gridEl = document.getElementById('sounds-grid');
-    this.countEl = opts.countEl || null;
-    this.searchInput = opts.searchInput || null;
+    this.searchInput = document.getElementById('sounds-search');
     this.sortSelect = document.getElementById('sort-select');
-    this.pageSize = config.sounds_per_page || 20;
+    this.countEl = document.getElementById('element-count');
+    this.featuredCountEl = document.getElementById('featured-count');
 
-    this.currentPage = 1;
-    this.currentSort = this.sortSelect ? this.sortSelect.value : 'featured';
-    this.currentSearch = this.searchInput ? this.searchInput.value.trim() : '';
-    this._sortedCache = null;
+    this.url = sectionEl.dataset.renderCardsUrl;
+    this.maxFeatured = parseInt(sectionEl.dataset.maxFeatured, 10) || 0;
+    // Card actions, restored after every swap
+    this.actionNames = this.maxFeatured ? ['remove', 'featured'] : ['remove'];
 
-    this._bindEvents();
-    this._autoRender = debounce(() => this.renderPage(), 0);
-    // Order is sticky: only the sort dropdown re-sorts. Toggling featured/remove
-    // leaves the cached order alone; newly-added sounds get appended so they
-    // show up without disturbing existing positions.
-    this.store.onChange((id, name) => {
-      if (name === 'added') {
-        if (this._sortedCache) {
-          const meta = this.store
-            .allSoundsWithMeta()
-            .find(s => s.id === id);
-          if (meta) this._sortedCache.data.push(meta);
-        }
-        this._autoRender();
-      } else if (this.countEl && name === 'remove') {
-        this.countEl.textContent = this.store.presentCount();
+    this.added = new Set();
+    this.removed = new Set();
+    // Ordered (saved first, newly featured appended); also drives the "featured" sort
+    this.featured = idList(sectionEl.dataset.featuredIds);
+    this.total = 0; // saved + added, sent by the server on each render
+
+    this.page = 1;
+    this.sort = this.sortSelect ? this.sortSelect.value : '';
+    this.search = this.searchInput ? this.searchInput.value.trim() : '';
+
+    this.bindEvents();
+    wireAddSoundsModal(
+      document,
+      () => [...this.added].join(','),
+      ids => {
+        ids.forEach(id => this.added.add(id));
+        this.renderPage();
       }
-    });
-
-    if (this.countEl) this.countEl.textContent = this.store.presentCount();
+    );
     this.renderPage();
   }
 
-  getFilteredSorted() {
-    if (!this._sortedCache || this._sortedCache.sort !== this.currentSort) {
-      const sorted = this.store.allSoundsWithMeta().slice();
-      const comparator = this._getComparator(this.currentSort);
-      if (comparator) sorted.sort(comparator);
-      this._sortedCache = { data: sorted, sort: this.currentSort };
-    }
-
-    if (this.currentSearch) {
-      const q = this.currentSearch.toLowerCase();
-      return this._sortedCache.data.filter(s => this._matchesSearch(s, q));
-    }
-
-    return this._sortedCache.data;
-  }
-
   renderPage() {
-    const filtered = this.getFilteredSorted();
-    const totalPages = Math.max(1, Math.ceil(filtered.length / this.pageSize));
-
-    if (this.currentPage > totalPages) this.currentPage = totalPages;
-    if (this.currentPage < 1) this.currentPage = 1;
-
-    const offset = (this.currentPage - 1) * this.pageSize;
-    const pageIds = filtered
-      .slice(offset, offset + this.pageSize)
-      .map(s => s.id);
-
-    const params = new URLSearchParams({
-      ids: pageIds.join(','),
-      page: String(this.currentPage),
-      total: String(totalPages),
-    });
-    if (this.currentSearch) params.set('q', this.currentSearch);
-
-    window.htmx.ajax('GET', `${this.renderCardsUrl}?${params}`, {
+    const params = new URLSearchParams({ s: this.sort, page: this.page });
+    if (this.added.size) params.set('added', [...this.added].join(','));
+    if (this.search) params.set('q', this.search);
+    if (this.maxFeatured) params.set('featured', this.featured.join(','));
+    window.htmx.ajax('GET', `${this.url}?${params}`, {
       target: this.gridEl,
       swap: 'innerHTML',
     });
   }
 
-  featuredIdsForSubmit() {
-    const comparator = this._getComparator('featured');
-    return this.store
-      .allSoundsWithMeta()
-      .filter(
-        sound =>
-          this.store.has(sound.id, 'featured') &&
-          !this.store.has(sound.id, 'remove')
-      )
-      .sort(comparator)
-      .map(sound => sound.id);
+  // has() and toggleAction() are called by the card buttons (see initializeObjectSelectorActions)
+  has(id, name) {
+    return name === 'remove'
+      ? this.removed.has(id)
+      : this.featured.includes(id);
   }
 
-  _matchesSearch(sound, queryLower) {
-    return (
-      (sound.name || '').toLowerCase().includes(queryLower) ||
-      (sound.username || '').toLowerCase().includes(queryLower)
-    );
-  }
-
-  _getComparator(key) {
-    const store = this.store;
-    switch (key) {
-      case 'featured':
-        return (a, b) => {
-          const af = store.has(a.id, 'featured');
-          const bf = store.has(b.id, 'featured');
-          if (af !== bf) return af ? -1 : 1;
-          if (af && bf) {
-            const aOrder = Number.isInteger(a.featured_order)
-              ? a.featured_order
-              : Number.MAX_SAFE_INTEGER;
-            const bOrder = Number.isInteger(b.featured_order)
-              ? b.featured_order
-              : Number.MAX_SAFE_INTEGER;
-            if (aOrder !== bOrder) return aOrder - bOrder;
-          }
-          return new Date(a.date_added || 0) - new Date(b.date_added || 0);
-        };
-      case 'created_desc':
-        return (a, b) =>
-          new Date(b.date_added || 0) - new Date(a.date_added || 0);
-      case 'created_asc':
-        return (a, b) =>
-          new Date(a.date_added || 0) - new Date(b.date_added || 0);
-      case 'name':
-        // Match Python ``str.lower()`` codepoint ordering (see _sort_collection_sounds).
-        return (a, b) => {
-          const an = (a.name || '').toLowerCase();
-          const bn = (b.name || '').toLowerCase();
-          if (an < bn) return -1;
-          if (an > bn) return 1;
-          return 0;
-        };
-      default:
-        return null;
+  // Returns the new state, or undefined when the click is a no-op
+  toggleAction(id, name) {
+    if (name === 'remove') {
+      if (!this.removed.delete(id)) this.removed.add(id);
+    } else if (name === 'featured') {
+      const position = this.featured.indexOf(id);
+      if (position !== -1) this.featured.splice(position, 1);
+      else if (this.featuredCount() < this.maxFeatured) this.featured.push(id);
+      else return undefined; // at the limit
+    } else {
+      return undefined;
     }
+    this.syncCounts();
+    return this.has(id, name);
   }
 
-  onAfterSwap(fn) {
-    this._afterSwapCallbacks = this._afterSwapCallbacks || [];
-    this._afterSwapCallbacks.push(fn);
+  featuredCount() {
+    return this.featured.filter(id => !this.removed.has(id)).length;
   }
 
-  _hydrateSwappedGrid() {
-    initializeObjectSelectorActions(this.gridEl, this.store);
-    if (this.countEl) this.countEl.textContent = this.store.presentCount();
-    if (this._afterSwapCallbacks) this._afterSwapCallbacks.forEach(fn => fn());
+  // Counters, plus greying out the featured buttons that can't be clicked
+  syncCounts() {
+    if (this.countEl) this.countEl.textContent = this.total - this.removed.size;
+    if (!this.maxFeatured) return;
+
+    const count = this.featuredCount();
+    if (this.featuredCountEl) this.featuredCountEl.textContent = count;
+
+    const atLimit = count >= this.maxFeatured;
+    this.gridEl.querySelectorAll('[data-action="featured"]').forEach(btn => {
+      const id = Number(btn.closest('[data-object-id]').dataset.objectId);
+      btn.disabled =
+        this.removed.has(id) || (!this.featured.includes(id) && atLimit);
+    });
   }
 
-  _bindEvents() {
-    // Paginator clicks go through JS so the (URL-less) sort/search state
-    // survives. Delegating on #sounds-section keeps the handler working
-    // across OOB swaps that replace #sounds-pagination.
-    if (this.sectionEl) {
-      this.sectionEl.addEventListener('click', evt => {
-        const link = evt.target.closest('#sounds-pagination a[data-page]');
-        if (!link) return;
-        const nextPage = parseInt(link.dataset.page, 10);
-        if (!Number.isFinite(nextPage) || nextPage < 1) return;
-        evt.preventDefault();
-        this.currentPage = nextPage;
-        this.renderPage();
-      });
-    }
+  bindEvents() {
+    const reload = (page = 1) => {
+      this.page = page;
+      this.renderPage();
+    };
 
-    this.gridEl.addEventListener('htmx:afterSwap', () => {
-      this._hydrateSwappedGrid();
+    // Paginator clicks go through JS so the (URL-less) sort/search state survives; delegated
+    // because the swaps replace #sounds-pagination
+    this.sectionEl.addEventListener('click', evt => {
+      const link = evt.target.closest('#sounds-pagination a[data-page]');
+      if (!link) return;
+      evt.preventDefault();
+      const page = parseInt(link.dataset.page, 10);
+      if (page >= 1) reload(page);
     });
 
-    this.gridEl.addEventListener('click', evt => {
-      const clearLink = evt.target.closest('[data-clear-search]');
-      if (!clearLink) return;
-      evt.preventDefault();
-      if (this.searchInput) this.searchInput.value = '';
-      this.currentSearch = '';
-      this.currentPage = 1;
-      this.renderPage();
+    this.gridEl.addEventListener('htmx:afterSwap', () => {
+      const meta = this.gridEl.querySelector('[data-grid-total]');
+      this.total = meta ? Number(meta.dataset.gridTotal) : 0;
+      initializeObjectSelectorActions(this.gridEl, this);
+      this.syncCounts();
     });
 
     if (this.searchInput) {
-      const handleSearch = () => {
-        this.currentSearch = this.searchInput.value.trim();
-        this.currentPage = 1;
-        this.renderPage();
+      const applySearch = () => {
+        this.search = this.searchInput.value.trim();
+        reload();
       };
+      this.searchInput.addEventListener('search', applySearch);
       this.searchInput.addEventListener('keydown', evt => {
-        if (evt.key === 'Enter') {
-          evt.preventDefault();
-          handleSearch();
-        }
+        if (evt.key !== 'Enter') return;
+        evt.preventDefault();
+        applySearch();
       });
-      this.searchInput.addEventListener('search', handleSearch);
+      this.gridEl.addEventListener('click', evt => {
+        if (!evt.target.closest('[data-clear-search]')) return;
+        evt.preventDefault();
+        this.searchInput.value = '';
+        applySearch();
+      });
     }
 
     if (this.sortSelect) {
-      const applySort = () => {
-        this.currentSort = this.sortSelect.value;
-        this._sortedCache = null;
-        this.currentPage = 1;
-        this.renderPage();
-      };
-      let savedValue = this.sortSelect.value;
+      // Deselect while the dropdown is open so re-picking the same option still fires `change`
+      let lastValue = this.sortSelect.value;
       this.sortSelect.addEventListener('mousedown', () => {
-        savedValue = this.sortSelect.value;
+        lastValue = this.sortSelect.value;
         this.sortSelect.selectedIndex = -1;
       });
-      this.sortSelect.addEventListener('change', applySort);
+      this.sortSelect.addEventListener('change', () => {
+        this.sort = this.sortSelect.value;
+        reload();
+      });
       this.sortSelect.addEventListener('blur', () => {
-        if (this.sortSelect.selectedIndex === -1) {
-          this.sortSelect.value = savedValue;
-        }
+        if (this.sortSelect.selectedIndex === -1)
+          this.sortSelect.value = lastValue;
       });
     }
   }
 }
+
+const initSoundGridEditor = () => {
+  const sectionEl = document.getElementById('sounds-section');
+  if (!sectionEl) return;
+  const editor = new SoundGridEditor(sectionEl);
+
+  const form = sectionEl.closest('form');
+  if (!form) return;
+  form.addEventListener('submit', () => {
+    form.querySelectorAll('[data-grid-value]').forEach(input => {
+      const source = VALUE_SOURCES[input.dataset.gridValue];
+      if (source) input.value = source(editor).join(',');
+      else console.warn(`Unknown data-grid-value "${input.dataset.gridValue}"`);
+    });
+  });
+};
+
+export { initSoundGridEditor };

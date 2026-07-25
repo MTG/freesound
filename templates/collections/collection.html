@@ -96,7 +96,7 @@
                                             hx-include="#collection-search, #sort-select"
                                             hx-indicator="#sounds-section">
                                         {% for key, option in sort_options.items %}
-                                            <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.0 }}</option>
+                                            <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.label }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>

@@ -367,13 +367,15 @@ def display_sound_small_selectable(context, sound, selected=False):
 
 
 @register.inclusion_tag("sounds/display_sound_with_actions.html", takes_context=True)
-def display_sound_small_with_actions(context, sound, is_featured=False):
-    """Display sound with featured and remove action toggles below it."""
+def display_sound_small_with_actions(context, sound, show_featured=True, object_noun="collection"):
+    """Display sound with remove (and optionally featured) toggles, whose state the grid editor
+    restores after each swap. ``object_noun`` labels the remove tooltip."""
     context = context.get("original_context", context)  # This is to allow passing context in nested inclusion tags
     tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
     tvars.update(
         {
-            "is_featured": is_featured,
+            "show_featured": show_featured,
+            "object_noun": object_noun,
         }
     )
     return tvars

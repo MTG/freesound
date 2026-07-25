@@ -1,3 +1,3 @@
-import { prepareAddSoundsModalAndFields } from '../components/addSoundsModal';
+import { initSoundGridEditor } from '../utils/soundGridEditor';
 
-prepareAddSoundsModalAndFields(document);
+initSoundGridEditor();

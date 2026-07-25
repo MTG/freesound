@@ -25,7 +25,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.paginator import Paginator
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -41,9 +40,16 @@ from fscollections.forms import (
 )
 from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from sounds.models import Sound
-from sounds.views import add_sounds_modal_helper
+from sounds.sound_grid_editor import (
+    FEATURED_SORT,
+    SORT_OPTIONS,
+    add_sounds_modal_helper,
+    render_edit_cards,
+    resolve_sort,
+    sorted_paginated_edit_sounds,
+)
 from utils.downloads import download_sounds
-from utils.pagination import build_paginator_template_context, paginate, read_page
+from utils.pagination import paginate
 
 
 def resolve_collection_from_url(view_func):
@@ -74,9 +80,7 @@ def collection(request, collection):
     if not collection.public and not (is_owner or is_maintainer):
         raise Http404
 
-    sort_key = request.GET.get("s") or settings.COLLECTION_SORT_DEFAULT
-    if sort_key not in settings.COLLECTION_SORT_OPTIONS:
-        sort_key = settings.COLLECTION_SORT_DEFAULT
+    sort_options, sort_key = resolve_sort(request, has_featured=True)
     search = request.GET.get("q", "").strip()
 
     sounds = Sound.objects.bulk_sounds_for_collection(collection.id)
@@ -88,7 +92,7 @@ def collection(request, collection):
             | Q(tags__name__icontains=search)
         ).distinct()
 
-    if sort_key == "featured":
+    if sort_key == FEATURED_SORT:
         featured_ids = list(collection.featured_sound_ids or [])
         if featured_ids:
             ordering = Case(
@@ -100,8 +104,7 @@ def collection(request, collection):
         else:
             sounds = sounds.order_by("collectionsound__created")
     else:
-        _, sort_field = settings.COLLECTION_SORT_OPTIONS[sort_key]
-        sounds = sounds.order_by(sort_field)
+        sounds = sounds.order_by(SORT_OPTIONS[sort_key].orm_field)
 
     pagination = paginate(request, sounds, settings.BOOKMARKS_PER_PAGE)
     page_sounds = list(pagination["page"])
@@ -114,7 +117,7 @@ def collection(request, collection):
         "is_maintainer": is_maintainer,
         "is_following": is_following,
         "maintainers": collection.maintainers.all(),
-        "sort_options": settings.COLLECTION_SORT_OPTIONS,
+        "sort_options": sort_options,
         "page_sounds": page_sounds,
         "featured_sound_ids_set": set(collection.featured_sound_ids or []),
         "current_sort": sort_key,
@@ -240,78 +243,27 @@ def delete_collection(request, collection):
         return HttpResponseRedirect(collection.get_absolute_url())
 
 
-def serialize_collection_sounds(collection):
-    """Return lightweight collection sound metadata shipped as client-side JSON."""
-    collection_sounds = list(Sound.objects.bulk_sounds_for_collection(collection_id=collection.id))
-    cs_dates = dict(CollectionSound.objects.filter(collection=collection).values_list("sound_id", "created"))
-    featured_order = {sound_id: order for order, sound_id in enumerate(collection.featured_sound_ids)}
-    return [
-        {
-            "id": sound.id,
-            "name": sound.original_filename,
-            "username": sound.username,
-            "duration": sound.duration,
-            "date_added": cs_dates.get(sound.id, sound.created),
-            "featured_order": featured_order.get(sound.id),
-        }
-        for sound in collection_sounds
-    ]
-
-
 @login_required
 @resolve_collection_from_url
 def render_collection_cards(request, collection):
-    """Render with-actions sound cards for a caller-specified id list.
-
-    Scoped to a collection: the caller must be its owner or a maintainer.
-
-    Used by the collection-edit grid, where the client is the source of truth
-    for which sounds appear and in what order. Featured / removed button state
-    is restored client-side from the editor's store, so this endpoint does not
-    take a ``featured`` parameter.
-
-    Query params:
-      - ``ids`` (required): comma-separated integer ids. Order is preserved;
-        unknown/non-public ids are silently dropped. Capped at
-        ``settings.MAX_SOUNDS_PER_COLLECTION``.
-      - ``page``, ``total`` (optional): when both are provided, an
-        ``hx-swap-oob`` paginator block is emitted alongside the cards so htmx
-        swaps both regions in a single response.
-      - ``q`` (optional): the active search query, used only to render an
-        empty-state message when the supplied id list is empty.
-    """
+    """Search/sort/paginated edit-grid cards for a collection; owner/maintainer only."""
     if not collection.user_is_owner_or_maintainer(request.user):
         return HttpResponse(status=403)
-    raw_ids = request.GET.get("ids", "")
-    ids = [int(x) for x in raw_ids.split(",") if x.isdigit()][: settings.MAX_SOUNDS_PER_COLLECTION]
-
-    sounds_by_id = {s.id: s for s in Sound.objects.bulk_query_id_public(ids)} if ids else {}
-    sounds = [sounds_by_id[i] for i in ids if i in sounds_by_id]
-
-    tvars = {
-        "sounds": sounds,
-        "max_sounds": settings.MAX_SOUNDS_PER_COLLECTION,
-        "current_search": request.GET.get("q", "").strip(),
-        # Keep showing the empty-collection message (not "no results") when searching an empty collection
-        "collection_is_empty": not sounds and not Sound.objects.sounds_for_collection(collection.id).exists(),
-    }
-
-    raw_page = request.GET.get("page")
-    raw_total = request.GET.get("total")
-    if raw_page and raw_total:
-        try:
-            total_pages = int(raw_total)
-            page_num = min(read_page(request), max(1, total_pages))
-            # Make a fake Paginator with `total_pages` pages so that the template can
-            # render the paginator
-            paginator = Paginator(range(total_pages), 1)
-            page = paginator.page(page_num)
-            tvars.update(build_paginator_template_context(page, base_path=request.path, base_query=request.GET))
-            tvars["has_paginator"] = True
-        except (ValueError, TypeError):
-            pass
-
-    return render(request, "collections/_collection_edit_cards.html", tvars)
+    saved_meta = [
+        {"id": sid, "name": name, "username": username, "date_added": created}
+        for sid, name, username, created in CollectionSound.objects.filter(
+            collection=collection, status="OK", sound__moderation_state="OK", sound__processing_state="OK"
+        ).values_list("sound_id", "sound__original_filename", "sound__user__username", "created")
+    ]
+    sounds, tvars = sorted_paginated_edit_sounds(
+        request,
+        saved_meta,
+        addable_sounds_qs=Sound.objects.filter(moderation_state="OK", processing_state="OK"),
+        per_page=settings.BOOKMARKS_PER_PAGE,
+        featured_ids=collection.featured_sound_ids,
+    )
+    tvars.update({"object_noun": "collection"})
+    return render_edit_cards(request, sounds, tvars)
 
 
 @login_required
@@ -345,23 +297,19 @@ def edit_collection(request, collection):
 
     form.collection_maintainers_objects = maintainers_query
 
-    sounds_data = serialize_collection_sounds(collection)
-
+    sort_options, current_sort = resolve_sort(request, has_featured=True)
     tvars = {
         "form": form,
         "collection": collection,
         "is_owner": is_owner,
         "is_maintainer": is_maintainer,
-        "sort_options": settings.COLLECTION_SORT_OPTIONS,
-        "sounds_data": sounds_data,
-        "current_sort": request.GET.get("s") or settings.COLLECTION_SORT_DEFAULT,
+        "sort_options": sort_options,
+        "current_sort": current_sort,
         "current_search": request.GET.get("q", "").strip(),
         "render_cards_url": collection.get_url("collection-render-cards"),
-        "page_config": {
-            "sounds_per_page": settings.BOOKMARKS_PER_PAGE,
-            "max_sounds": settings.MAX_SOUNDS_PER_COLLECTION,
-            "max_featured": settings.MAX_FEATURED_SOUNDS_PER_COLLECTION,
-        },
+        # max_featured also switches the featured action on client-side (see soundGridEditor.js)
+        "max_featured": settings.MAX_FEATURED_SOUNDS_PER_COLLECTION,
+        "featured_ids": ",".join(str(sid) for sid in collection.featured_sound_ids),
     }
 
     return render(request, "collections/edit_collection.html", tvars)
@@ -427,7 +375,9 @@ def collection_licenses(request, collection):
 
 @resolve_collection_from_url
 def add_sounds_modal_for_collection_edit(request, collection):
-    tvars = add_sounds_modal_helper(request)
+    tvars = add_sounds_modal_helper(
+        request, exclude_sound_ids=Sound.objects.sounds_for_collection(collection.id).values_list("id", flat=True)
+    )
     tvars.update({"modal_title": "Add sounds to collection", "help_text": "Modal to add sounds to your collection"})
     return render(request, "sounds/modal_add_sounds.html", tvars)
 

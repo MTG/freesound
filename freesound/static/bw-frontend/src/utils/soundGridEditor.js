@@ -1,7 +1,5 @@
-// Sound grid for the collection/pack edit pages. Nothing is added or removed until the form is
-// submitted: the client holds a pending delta (`added`, `removed`, ordered `featured`) while the
-// server owns the saved set and does the searching/sorting/paginating, so every change re-fetches
-// the page from `render-cards`. Config comes from #sounds-section's data attributes.
+// Sound grid for collection/pack edit pages. Client holds a pending delta (added/removed/featured);
+// server owns search/sort/paginate and is re-fetched from render-cards on every change.
 
 import { wireAddSoundsModal } from '../components/addSoundsModal';
 import { initializeObjectSelectorActions } from '../components/objectSelector';
@@ -26,7 +24,6 @@ class SoundGridEditor {
 
     this.url = sectionEl.dataset.renderCardsUrl;
     this.maxFeatured = parseInt(sectionEl.dataset.maxFeatured, 10) || 0;
-    // Card actions, restored after every swap
     this.actionNames = this.maxFeatured ? ['remove', 'featured'] : ['remove'];
 
     this.added = new Set();
@@ -111,8 +108,7 @@ class SoundGridEditor {
       this.renderPage();
     };
 
-    // Paginator clicks go through JS so the (URL-less) sort/search state survives; delegated
-    // because the swaps replace #sounds-pagination
+    // Delegated: swaps replace #sounds-pagination, and this keeps sort/search state (no URL)
     this.sectionEl.addEventListener('click', evt => {
       const link = evt.target.closest('#sounds-pagination a[data-page]');
       if (!link) return;

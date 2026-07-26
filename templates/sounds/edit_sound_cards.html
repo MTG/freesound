@@ -2,7 +2,7 @@
 {# Saved + pending-added; the editor subtracts its pending removals for the counter #}
 <span data-grid-total="{{ total }}" hidden></span>
 {% if sounds %}
-<div class="bw-object-selector-container row no-gutters" style="margin-left:-8px;margin-right:-8px" data-type="sounds"{% if max_sounds %} data-max-elements="{{ max_sounds }}"{% endif %}>
+<div class="bw-object-selector-container row no-gutters" style="margin-left:-8px;margin-right:-8px" data-type="sounds">
     {% for sound in sounds %}
         <div class="col-md-4 col-6">
             {% display_sound_small_with_actions sound show_featured=show_featured object_noun=object_noun %}

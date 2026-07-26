@@ -31,6 +31,7 @@ from django.utils.timezone import now
 from django_recaptcha.fields import ReCaptchaField
 
 from sounds.models import Flag, License, Pack, Sound
+from utils.cache import invalidate_grid_edit_cache
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import CommaSeparatedIdField, HtmlCleaningCharField, TagField
 
@@ -127,8 +128,7 @@ class PackForm(forms.Form):
 
 
 class PackEditForm(ModelForm):
-    # The edit grid submits a delta, so an edit only touches the sounds the user toggled.
-    # data-grid-value names the id list the grid editor writes into the field on submit.
+    # data-grid-value names the id list the grid editor writes into the field on submit
     added_sounds = CommaSeparatedIdField(
         widget=forms.widgets.HiddenInput(attrs={"id": "added_sounds", "data-grid-value": "added"}),
         required=False,
@@ -145,18 +145,21 @@ class PackEditForm(ModelForm):
         required=False,
     )
 
-    def clean_added_sounds(self):
-        # A pack only holds its owner's sounds
-        added = self.cleaned_data["added_sounds"]
+    def clean(self):
+        cleaned_data = super().clean()
+        # Ids in both lists cancel out, so validate what the save will actually add
+        added = cleaned_data.get("added_sounds", set()) - cleaned_data.get("removed_sounds", set())
         owned = set(Sound.objects.filter(id__in=added, user=self.instance.user).values_list("id", flat=True))
         if added - owned:
-            raise forms.ValidationError("You can only add your own sounds to a pack.")
-        return added
+            self.add_error("added_sounds", forms.ValidationError("You can only add your own sounds to a pack."))
+        else:
+            cleaned_data["added_sounds"] = added
+        return cleaned_data
 
     def save(self, force_insert=False, force_update=False, commit=True):
         pack = super().save(commit=False)
         removed = self.cleaned_data["removed_sounds"]
-        added = self.cleaned_data["added_sounds"] - removed
+        added = self.cleaned_data["added_sounds"]
         affected_packs = [pack]
 
         for sound in Sound.objects.filter(id__in=removed, pack=pack):
@@ -173,6 +176,7 @@ class PackEditForm(ModelForm):
             pack.save()
         for affected_pack in affected_packs:
             affected_pack.process()
+            invalidate_grid_edit_cache("pack", affected_pack.id)
         return pack
 
     class Meta:

@@ -38,12 +38,13 @@ from fscollections.forms import (
     MaintainerForm,
     SelectCollectionForm,
 )
-from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
+from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound
 from sounds.models import Sound
 from sounds.sound_grid_editor import (
     FEATURED_SORT,
     SORT_OPTIONS,
     add_sounds_modal_helper,
+    cached_saved_meta,
     render_edit_cards,
     resolve_sort,
     sorted_paginated_edit_sounds,
@@ -243,18 +244,22 @@ def delete_collection(request, collection):
         return HttpResponseRedirect(collection.get_absolute_url())
 
 
+def _collection_saved_meta(collection):
+    return [
+        {"id": sid, "name": name, "username": username, "date_added": created}
+        for sid, name, username, created in Sound.objects.sounds_for_collection(collection.id).values_list(
+            "id", "original_filename", "user__username", "collectionsound__created"
+        )
+    ]
+
+
 @login_required
 @resolve_collection_from_url
 def render_collection_cards(request, collection):
     """Search/sort/paginated edit-grid cards for a collection; owner/maintainer only."""
     if not collection.user_is_owner_or_maintainer(request.user):
         return HttpResponse(status=403)
-    saved_meta = [
-        {"id": sid, "name": name, "username": username, "date_added": created}
-        for sid, name, username, created in CollectionSound.objects.filter(
-            collection=collection, status="OK", sound__moderation_state="OK", sound__processing_state="OK"
-        ).values_list("sound_id", "sound__original_filename", "sound__user__username", "created")
-    ]
+    saved_meta = cached_saved_meta("collection", collection.id, lambda: _collection_saved_meta(collection))
     sounds, tvars = sorted_paginated_edit_sounds(
         request,
         saved_meta,
@@ -375,9 +380,8 @@ def collection_licenses(request, collection):
 
 @resolve_collection_from_url
 def add_sounds_modal_for_collection_edit(request, collection):
-    tvars = add_sounds_modal_helper(
-        request, exclude_sound_ids=Sound.objects.sounds_for_collection(collection.id).values_list("id", flat=True)
-    )
+    saved_meta = cached_saved_meta("collection", collection.id, lambda: _collection_saved_meta(collection))
+    tvars = add_sounds_modal_helper(request, exclude_sound_ids=[m["id"] for m in saved_meta])
     tvars.update({"modal_title": "Add sounds to collection", "help_text": "Modal to add sounds to your collection"})
     return render(request, "sounds/modal_add_sounds.html", tvars)
 

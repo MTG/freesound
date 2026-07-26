@@ -61,13 +61,14 @@ from sounds.models import (
 )
 from sounds.sound_grid_editor import (
     add_sounds_modal_helper,
+    cached_saved_meta,
     render_edit_cards,
     resolve_sort,
     sorted_paginated_edit_sounds,
 )
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
-from utils.cache import invalidate_user_template_caches
+from utils.cache import invalidate_grid_edit_cache, invalidate_user_template_caches
 from utils.cdn import generate_cdn_download_url
 from utils.downloads import download_sounds, should_suggest_donation
 from utils.mail import send_mail_template, send_mail_template_to_support
@@ -599,6 +600,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
         for pack_to_process in packs_to_process:
             pack_to_process.process()
+            invalidate_grid_edit_cache("pack", pack_to_process.id)
 
     files = request.session.get(
         f"{session_key_prefix}-describe_sounds", None
@@ -824,6 +826,13 @@ def pack_edit(request, username, pack_id):
     return render(request, "sounds/pack_edit.html", tvars)
 
 
+def _pack_saved_meta(pack, own_sounds_qs):
+    return [
+        {"id": sid, "name": name, "username": pack.user.username, "date_added": created}
+        for sid, name, created in own_sounds_qs.filter(pack=pack).values_list("id", "original_filename", "created")
+    ]
+
+
 @login_required
 def render_pack_edit_cards(request, username, pack_id):
     """Search/sort/paginated edit-grid cards for a pack the user may edit."""
@@ -834,10 +843,7 @@ def render_pack_edit_cards(request, username, pack_id):
         raise PermissionDenied
 
     own_sounds = Sound.objects.filter(user=pack.user, moderation_state="OK", processing_state="OK")
-    saved_meta = [
-        {"id": sid, "name": name, "username": pack.user.username, "date_added": created}
-        for sid, name, created in own_sounds.filter(pack=pack).values_list("id", "original_filename", "created")
-    ]
+    saved_meta = cached_saved_meta("pack", pack.id, lambda: _pack_saved_meta(pack, own_sounds))
     sounds, tvars = sorted_paginated_edit_sounds(
         request,
         saved_meta,
@@ -856,10 +862,12 @@ def sound_edit_sources(request, username, sound_id):
 @login_required
 def add_sounds_modal_for_pack_edit(request, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
+    own_sounds = Sound.objects.filter(user=pack.user, moderation_state="OK", processing_state="OK")
+    saved_meta = cached_saved_meta("pack", pack.id, lambda: _pack_saved_meta(pack, own_sounds))
     tvars = add_sounds_modal_helper(
         request,
         username=pack.user.username,
-        exclude_sound_ids=pack.sounds.values_list("id", flat=True),
+        exclude_sound_ids=[m["id"] for m in saved_meta],
     )
     tvars.update(
         {

@@ -35,6 +35,7 @@ from django.utils.text import slugify
 from freesound import settings
 from sounds.models import License, LicenseSummaryMixin, Sound
 from tags.models import Tag
+from utils.cache import invalidate_grid_edit_cache
 
 
 class Collection(LicenseSummaryMixin, models.Model):
@@ -211,6 +212,8 @@ class CollectionSound(models.Model):
 def update_collection_num_sounds(sender, instance, **kwargs):
     if instance and instance.collection_id:
         instance.collection.update_num_sounds()
+        # Choke point for all membership changes (edit page, bookmark, moderation, ...)
+        invalidate_grid_edit_cache("collection", instance.collection_id)
 
 
 @receiver(post_delete, sender=CollectionSound)

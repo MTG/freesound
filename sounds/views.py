@@ -841,6 +841,10 @@ def pack_edit(request, username, pack_id):
     return render(request, "sounds/pack_edit.html", tvars)
 
 
+def _pack_own_sounds(pack):
+    return Sound.objects.filter(user=pack.user, moderation_state="OK", processing_state="OK")
+
+
 def _pack_saved_meta(pack, own_sounds_qs):
     return [
         {"id": sid, "name": name, "username": pack.user.username, "date_added": created}
@@ -857,7 +861,7 @@ def render_pack_edit_cards(request, username, pack_id):
     if not (request.user.has_perm("pack.can_change") or pack.user == request.user):
         raise PermissionDenied
 
-    own_sounds = Sound.objects.filter(user=pack.user, moderation_state="OK", processing_state="OK")
+    own_sounds = _pack_own_sounds(pack)
     saved_meta = _pack_saved_meta(pack, own_sounds)
     sounds, tvars = sorted_paginated_edit_sounds(
         request,
@@ -877,12 +881,10 @@ def sound_edit_sources(request, username, sound_id):
 @login_required
 def add_sounds_modal_for_pack_edit(request, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
-    own_sounds = Sound.objects.filter(user=pack.user, moderation_state="OK", processing_state="OK")
-    saved_meta = _pack_saved_meta(pack, own_sounds)
     tvars = add_sounds_modal_helper(
         request,
         username=pack.user.username,
-        exclude_sound_ids=[m["id"] for m in saved_meta],
+        exclude_sound_ids=_pack_own_sounds(pack).filter(pack=pack).values_list("id", flat=True),
     )
     tvars.update(
         {

@@ -19,8 +19,6 @@
     No sounds found matching "{{ current_search }}". <a href="#" data-clear-search>Clear search</a>
 </div>
 {% endif %}
-{% if has_paginator %}
-    <div id="sounds-pagination" class="v-spacing-top-3" hx-swap-oob="outerHTML">
-        {% include "molecules/paginator.html" %}
-    </div>
-{% endif %}
+<div id="sounds-pagination" class="v-spacing-top-3" hx-swap-oob="outerHTML">
+    {% include "molecules/paginator.html" %}
+</div>

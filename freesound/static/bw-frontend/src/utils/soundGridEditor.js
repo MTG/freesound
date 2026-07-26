@@ -6,6 +6,10 @@ import { initializeObjectSelectorActions } from '../components/objectSelector';
 
 const idList = str => (str || '').split(',').filter(Boolean).map(Number);
 
+// Session-scoped cache of rendered pages; keys are full query strings, so any
+// state change (page/sort/search/pending delta) lands on a different key
+const PAGE_CACHE_MAX = 30;
+
 // data-grid-value → the ids that field gets on submit
 const VALUE_SOURCES = {
   added: e => [...e.added].filter(id => !e.removed.has(id)),
@@ -31,6 +35,7 @@ class SoundGridEditor {
     // Ordered (saved first, newly featured appended); also drives the "featured" sort
     this.featured = idList(sectionEl.dataset.featuredIds);
     this.total = 0; // saved + added, sent by the server on each render
+    this.pageCache = new Map(); // query string → {grid, pagination} HTML
 
     this.page = 1;
     this.sort = this.sortSelect ? this.sortSelect.value : '';
@@ -53,10 +58,28 @@ class SoundGridEditor {
     if (this.added.size) params.set('added', [...this.added].join(','));
     if (this.search) params.set('q', this.search);
     if (this.maxFeatured) params.set('featured', this.featured.join(','));
-    window.htmx.ajax('GET', `${this.url}?${params}`, {
+    this.query = `${this.url}?${params}`;
+
+    const cached = this.pageCache.get(this.query);
+    if (cached) {
+      this.gridEl.innerHTML = cached.grid;
+      const pagination = document.getElementById('sounds-pagination');
+      if (pagination) pagination.innerHTML = cached.pagination;
+      this.hydrate();
+      return;
+    }
+    window.htmx.ajax('GET', this.query, {
       target: this.gridEl,
       swap: 'innerHTML',
     });
+  }
+
+  // Re-apply pending state to a freshly swapped/restored grid
+  hydrate() {
+    const meta = this.gridEl.querySelector('[data-grid-total]');
+    this.total = meta ? Number(meta.dataset.gridTotal) : 0;
+    initializeObjectSelectorActions(this.gridEl, this);
+    this.syncCounts();
   }
 
   // has() and toggleAction() are called by the card buttons (see initializeObjectSelectorActions)
@@ -117,11 +140,24 @@ class SoundGridEditor {
       if (page >= 1) reload(page);
     });
 
+    // Drop responses that were overtaken by a newer request
+    this.gridEl.addEventListener('htmx:beforeSwap', evt => {
+      if (!evt.detail.xhr.responseURL.endsWith(this.query)) {
+        evt.detail.shouldSwap = false;
+      }
+    });
+
     this.gridEl.addEventListener('htmx:afterSwap', () => {
-      const meta = this.gridEl.querySelector('[data-grid-total]');
-      this.total = meta ? Number(meta.dataset.gridTotal) : 0;
-      initializeObjectSelectorActions(this.gridEl, this);
-      this.syncCounts();
+      // Cache the pristine server HTML before hydrate() marks up button state
+      if (this.pageCache.size >= PAGE_CACHE_MAX) {
+        this.pageCache.delete(this.pageCache.keys().next().value);
+      }
+      const pagination = document.getElementById('sounds-pagination');
+      this.pageCache.set(this.query, {
+        grid: this.gridEl.innerHTML,
+        pagination: pagination ? pagination.innerHTML : '',
+      });
+      this.hydrate();
     });
 
     if (this.searchInput) {
@@ -173,7 +209,6 @@ const initSoundGridEditor = () => {
     form.querySelectorAll('[data-grid-value]').forEach(input => {
       const source = VALUE_SOURCES[input.dataset.gridValue];
       if (source) input.value = source(editor).join(',');
-      else console.warn(`Unknown data-grid-value "${input.dataset.gridValue}"`);
     });
   });
 };

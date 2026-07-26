@@ -15,7 +15,7 @@
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ pack.name }}</h2>
-        <form id="pack-form" class="bw-form disable-on-submit do-not-submit-on-enter" method="post" novalidate>{% csrf_token %}
+        <form class="bw-form disable-on-submit do-not-submit-on-enter" method="post" novalidate>{% csrf_token %}
             {{ form.non_field_errors }}
             {{ form.name.errors }}
             {{ form.name.label_tag }}

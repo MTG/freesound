@@ -129,12 +129,12 @@ class PackForm(forms.Form):
 class PackEditForm(ModelForm):
     # data-grid-value names the id list the grid editor writes into the field on submit
     added_sounds = CommaSeparatedIdField(
-        widget=forms.widgets.HiddenInput(attrs={"id": "added_sounds", "data-grid-value": "added"}),
+        widget=forms.widgets.HiddenInput(attrs={"data-grid-value": "added"}),
         required=False,
     )
 
     removed_sounds = CommaSeparatedIdField(
-        widget=forms.widgets.HiddenInput(attrs={"id": "removed_sounds", "data-grid-value": "removed"}),
+        widget=forms.widgets.HiddenInput(attrs={"data-grid-value": "removed"}),
         required=False,
     )
 

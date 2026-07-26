@@ -545,7 +545,7 @@ class CollectionTest(TestCase):
 
         self.assertEqual(200, resp.status_code)
         html = resp.content.decode()
-        self.assertIn(f'data-grid-total="{2}"', html)
+        self.assertIn('data-grid-total="2"', html)
         self.assertLess(
             html.index(f'data-object-id="{self.sound2.id}"'),
             html.index(f'data-object-id="{self.sound.id}"'),
@@ -608,7 +608,7 @@ class CollectionTest(TestCase):
         self.collection.featured_sound_ids = [self.sound2.id, self.sound.id]
         self.collection.save()
 
-        resp = self.client.get(self.collection.get_url("collection-edit"))
+        resp = self.client.get(self.collection.edit_url)
 
         self.assertEqual(200, resp.status_code)
         self.assertContains(resp, f'data-featured-ids="{self.sound2.id},{self.sound.id}"')

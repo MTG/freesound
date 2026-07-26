@@ -388,8 +388,8 @@ def collection_licenses(request, collection):
 
 @resolve_collection_from_url
 def add_sounds_modal_for_collection_edit(request, collection):
-    saved_meta = _collection_saved_meta(collection)
-    tvars = add_sounds_modal_helper(request, exclude_sound_ids=[m["id"] for m in saved_meta])
+    saved_ids = Sound.objects.sounds_for_collection(collection.id).values_list("id", flat=True)
+    tvars = add_sounds_modal_helper(request, exclude_sound_ids=saved_ids)
     tvars.update({"modal_title": "Add sounds to collection", "help_text": "Modal to add sounds to your collection"})
     return render(request, "sounds/modal_add_sounds.html", tvars)
 

@@ -39,15 +39,16 @@ class SortOption(NamedTuple):
     needs_featured: bool = False  # only offered by grids that have featured sounds
 
 
-# "featured" has no ORM field: it is ordered by the object's featured_sound_ids
+FEATURED_SORT = "featured"
+DEFAULT_SORT = "created_desc"
+
+# FEATURED_SORT has no ORM field: it is ordered by the object's featured_sound_ids
 SORT_OPTIONS = {
-    "featured": SortOption("Featured first", needs_featured=True),
-    "created_desc": SortOption("Date added (newest first)", "-collectionsound__created"),
+    FEATURED_SORT: SortOption("Featured first", needs_featured=True),
+    DEFAULT_SORT: SortOption("Date added (newest first)", "-collectionsound__created"),
     "created_asc": SortOption("Date added (oldest first)", "collectionsound__created"),
     "name": SortOption("Name (A to Z)", "original_filename"),
 }
-FEATURED_SORT = "featured"
-DEFAULT_SORT = "created_desc"
 
 # Safety bound on the pending delta, not a product limit (the forms enforce those)
 MAX_PENDING_ADDED = 1000
@@ -113,14 +114,14 @@ def sorted_paginated_edit_sounds(request, saved_meta, addable_sounds_qs, per_pag
     sounds = [sounds_by_id[i] for i in page_ids if i in sounds_by_id]
 
     tvars = build_paginator_template_context(pagination["page"], base_path=request.path, base_query=request.GET)
-    tvars.update({"has_paginator": True, "is_empty": is_empty, "total": len(meta), "show_featured": has_featured})
+    tvars.update(
+        {"is_empty": is_empty, "total": len(meta), "show_featured": has_featured, "current_search": search}
+    )
     return sounds, tvars
 
 
 def render_edit_cards(request, sounds, extra_tvars):
-    tvars = {"sounds": sounds, "current_search": request.GET.get("q", "").strip()}
-    tvars.update(extra_tvars)
-    return render(request, "sounds/edit_sound_cards.html", tvars)
+    return render(request, "sounds/edit_sound_cards.html", {"sounds": sounds, **extra_tvars})
 
 
 def add_sounds_modal_helper(request, username=None, exclude_sound_ids=None):

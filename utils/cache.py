@@ -53,12 +53,3 @@ def invalidate_all_moderators_header_cache():
 
 def get_all_keys_matching_pattern(pattern, cache_store):
     return [k.decode().split(":")[-1] for k in cache_store._cache.get_client().keys(pattern)]
-
-
-def grid_edit_cache_key(kind, object_id):
-    """Cache key for the sound grid editor's saved-sound metadata (collection/pack edit pages)."""
-    return f"sound-grid-edit-meta:{kind}:{object_id}"
-
-
-def invalidate_grid_edit_cache(kind, object_id):
-    cache.delete(grid_edit_cache_key(kind, object_id))

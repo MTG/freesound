@@ -31,7 +31,6 @@ from django.utils.timezone import now
 from django_recaptcha.fields import ReCaptchaField
 
 from sounds.models import Flag, License, Pack, Sound
-from utils.cache import invalidate_grid_edit_cache
 from utils.encryption import sign_with_timestamp, unsign_with_timestamp
 from utils.forms import CommaSeparatedIdField, HtmlCleaningCharField, TagField
 
@@ -176,7 +175,6 @@ class PackEditForm(ModelForm):
             pack.save()
         for affected_pack in affected_packs:
             affected_pack.process()
-            invalidate_grid_edit_cache("pack", affected_pack.id)
         return pack
 
     class Meta:

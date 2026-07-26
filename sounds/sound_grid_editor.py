@@ -26,11 +26,9 @@ The client (soundGridEditor.js) keeps the pending edits and re-fetches cards fro
 
 from typing import NamedTuple
 
-from django.core.cache import cache
 from django.shortcuts import render
 
 from sounds.models import Sound
-from utils.cache import grid_edit_cache_key
 from utils.pagination import build_paginator_template_context, paginate
 from utils.search.search_sounds import perform_search_engine_query
 
@@ -51,9 +49,6 @@ SORT_OPTIONS = {
 FEATURED_SORT = "featured"
 DEFAULT_SORT = "created_desc"
 
-# Mutations also call invalidate_grid_edit_cache directly; this timeout is just a backstop
-SAVED_META_CACHE_TIMEOUT = 300
-
 # Safety bound on the pending delta, not a product limit (the forms enforce those)
 MAX_PENDING_ADDED = 1000
 
@@ -64,16 +59,6 @@ def resolve_sort(request, has_featured=False):
     default = FEATURED_SORT if has_featured else DEFAULT_SORT
     sort_key = request.GET.get("s") or default
     return options, sort_key if sort_key in options else default
-
-
-def cached_saved_meta(kind, object_id, fetch_fn):
-    """Cache-or-fetch a grid's saved-sound metadata; ``fetch_fn`` only runs on a cache miss."""
-    key = grid_edit_cache_key(kind, object_id)
-    meta = cache.get(key)
-    if meta is None:
-        meta = fetch_fn()
-        cache.set(key, meta, SAVED_META_CACHE_TIMEOUT)
-    return meta
 
 
 def sorted_paginated_edit_sounds(request, saved_meta, addable_sounds_qs, per_page, featured_ids=None):

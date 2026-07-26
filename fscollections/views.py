@@ -25,7 +25,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -46,10 +45,10 @@ from sounds.sound_grid_editor import (
     FEATURED_SORT,
     SORT_OPTIONS,
     add_sounds_modal_helper,
-    cached_saved_meta,
     render_edit_cards,
     resolve_sort,
     sorted_paginated_edit_sounds,
+)
 from utils.download_limit import (
     DownloadType,
     count_download_and_set_sentinel,
@@ -271,7 +270,7 @@ def render_collection_cards(request, collection):
     """Search/sort/paginated edit-grid cards for a collection; owner/maintainer only."""
     if not collection.user_is_owner_or_maintainer(request.user):
         return HttpResponse(status=403)
-    saved_meta = cached_saved_meta("collection", collection.id, lambda: _collection_saved_meta(collection))
+    saved_meta = _collection_saved_meta(collection)
     sounds, tvars = sorted_paginated_edit_sounds(
         request,
         saved_meta,
@@ -389,7 +388,7 @@ def collection_licenses(request, collection):
 
 @resolve_collection_from_url
 def add_sounds_modal_for_collection_edit(request, collection):
-    saved_meta = cached_saved_meta("collection", collection.id, lambda: _collection_saved_meta(collection))
+    saved_meta = _collection_saved_meta(collection)
     tvars = add_sounds_modal_helper(request, exclude_sound_ids=[m["id"] for m in saved_meta])
     tvars.update({"modal_title": "Add sounds to collection", "help_text": "Modal to add sounds to your collection"})
     return render(request, "sounds/modal_add_sounds.html", tvars)

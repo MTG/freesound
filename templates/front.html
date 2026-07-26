@@ -113,7 +113,7 @@
                                             <div class="row">
                                                 {% for search_term, url in popular_searches_slice %}
                                                     <div class="col v-spacing-1">
-                                                        {% bw_tag search_term 4 'w-100 h-75 display-inline-block' url 1.0 %}
+                                                        {% bw_tag search_term size=4 class_name='w-100 h-75 display-inline-block' url=url weight=1.0 %}
                                                     </div>
                                                 {% endfor %}
                                             </div>

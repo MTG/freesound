@@ -17,22 +17,29 @@
 # Authors:
 #     See AUTHORS file.
 #
+
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 from utils.search import SearchEngineException, get_search_engine
+
+if TYPE_CHECKING:
+    from forum.models import Post
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
 
 
-def add_posts_to_search_engine(post_objects, solr_collection_url=None):
+def add_posts_to_search_engine(post_objects: list[Post], solr_collection_url=None) -> int:
     """Add forum posts to search engine
 
     Args:
-        post_objects (List[forum.models.Post]): list (or queryset) of forum Post objects to index
+        post_objects: list (or queryset) of forum Post objects to index
 
     Returns:
-        int: number of sounds added to the index
+        number of sounds added to the index
     """
     num_posts = len(post_objects)
     try:
@@ -44,11 +51,11 @@ def add_posts_to_search_engine(post_objects, solr_collection_url=None):
         return 0
 
 
-def delete_posts_from_search_engine(post_ids, solr_collection_url=None):
+def delete_posts_from_search_engine(post_ids: list[int], solr_collection_url=None):
     """Delete forum posts from the search engine
 
     Args:
-        post_ids (list[int]): IDs of the forum posts to delete
+        post_ids: IDs of the forum posts to delete
     """
     console_logger.info(f"Deleting {len(post_ids)} forum posts from search engine")
     search_logger.info(f"Deleting {len(post_ids)} forum posts from search engine")
@@ -67,14 +74,14 @@ def delete_all_posts_from_search_engine(solr_collection_url=None):
         console_logger.info(f"Could not delete forum posts: {str(e)}")
 
 
-def get_all_post_ids_from_search_engine(solr_collection_url=None, page_size=2000):
+def get_all_post_ids_from_search_engine(solr_collection_url=None, page_size=2000) -> list[int]:
     """Retrieves the list of all forum post IDs currently indexed in the search engine
 
     Args:
         page_size: number of post IDs to retrieve per search engine query
 
     Returns:
-        list[int]: list of forum IDs indexed in the search engine
+        list of forum IDs indexed in the search engine
     """
     console_logger.info("Getting all forum post ids from search engine")
     search_engine = get_search_engine(forum_index_url=solr_collection_url)

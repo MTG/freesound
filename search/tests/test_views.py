@@ -29,8 +29,13 @@ from django.urls import reverse
 
 from sounds.models import Sound
 from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.ratelimit import request_limit_events_total
 from utils.search import SearchResults
-from utils.test_helpers import create_user_and_sounds
+from utils.test_helpers import counter_samples, create_user_and_sounds
+
+
+def _samples():
+    return counter_samples(request_limit_events_total, "reason", "enforced", "user_type")
 
 
 def create_fake_search_engine_results():
@@ -301,6 +306,29 @@ class SearchResultClustering(TestCase):
         self.assertTemplateUsed(resp, "search/clustering_results.html")
         self.assertEqual(resp.context["clusters_data"], None)
 
+    def test_clusters_section_invalid_filter_returns_no_clusters(self):
+        # A corrupted/invalid filter sets sqp.errors, which must short-circuit
+        # and not send a request to solr and return an empty page.
+        resp = self.client.get(reverse("clusters-section") + "?f=samplerate%3Aabc")
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "search/clustering_results.html")
+        self.assertEqual(resp.context["clusters_data"], None)
+
+    def test_clustered_graph_invalid_filter_returns_error(self):
+        # A corrupted/invalid filter sets sqp.errors, which must short-circuit
+        # and not send a request to solr and return an empty response.
+        resp = self.client.get(reverse("clustered-graph-json") + "?f=samplerate%3Aabc")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b"error", resp.content)
+
+    @mock.patch("search.views.get_clusters_for_query")
+    def test_clustered_graph_clustering_timeout_returns_error(self, get_clusters_for_query):
+        # On clustering timeout/failure get_clusters_for_query returns {"clusters": None}
+        get_clusters_for_query.return_value = {"clusters": None}
+        resp = self.client.get(reverse("clustered-graph-json"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(b"error", resp.content)
+
 
 @pytest.mark.django_db
 class TestSearchDeepPagination:
@@ -311,10 +339,12 @@ class TestSearchDeepPagination:
         call_command("loaddata", "users")
         search_url = reverse("sounds-search") + "?q=wind&page=300"
         tag_url = reverse("tags") + '?f=tag:"field-recording"&page=300'
+        before = _samples().get(("search_page_limit", "true", "anonymous"), 0)
 
         with mock.patch("search.views.perform_search_engine_query") as perform:
             assert client.get(search_url, **self.IP).status_code == 429
             assert client.get(tag_url, **self.IP).status_code == 429
+            assert _samples()[("search_page_limit", "true", "anonymous")] == before + 2
 
             client.force_login(User.objects.get(username="User1"))
             assert client.get(search_url, **self.IP).status_code == 429

@@ -18,31 +18,39 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import datetime
 import random
 import zlib
+from typing import TYPE_CHECKING
 
 from django.http import HttpResponse
 from django.utils import timezone
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 from donations.models import DonationsModalSettings
 from sounds.models import Download, PackDownload
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download
 
 
-def download_sounds(licenses_file_url, licenses_file_content, sounds_list, download_filename):
+def download_sounds(
+    licenses_file_url: str, licenses_file_content: str, sounds_list: QuerySet, download_filename: str
+) -> HttpResponse:
     """From a list of sounds generates the HttpResponse with the information of
     the wav files of the sounds and a text file with the license. This response
     is handled by mod_zipfile of nginx to generate a zip file with the content.
 
     Args:
-        licenses_file_url (str): url to the sound Pack or BookmarkCategory licenses
-        licenses_file_content (str): attributions for the different sounds in the Pack or BookmarkCategory
-        sounds_list (django.db.models.query.QuerySet): list of sounds forming the Pack or BookmarkCategory
-        download_filename (str): name of the zip file to be downloaded
+        licenses_file_url: url to the sound Pack or BookmarkCategory licenses
+        licenses_file_content: attributions for the different sounds in the Pack or BookmarkCategory
+        sounds_list: list of sounds forming the Pack or BookmarkCategory
+        download_filename: name of the zip file to be downloaded
 
     Returns:
-        HttpResponse: information of the wav files of the sounds and a text file with the license
+        information of the wav files of the sounds and a text file with the license
     """
     license_crc = zlib.crc32(licenses_file_content.encode("UTF-8")) & 0xFFFFFFFF
     filelist = "%02x %i %s %s\r\n" % (

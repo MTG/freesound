@@ -12,7 +12,7 @@
             <img id="imageProfile" class="avatar" style="width:100px;height:100px;" src="{{ profile.locations.avatar.XL.url }}" />
         {% else %}
             <img id="imageProfile" class="display-none avatar" style="width:100px;height:100px;" />
-            {% bw_user_avatar profile.locations.avatar.XL.url user.username 100 %}
+            {% bw_user_avatar profile.locations.avatar.XL.url user.username size=100 %}
         {% endif %}
     </div>
     <div class="bw-edit-profile__username v-spacing-top-2 center">

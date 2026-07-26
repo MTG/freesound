@@ -19,158 +19,66 @@
 #
 
 
-import logging
-
-import sentry_sdk
 from rest_framework import status
 from rest_framework.exceptions import APIException
 
-import apiv2.apiv2_utils  # absolute import because of mutual imports of this module and apiv2_utils
 
-errors_logger = logging.getLogger("api_errors")
+class LoggedAPIException(APIException):
+    # An APIException, which when handled by our exception handler will also emit a log message
+    # to the specified logger.
+    summary_label = None
+    report_to_sentry = False
+
+    def __init__(self, msg=None, *, resource=None, request=None):
+        self.detail = msg if msg is not None else self.default_detail
+        self.log_resource = resource
+        self.log_request = request
 
 
-class NotFoundException(APIException):
-    detail = None
+class NotFoundException(LoggedAPIException):
     status_code = status.HTTP_404_NOT_FOUND
-
-    def __init__(self, msg="Not found", resource=None):
-        summary_message = "%i Not found" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                resource=resource,
-            )
-        )
-        self.detail = msg
+    summary_label = "Not found"
+    default_detail = "Not found"
 
 
-class InvalidUrlException(APIException):
-    detail = None
+class InvalidUrlException(LoggedAPIException):
     status_code = status.HTTP_400_BAD_REQUEST
-
-    def __init__(self, msg="Invalid url", request=None):
-        summary_message = "%i Invalid url" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                request=request,
-            )
-        )
-        self.detail = msg
+    summary_label = "Invalid url"
+    default_detail = "Invalid url"
 
 
-class BadRequestException(APIException):
-    detail = None
+class BadRequestException(LoggedAPIException):
     status_code = status.HTTP_400_BAD_REQUEST
-
-    def __init__(self, msg="Bad request", resource=None):
-        summary_message = "%i Bad request" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                resource=resource,
-            )
-        )
-        self.detail = msg
+    summary_label = "Bad request"
+    default_detail = "Bad request"
 
 
-class ConflictException(APIException):
-    detail = None
+class ConflictException(LoggedAPIException):
     status_code = status.HTTP_409_CONFLICT
-
-    def __init__(self, msg="Conflict", resource=None):
-        summary_message = "%i Conflict" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                resource=resource,
-            )
-        )
-        self.detail = msg
+    summary_label = "Conflict"
+    default_detail = "Conflict"
 
 
-class UnauthorizedException(APIException):
-    detail = None
+class UnauthorizedException(LoggedAPIException):
     status_code = status.HTTP_401_UNAUTHORIZED
-
-    def __init__(self, msg="Not authorized", resource=None):
-        summary_message = "%i Not authorized" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                resource=resource,
-            )
-        )
-        self.detail = msg
+    summary_label = "Not authorized"
+    default_detail = "Not authorized"
 
 
-class RequiresHttpsException(APIException):
-    detail = None
+class RequiresHttpsException(LoggedAPIException):
     status_code = status.HTTP_403_FORBIDDEN
-
-    def __init__(self, msg="This resource requires a secure connection (https)", request=None):
-        summary_message = "%i Requires Https" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                request=request,
-            )
-        )
-        self.detail = msg
+    summary_label = "Requires Https"
+    default_detail = "This resource requires a secure connection (https)"
 
 
-class ServerErrorException(APIException):
-    detail = None
+class ServerErrorException(LoggedAPIException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-
-    def __init__(self, msg="Server error", resource=None):
-        summary_message = "%i Server error" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                resource=resource,
-            )
-        )
-        self.detail = msg
-        sentry_sdk.capture_exception(self)
+    summary_label = "Server error"
+    default_detail = "Server error"
+    report_to_sentry = True
 
 
-class OtherException(APIException):
-    detail = None
-    status_code = None
-
-    def __init__(self, msg="Bad request", status=status.HTTP_400_BAD_REQUEST, resource=None):
-        summary_message = "%i Other exception" % status
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": status},
-                resource=resource,
-            )
-        )
-        self.detail = msg
-        self.status_code = status
-
-
-class Throttled(APIException):
-    detail = None
+class Throttled(LoggedAPIException):
     status_code = status.HTTP_429_TOO_MANY_REQUESTS
-
-    def __init__(self, msg="Request was throttled", request=None):
-        summary_message = "%i Throttled" % self.status_code
-        errors_logger.info(
-            apiv2.apiv2_utils.log_message_helper(
-                summary_message,
-                data_dict={"summary_message": summary_message, "long_message": msg, "status": self.status_code},
-                request=request,
-            )
-        )
-        self.detail = msg
+    summary_label = "Throttled"
+    default_detail = "Request was throttled"

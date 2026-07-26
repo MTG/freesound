@@ -51,7 +51,6 @@ from apiv2.exceptions import (
     ConflictException,
     InvalidUrlException,
     NotFoundException,
-    OtherException,
     ServerErrorException,
     UnauthorizedException,
 )
@@ -761,11 +760,11 @@ class UploadSound(WriteRequiredGenericAPIView):
                         try:
                             sound = utils.sound_upload.create_sound(self.user, sound_fields, apiv2_client=apiv2_client)
                         except utils.sound_upload.NoAudioException:
-                            raise OtherException(
+                            raise BadRequestException(
                                 "Something went wrong with accessing the file %s." % sound_fields["name"]
                             )
                         except utils.sound_upload.AlreadyExistsException:
-                            raise OtherException(
+                            raise BadRequestException(
                                 "Sound could not be created because the uploaded file is already part of freesound.",
                                 resource=self,
                             )

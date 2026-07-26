@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import datetime
 import json
 import time
@@ -93,11 +95,11 @@ def in_list(value, arg):
 
 
 @register.filter
-def chunks(l, n):
+def chunks(l: list, n: int) -> list:
     """
     Returns the elements of l grouped in chunks of size n.
-    :param list l: list of elements to regroup
-    :param int n: number of elements per group
+    :param l: list of elements to regroup
+    :param n: number of elements per group
     :return: list of n-sized lists
     """
     if not isinstance(l, list):

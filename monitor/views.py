@@ -24,7 +24,7 @@ from collections import Counter
 import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, User
 from django.core.cache import caches
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
@@ -45,8 +45,12 @@ MONITOR_HOME_VIEWS = PrometheusCounter(
 )
 
 
+def user_is_staff(user: AbstractBaseUser | AnonymousUser) -> bool:
+    return isinstance(user, User) and user.is_staff
+
+
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def get_queues_status(request):
     try:
         celery_task_counts = get_queues_task_counts()
@@ -56,7 +60,7 @@ def get_queues_status(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_home(request):
     # Test instrumentation: bump a counter so we can confirm it appears on /metrics.
     MONITOR_HOME_VIEWS.inc()
@@ -64,7 +68,7 @@ def monitor_home(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_processing(request):
     # Processing
     sounds_queued_count = Sound.objects.filter(processing_ongoing_state="QU").count()
@@ -90,7 +94,7 @@ def monitor_processing(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_analysis(request):
     # Analysis
     analyzers_data = {}
@@ -142,7 +146,7 @@ def monitor_analysis(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_similarity(request):
     # Get stats about similarity vectors indexed in Solr
     try:
@@ -169,7 +173,7 @@ def monitor_similarity(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_moderation(request):
     sounds_in_moderators_queue_count = tickets.views._get_sounds_in_moderators_queue_count(request.user)
     new_upload_count = tickets.views.new_sound_tickets_count()
@@ -198,14 +202,14 @@ def monitor_moderation(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def monitor_stats(request):
     tvars = {"activePage": "stats"}
     return render(request, "monitor/stats.html", tvars)
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def moderators_stats(request):
     return HttpResponseRedirect(reverse("monitor-moderation"))
 
@@ -266,7 +270,7 @@ def totals_stats_ajax(request):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff, login_url="/")
+@user_passes_test(user_is_staff, login_url="/")
 def process_sounds(request):
     # Send sounds to processing according to their processing_state
     processing_status = request.GET.get("prs", None)

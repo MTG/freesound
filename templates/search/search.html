@@ -41,8 +41,8 @@
                             <span class="bw-search_remove-query" id="remove-content-search">{% bw_icon 'close' %}</span>
                         </div>
                         <input type="hidden" name="f" value="{{ sqp.get_filter_string_for_url|urlencode }}"/>
-                        {% if not sqp.options.field_weights.is_default_value %} {% display_search_option "field_weights" "hidden" %}{% endif %}
-                        {% if not sqp.options.similar_to.is_default_value %} {% display_search_option "similar_to" "hidden" %}{% endif %}
+                        {% if not sqp.options.field_weights.is_default_value %} {% display_search_option "field_weights" widget="hidden" %}{% endif %}
+                        {% if not sqp.options.similar_to.is_default_value %} {% display_search_option "similar_to" widget="hidden" %}{% endif %}
                     </div>
                     {% if sqp.tags_mode_active %}
                         {% comment %}"sounds tagged as" label with follow/unfollow buttons{% endcomment %}
@@ -196,7 +196,7 @@
                 <div class="col-12 center v-spacing-top-negative-2 d-md-none">
                     <div data-target="collapsable-filters" data-show-text="Show filters" data-hide-text="Hide filters" data-hide-on-load class="collapsable-toggle v-spacing-top-2 font-weight-bold text-light-grey"></div>
                 </div>
-                {% comment %}facets{% endcomment%}
+                {% comment %}facets{% endcomment %}
                 <aside class="col-md-4 col-lg-3 collapsable-block md-max-h-100" id="collapsable-filters">
                     {% if sqp.tags_mode_active %}
                         {% display_facet "tags" %}
@@ -314,7 +314,7 @@
                             {% endif %}
                         </div>
                         <div class="v-spacing-6">
-                            {% bw_paginator page request "sound" non_grouped_number_of_results max_pages=search_max_page_limit %}
+                            {% bw_paginator page request anchor="sound" non_grouped_number_of_results=non_grouped_number_of_results max_pages=search_max_page_limit %}
                         </div>
                     {% endif %}
                 </main>

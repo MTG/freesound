@@ -23,7 +23,7 @@ from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from accounts.models import EmailPreferenceType, UserEmailSetting
+from accounts.models import DeletedUser, EmailPreferenceType, UserEmailSetting
 from forum.models import Forum, Post, Subscription, Thread
 
 
@@ -239,6 +239,39 @@ class ForumPostSignalTestCase(TestCase):
         # After deleting t1post2, the last post of thread1 has changed, but not the last post of the forum
         self.assertEqual(self.thread.last_post, t1post1)
         self.assertEqual(self.forum.last_post, t2post)
+
+
+class ForumPostCascadeDeleteTestCase(TestCase):
+    """Tests that thread and forum last_post/num_posts are correctly updated when posts are
+    deleted in cascade together with their author, e.g. when a spammer user is deleted (#1575)"""
+
+    def setUp(self):
+        self.user = User.objects.create_user("testuser", password="testpass", email="email@freesound.org")
+        self.spammer = User.objects.create_user("spammer", password="testpass", email="spammer@freesound.org")
+        self.forum = Forum.objects.create(name="testForum", name_slug="test_forum", description="test")
+        self.thread = Thread.objects.create(forum=self.forum, title="testThread", author=self.user)
+        self.first_post = Post.objects.create(thread=self.thread, author=self.user, body="", moderation_state="OK")
+        self.spam_post = Post.objects.create(thread=self.thread, author=self.spammer, body="", moderation_state="OK")
+
+    def assert_counts_updated_after_spammer_deletion(self):
+        self.thread.refresh_from_db()
+        self.forum.refresh_from_db()
+        self.assertEqual(self.thread.num_posts, 1)
+        self.assertEqual(self.thread.last_post, self.first_post)
+        self.assertEqual(self.forum.num_posts, 1)
+        self.assertEqual(self.forum.last_post, self.first_post)
+
+    def test_delete_user_object_cascade(self):
+
+        self.spammer.delete()
+        self.assert_counts_updated_after_spammer_deletion()
+
+    def test_delete_spammer_user_from_db(self):
+
+        self.spammer.profile.delete_user(
+            delete_user_object_from_db=True, deletion_reason=DeletedUser.DELETION_REASON_SPAMMER
+        )
+        self.assert_counts_updated_after_spammer_deletion()
 
 
 class ForumThreadSignalTestCase(TestCase):

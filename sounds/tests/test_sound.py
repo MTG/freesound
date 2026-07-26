@@ -385,14 +385,16 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check download works successfully if user logged in
             self.client.force_login(self.user)
-            resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
 
             # Download again and check n download objects is still 1
-            self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
+            with self.captureOnCommitCallbacks(execute=True):
+                self.client.get(reverse("sound-download", args=[self.sound.user.username, self.sound.id]))
             self.assertEqual(Download.objects.filter(user=self.user, sound=self.sound).count(), 1)
 
             # Check num_download attribute of Sound is 1
@@ -475,7 +477,8 @@ class SoundPackDownloadTestCase(TestCase):
 
             # Check download works successfully if user logged in
             self.client.force_login(self.user)
-            resp = self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(resp.status_code, 200)
 
             # Check n download objects is 1
@@ -487,8 +490,10 @@ class SoundPackDownloadTestCase(TestCase):
                 1,
             )
 
-            # Download again and check n download objects is still 1
-            self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
+            # Download again and check n download objects is still 1 (deduplicated via the
+            # in-progress sentinel, which is written on transaction commit)
+            with self.captureOnCommitCallbacks(execute=True):
+                self.client.get(reverse("pack-download", args=[self.sound.user.username, self.pack.id]))
             self.assertEqual(PackDownload.objects.filter(user=self.user, pack=self.pack).count(), 1)
 
             # Check num_download attribute of Sound is 1

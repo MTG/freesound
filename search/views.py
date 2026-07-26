@@ -29,7 +29,6 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, reverse
 from django_ratelimit.decorators import ratelimit
-from prometheus_client import Counter
 
 import forum
 import sounds
@@ -44,7 +43,7 @@ from utils.clustering_utilities import (
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.pagination import PreSlicedCountProvidedPaginator, read_page
-from utils.ratelimit import key_for_ratelimiting, rate_per_ip
+from utils.ratelimit import RequestLimitReason, count_request_limit_event, key_for_ratelimiting, rate_per_ip
 from utils.search import (
     SearchEngineException,
     SearchEngineTimeoutException,
@@ -58,13 +57,6 @@ from utils.search.search_sounds import (
 )
 
 search_logger = logging.getLogger("search")
-
-# number of times we identified a suspicious ?page parameter in a search
-search_pagination_blocks_total = Counter(
-    "freesound_search_pagination_blocks_total",
-    "Search requests blocked by ?page query parameter anti-abuse",
-    ["reason", "enforced"],
-)
 
 
 def is_empty_query(request):
@@ -130,12 +122,12 @@ def search_view_helper(request):
                     "ip": get_client_ip(request),
                     "page": page,
                     "query": sqp.get_option_value_to_apply("query"),
-                    "reason": "hard_cap",
+                    "reason": RequestLimitReason.SEARCH_PAGE_LIMIT.value,
                     "enforced": True,
                 }
             )
         )
-        search_pagination_blocks_total.labels(reason="hard_cap", enforced="true").inc()
+        count_request_limit_event(request, RequestLimitReason.SEARCH_PAGE_LIMIT, enforced=True)
         raise PaginationAbuseBlocked()
 
     # Run the query and post-process the results
@@ -328,7 +320,7 @@ def _get_clusters_data_helper(sqp):
 
 def clusters_section(request):
     sqp = search_query_processor.SearchQueryProcessor(request)
-    clusters_data = _get_clusters_data_helper(sqp)
+    clusters_data = None if sqp.errors else _get_clusters_data_helper(sqp)
     if clusters_data is None:
         return render(request, "search/clustering_results.html", {"clusters_data": None})
     return render(request, "search/clustering_results.html", {"sqp": sqp, "clusters_data": clusters_data})
@@ -339,9 +331,13 @@ def clustered_graph(request):
     # TODO: this view is currently not used in the new UI, but we could add a modal in the
     # clustering section to show results in a graph.
     sqp = search_query_processor.SearchQueryProcessor(request)
+    if sqp.errors:
+        return JsonResponse(json.dumps({"error": True}), safe=False)
+
     results = get_clusters_for_query(sqp)
-    if results is None:
-        JsonResponse(json.dumps({"error": True}), safe=False)
+    if results is None or results.get("clusters") is None:
+        return JsonResponse(json.dumps({"error": True}), safe=False)
+
     graph = get_clustering_data_for_graph_display(sqp, results["graph"])
     return JsonResponse(json.dumps(graph), safe=False)
 

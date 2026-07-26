@@ -26,7 +26,7 @@ from django.test import RequestFactory
 def _render(num_pages, current_page, max_pages_expr):
     page = Paginator(range(num_pages * 15), 15).page(current_page)
     request = RequestFactory().get("/search/?q=wind")
-    tpl = Template("{% load bw_templatetags %}{% bw_paginator page request 'sound' -1 " + max_pages_expr + " %}")
+    tpl = Template("{% load bw_templatetags %}{% bw_paginator page request anchor='sound' " + max_pages_expr + " %}")
     return tpl.render(Context({"page": page, "request": request}))
 
 

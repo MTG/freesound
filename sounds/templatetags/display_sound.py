@@ -355,7 +355,7 @@ def display_sound_small_no_sound_object_no_bookmark(context, file_data):
 
 
 @register.inclusion_tag("sounds/display_sound_selectable.html", takes_context=True)
-def display_sound_small_selectable(context, sound, selected=False):
+def display_sound_small_selectable(context, sound, *, selected=False):
     context = context.get("original_context", context)  # This is to allow passing context in nested inclusion tags
     tvars = display_sound_small_no_bookmark_no_ratings(context, sound)
     tvars.update(
@@ -367,7 +367,7 @@ def display_sound_small_selectable(context, sound, selected=False):
 
 
 @register.inclusion_tag("sounds/display_sound_with_actions.html", takes_context=True)
-def display_sound_small_with_actions(context, sound, show_featured=True, object_noun="collection"):
+def display_sound_small_with_actions(context, sound, *, show_featured=True, object_noun="collection"):
     """Display sound with remove (and optionally featured) toggles, whose state the grid editor
     restores after each swap. ``object_noun`` labels the remove tooltip."""
     context = context.get("original_context", context)  # This is to allow passing context in nested inclusion tags

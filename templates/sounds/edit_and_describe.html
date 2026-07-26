@@ -10,11 +10,11 @@
 {% block page-content %}
 
 <div class="v-spacing-5 v-spacing-top-2">
-<p>{% if describing and total_sounds_to_describe > 1  %}This is the last step of the description process. {% endif %}{% if num_rounds > 1%}If you've selected more than {{ sounds_per_round }} sounds, 
-    you will be asked to {%if describe %}describe{% else %}edit{% endif %} them in rounds of {{ sounds_per_round }} sounds until all are done. {% endif %}
+<p>{% if describing and total_sounds_to_describe > 1 %}This is the last step of the description process. {% endif %}{% if num_rounds > 1 %}If you've selected more than {{ sounds_per_round }} sounds, 
+    you will be asked to {% if describe %}describe{% else %}edit{% endif %} them in rounds of {{ sounds_per_round }} sounds until all are done. {% endif %}
     {% if num_forms > 1 %}For each sound y{% else %}Y{% endif %}ou'll have to at least specify a <b>name</b>, some <b>tags</b>, a <b>description</b> and a <b>license</b>. Additionally, you can also provide a <b>pack</b>, <b>geolocation</b> data (only recommended for 
     field recordings), and a list of <b>sound sources</b>, that is to say, a list of other Freesound sounds that were used to create this one.
-    {% if num_forms > 1%}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
+    {% if num_forms > 1 %}<strong>Click on the sound filenames below to display the form for {% if describing %}describing{% else %}editing{% endif %} each sound</strong>.{% endif %}</p>
 </div>
 
 <form action=".?{% if next %}next={{next}}&{% endif %}session={{session_key_prefix}}" id="edit_describe_form" method="post" novalidate class="disable-on-submit do-not-submit-on-enter bw-form">{% csrf_token %}

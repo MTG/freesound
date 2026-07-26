@@ -10,7 +10,7 @@
         <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
             <h5>Most active users in the last weeks</h5>
             <div class="v-spacing-top-3">
-                {% for user_data in recent_most_active_users  %}
+                {% for user_data in recent_most_active_users %}
                     <div class="row middle">
                         <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
                         <div class="col-11">
@@ -36,7 +36,7 @@
         <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
             <h5>Most active new users</h5>
             <div class="v-spacing-top-3">
-                {% for user_data in new_active_users  %}
+                {% for user_data in new_active_users %}
                     <div class="row middle">
                         <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
                         <div class="col-11">
@@ -65,7 +65,7 @@
         <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
             <h5>Top recent uploaders (by number of sounds)</h5>
             <div class="v-spacing-top-3">
-                {% for user_avatar_url, username, count in top_recent_uploaders_by_count  %}
+                {% for user_avatar_url, username, count in top_recent_uploaders_by_count %}
                     <div class="row middle">
                         <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
                         <div class="col-11">
@@ -91,7 +91,7 @@
         <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
             <h5>Top recent uploaders (by sound length)</h5>
             <div class="v-spacing-top-3">
-                {% for user_avatar_url, username, length in top_recent_uploaders_by_length  %}
+                {% for user_avatar_url, username, length in top_recent_uploaders_by_length %}
                     <div class="row middle">
                         <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
                         <div class="col-11">
@@ -120,7 +120,7 @@
         <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
             <h5>All time top uploaders (by number of sounds)</h5>
             <div class="v-spacing-top-3">
-                {% for user_avatar_url, username, count in all_time_top_uploaders_by_count  %}
+                {% for user_avatar_url, username, count in all_time_top_uploaders_by_count %}
                     <div class="row middle">
                         <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
                         <div class="col-11">
@@ -146,7 +146,7 @@
         <div class="col-lg-5 offset-lg-1 v-spacing-top-6">
             <h5>All time top uploaders (by sound length)</h5>
             <div class="v-spacing-top-3">
-                {% for user_avatar_url, username, length in all_time_top_uploaders_by_length  %}
+                {% for user_avatar_url, username, length in all_time_top_uploaders_by_length %}
                     <div class="row middle">
                         <div class="col-1 text-grey font-weight-bold">#{{ forloop.counter }}</div>
                         <div class="col-11">

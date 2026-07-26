@@ -29,7 +29,7 @@
     {% if type == "cloud" %}
     <div class="bw-search__filter-tags-list">
         {% for f in facet %}
-            {% bw_tag f.display_value 1 '' f.add_filter_url f.weight %}
+            {% bw_tag f.display_value size=1 class_name='' url=f.add_filter_url weight=f.weight %}
         {% endfor %}
     </div>
     {% endif %}

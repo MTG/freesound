@@ -20,7 +20,6 @@
 #     See AUTHORS file.
 #
 
-
 import math
 import os
 import re

@@ -34,7 +34,7 @@
             </div>
             {% if collection.num_downloads %}
             <div class="h-spacing-left-1" title="{{ collection.num_downloads|bw_intcomma }} download{{ collection.num_downloads|pluralize }}">
-                <a href="{{ collection.download_url }}" class="bw-link--grey-light">
+                <a href="javascript:void(0)" data-toggle="modal-default" data-modal-content-url="{% url 'collection-downloaders' collection.id collection.url_kwargs.collection_name %}?ajax=1" class="bw-link--grey-light">
                     <span class="bw-icon-download" style="font-size:90%;"></span> {{ collection.num_downloads|formatnumber }}
                 </a>
             </div>
@@ -52,7 +52,7 @@
     <div class="v-spacing-top-1 bw-player__description-height">
         {% if collection.description %}
             {% with collection.description|striptags|safe as preprocessed_description %}
-            <div {% if preprocessed_description|length >= 55%}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
+            <div {% if preprocessed_description|length >= 55 %}title="{{ preprocessed_description|truncatewords_html:200|force_escape }}"{% endif %}>
                 {{ preprocessed_description|truncatechars_html:55 }}
             </div>
             {% endwith %}

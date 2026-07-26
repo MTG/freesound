@@ -64,6 +64,22 @@ that were made, and allow feedback if necessary
 
 ## Specific notes
 
+### Template tag optional arguments
+
+Optional arguments in template tags must always be keyword-only:
+
+```py
+@register.inclusion_tag("atoms/avatar.html")
+def bw_user_avatar(avatar_url, username, *, size=40, extra_class=""):
+```
+
+and templates need to specify the keywords in order to change the default:
+
+```html
+{% bw_user_avatar url username size=32 %}
+```
+
+
 ### Custom Django permissions
 
 If there is a need for defining custom permissions we should define them in the corresponding model's `Meta` class
@@ -337,6 +353,15 @@ Note that this command will update existing objects and create new ones if missi
 Running this command will also mark sounds as index dirty so search index is updated accordingly.
 The command has a number of options that can be set to skip some of the steps if needed, or run it only for a specific set of sound IDs.
 
+
+### Prometheus metrics
+
+From freesound you can count metrics by defining a `prometheus_client.Counter` and then calling `.inc()` on it.
+We prefer to define metrics close to the location where they are defined, especially if they are only emitted
+in that one place. A metric incremented from several modules should be defined in a generic "domain" module
+
+Metrics are periodically pulled from freesound by Prometheus. Freesound automatically serves an internal /metrics
+endpoint when running in production. 
 
 ### Considerations when updating Django version
 

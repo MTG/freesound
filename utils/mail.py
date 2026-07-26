@@ -18,10 +18,17 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import json
 import logging
+from typing import TYPE_CHECKING
 
 from django.conf import settings
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
+
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMessage
 from django.template.loader import render_to_string
@@ -45,15 +52,15 @@ def _ensure_list(item):
 
 
 def send_mail(
-    subject,
-    email_body,
-    user_to=None,
-    email_to=None,
-    email_from=None,
-    reply_to=None,
-    email_type_preference_check=None,
-    extra_subject="",
-):
+    subject: str,
+    email_body: str,
+    user_to: User | list[User] | None = None,
+    email_to: str | list[str] | None = None,
+    email_from: str | None = None,
+    reply_to: str | None = None,
+    email_type_preference_check: str | None = None,
+    extra_subject: str = "",
+) -> bool:
     """Sends email with a lot of defaults.
 
     The function will check if user's email is valid based on bounce info. The function will also check email
@@ -61,22 +68,22 @@ def send_mail(
     other should be None.
 
     Args:
-        subject (str): subject of the email.
-        email_body (str): body of the email.
-        user_to (Union[User, List[User]]): a User object or a list of User objects to send the email to. If user_to
+        subject: subject of the email.
+        email_body: body of the email.
+        user_to: a User object or a list of User objects to send the email to. If user_to
             is set, email_to should be None.
-        email_to (Union[str, List[str]]): a string representing an email address or a list of strings representing
+        email_to: a string representing an email address or a list of strings representing
             email addresses who to send the email to.  If email_to is set, user_to should be None.
-        email_from (str): email string that shows up as sender. The default value is DEFAULT_FROM_EMAIL in config.
-        reply_to (str): email string that will be added as a "Reply-To" header to all mails being sent.
-        email_type_preference_check (str): name of EmailPreferenceType that users should have enabled for the email to
+        email_from: email string that shows up as sender. The default value is DEFAULT_FROM_EMAIL in config.
+        reply_to: email string that will be added as a "Reply-To" header to all mails being sent.
+        email_type_preference_check: name of EmailPreferenceType that users should have enabled for the email to
             be sent. If set to None, no checks will be carried out.
-        extra_subject (str): extra contents for the email subject which will be appended to the 'subject' param above
+        extra_subject: extra contents for the email subject which will be appended to the 'subject' param above
             and separated by a dash (this should be used to separate parts of the subject which are not common for a
             given type of email, e.g. to pass the "topic name" in a "topic reply notification" email).
 
     Returns:
-        (bool): True if all emails were sent successfully, False otherwise.
+        True if all emails were sent successfully, False otherwise.
     """
     assert bool(user_to) != bool(email_to), "One of parameters user_to and email_to should be set, but not both"
 

@@ -8,7 +8,7 @@ This {{ type }} of sounds contains sounds by the following user{{ users|pluraliz
 
 {% if type == "Pack" %}You can find this pack online at: {% absurl 'pack' object.user.username object.id %}{% endif %}
 
-{%if object.description %}
+{% if object.description %}
 {{ type }} description
 ----------------
 

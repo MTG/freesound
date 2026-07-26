@@ -26,7 +26,7 @@
         <div class="col-6 col-md-4 col-lg-3">
             <div class="start">
                 <div>
-                    {% bw_user_avatar item.user.profile.locations.avatar.L.url item.user.username 70 %}
+                    {% bw_user_avatar item.user.profile.locations.avatar.L.url item.user.username size=70 %}
                 </div>
                 <div class="padding-left-3 ellipsis">
                     <a href="{% url "account" item.username %}">{{ item.username }}</a>

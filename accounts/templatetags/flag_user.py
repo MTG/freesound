@@ -26,7 +26,7 @@ register = template.Library()
 
 
 @register.inclusion_tag("accounts/flag_user.html", takes_context=True)
-def flag_user(context, flag_type, username, content_id, text=None, user_sounds=None):
+def flag_user(context, flag_type, username, content_id, *, text=None, user_sounds=None):
     no_show = False
     link_text = "Report spam/offensive"
 

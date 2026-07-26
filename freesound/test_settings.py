@@ -27,6 +27,10 @@ CACHES = {
     "clustering": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     },
+    "abuse": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/15",
+    },
 }
 
 # django_ratelimit off in tests.

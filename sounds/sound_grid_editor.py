@@ -114,9 +114,7 @@ def sorted_paginated_edit_sounds(request, saved_meta, addable_sounds_qs, per_pag
     sounds = [sounds_by_id[i] for i in page_ids if i in sounds_by_id]
 
     tvars = build_paginator_template_context(pagination["page"], base_path=request.path, base_query=request.GET)
-    tvars.update(
-        {"is_empty": is_empty, "total": len(meta), "show_featured": has_featured, "current_search": search}
-    )
+    tvars.update({"is_empty": is_empty, "total": len(meta), "show_featured": has_featured, "current_search": search})
     return sounds, tvars
 
 

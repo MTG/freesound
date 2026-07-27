@@ -94,7 +94,7 @@ from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import (
     DownloadAPIView,
-    GenericAPIView,
+    FreesoundAPIView,
     ListAPIView,
     OauthRequiredAPIView,
     RetrieveAPIView,
@@ -167,7 +167,7 @@ def get_include_remix_subqueries(fields):
         return False
 
 
-class Search(GenericAPIView):
+class Search(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -334,7 +334,7 @@ class SoundInstance(RetrieveAPIView):
 
 
 class SoundAnalysisView(
-    GenericAPIView
+    FreesoundAPIView
 ):  # Needs to be named SoundAnalysisView so it does not overlap with SoundAnalysis
     @classmethod
     def get_description(cls):
@@ -371,7 +371,7 @@ class SoundAnalysisView(
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class SimilarSounds(GenericAPIView):
+class SimilarSounds(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -1325,7 +1325,7 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
             raise ServerErrorException(resource=self)
 
 
-class FreesoundApiV2Resources(GenericAPIView):
+class FreesoundApiV2Resources(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -1480,7 +1480,7 @@ class FreesoundApiV2Resources(GenericAPIView):
 
 
 @throttle_classes([])  # This view is never throttled
-class CurrentUsage(GenericAPIView):
+class CurrentUsage(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (

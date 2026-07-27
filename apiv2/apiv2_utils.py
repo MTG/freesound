@@ -42,6 +42,7 @@ from rest_framework.generics import (
 )
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.utils import formatting
+from rest_framework.views import APIView as RestFrameworkAPIView
 
 from apiv2.authentication import OAuth2Authentication, SessionAuthentication, TokenAuthentication
 from apiv2.exceptions import (
@@ -188,10 +189,12 @@ class FreesoundAPIViewMixin:
                 raise RequiresHttpsException(request=request)
 
 
-class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
+class FreesoundAPIView(RestFrameworkAPIView, FreesoundAPIViewMixin):
     throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
     authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-    queryset = False
+
+    def get_serializer_context(self):
+        return {"request": self.request, "format": self.format_kwarg, "view": self}
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
@@ -220,7 +223,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
         self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
+        # See comment in FreesoundAPIView.finalize_response
         response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
@@ -256,7 +259,7 @@ class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewM
                 raise UnauthorizedException(resource=self)
 
     def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
+        # See comment in FreesoundAPIView.finalize_response
         response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
@@ -272,7 +275,7 @@ class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
         self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
+        # See comment in FreesoundAPIView.finalize_response
         response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response
@@ -288,7 +291,7 @@ class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
         self.store_monitor_usage()
 
     def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
+        # See comment in FreesoundAPIView.finalize_response
         response = super().finalize_response(request, response, *args, **kwargs)
         response = self.redirect_if_needed(request, response)
         return response

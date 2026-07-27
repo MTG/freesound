@@ -40,7 +40,7 @@ from bookmarks.models import Bookmark
 from fscollections.models import Collection, CollectionSound
 from sounds.models import DownloadAPI, PackDownloadAPI, PackDownloadSoundAPI, Sound
 from utils.ratelimit import request_limit_events_total
-from utils.search import SearchEngineUnavailableException
+from utils.search import SearchEngineUnavailableException, SearchResults
 from utils.test_helpers import counter_samples, create_user_and_sounds
 
 from .exceptions import (
@@ -1274,3 +1274,48 @@ class TagLengthValidationTests(SimpleTestCase):
         for value in (f"{'x' * 100},two,three", f"--{'x' * 98}---y-- two three"):
             with self.subTest(value=value):
                 self.assertEqual(validate_tags(value), value)
+
+
+class TestSearchEndpoints(TestCase):
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        user, _, sounds = create_user_and_sounds(processing_state="OK", moderation_state="OK")
+        self.sound = sounds[0]
+        self.client.force_login(user)
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_search_get_serializes_requested_fields(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.return_value = SearchResults(
+            docs=[{"id": self.sound.id, "score": 1.0}], num_found=1
+        )
+
+        response = self.client.get(reverse("apiv2-sound-search") + "?query=test&fields=id", secure=True)
+
+        assert response.status_code == 200
+        assert response.json()["results"] == [{"id": self.sound.id}]
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_similar_sounds_get_serializes_requested_fields(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.return_value = SearchResults(
+            docs=[{"id": self.sound.id, "score": 1.0}], num_found=1
+        )
+
+        response = self.client.get(reverse("apiv2-similarity-sound", args=[self.sound.id]) + "?fields=id", secure=True)
+
+        assert response.status_code == 200
+        assert response.json()["results"] == [{"id": self.sound.id}]
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_search_html_shows_custom_documentation_above_results(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.return_value = SearchResults(docs=[], num_found=0)
+
+        response = self.client.get(reverse("apiv2-sound-search") + "?query=test", secure=True, HTTP_ACCEPT="text/html")
+
+        assert response.status_code == 200
+        assert response["Content-Type"].startswith("text/html")
+        html = response.content.decode()
+        description = "Search sounds in Freesound based on their tags and other metadata."
+        assert description in html
+        assert "Some quick examples:" in html
+        assert html.index(description) < html.index('class="response-info"')

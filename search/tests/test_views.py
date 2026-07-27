@@ -29,8 +29,13 @@ from django.urls import reverse
 
 from sounds.models import Sound
 from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.ratelimit import request_limit_events_total
 from utils.search import SearchResults
-from utils.test_helpers import create_user_and_sounds
+from utils.test_helpers import counter_samples, create_user_and_sounds
+
+
+def _samples():
+    return counter_samples(request_limit_events_total, "reason", "enforced", "user_type")
 
 
 def create_fake_search_engine_results():
@@ -334,10 +339,12 @@ class TestSearchDeepPagination:
         call_command("loaddata", "users")
         search_url = reverse("sounds-search") + "?q=wind&page=300"
         tag_url = reverse("tags") + '?f=tag:"field-recording"&page=300'
+        before = _samples().get(("search_page_limit", "true", "anonymous"), 0)
 
         with mock.patch("search.views.perform_search_engine_query") as perform:
             assert client.get(search_url, **self.IP).status_code == 429
             assert client.get(tag_url, **self.IP).status_code == 429
+            assert _samples()[("search_page_limit", "true", "anonymous")] == before + 2
 
             client.force_login(User.objects.get(username="User1"))
             assert client.get(search_url, **self.IP).status_code == 429

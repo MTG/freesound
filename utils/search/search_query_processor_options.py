@@ -18,6 +18,11 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import Any
+
 from django.conf import settings
 
 
@@ -36,33 +41,33 @@ class SearchOption(object):
 
     def __init__(
         self,
-        advanced=True,
-        label="",
-        help_text="",
-        placeholder="",
-        search_engine_field_name=None,
-        query_param_name=None,
-        value_default=None,
-        get_default_value=None,
-        should_be_disabled=None,
-        get_value_to_apply=None,
+        advanced: bool = True,
+        label: str = "",
+        help_text: str = "",
+        placeholder: str = "",
+        search_engine_field_name: str | None = None,
+        query_param_name: str | None = None,
+        value_default: Any = None,
+        get_default_value: Callable | None = None,
+        should_be_disabled: Callable | None = None,
+        get_value_to_apply: Callable | None = None,
     ):
         """Initialize the SearchOption object.
 
         Args:
-            advanced (bool, optional): Whether this option is part of the advanced search options (defaults to True).
-            label (str, optional): Label to be used in the frontend template when displaying the option.
-            help_text (str, optional): Help text to be used in the frontend template when displaying the option.
-            placeholder (str, optional): Placeholder text to be used in input elements of the frontend template when displaying the option.
-            search_engine_field_name (str, optional): Field name of the search engine index corresponding to this option (can be None).
-            query_param_name (str, optional): Name to represent this option in the URL query parameters (can be None).
-            value_default (any, optional): Value of the option to be used when not set in the request (as valid Python type). Note that
+            advanced: Whether this option is part of the advanced search options (defaults to True).
+            label: Label to be used in the frontend template when displaying the option.
+            help_text: Help text to be used in the frontend template when displaying the option.
+            placeholder: Placeholder text to be used in input elements of the frontend template when displaying the option.
+            search_engine_field_name: Field name of the search engine index corresponding to this option (can be None).
+            query_param_name: Name to represent this option in the URL query parameters (can be None).
+            value_default: Value of the option to be used when not set in the request (as valid Python type). Note that
               this value can be overriden if passing the get_default_value optional parameter.
-            get_default_value (function, optional): A function returning the default value (as a valid Python type) that the option should take
+            get_default_value: A function returning the default value (as a valid Python type) that the option should take
               if not set in the request. The function will be passed the SearchOption itself as an argument.
-            should_be_disabled (function, optional): Function to determine if the option should be disabled based on the data of the search query.
+            should_be_disabled: Function to determine if the option should be disabled based on the data of the search query.
               The function will be passed the SearchOption itself as an argument.
-            get_value_to_apply (function, optional): Function to determine the value to be used when applying the option in the search engine.
+            get_value_to_apply: Function to determine the value to be used when applying the option in the search engine.
               The function will be passed the SearchOption itself as an argument.
         """
         self.advanced = advanced
@@ -258,9 +263,9 @@ class SearchOptionChoice(SearchOptionStr):
     Django forms.
     """
 
-    def __init__(self, choices=[], **kwargs):
+    def __init__(self, choices: list = [], **kwargs):
         """Args:
-        choices (list): List of available choices in the format [(value, label), ...].
+        choices: List of available choices in the format [(value, label), ...].
         """
         self.choices = choices
         super().__init__(**kwargs)
@@ -284,10 +289,10 @@ class SearchOptionMultipleChoice(SearchOption):
 
     value_default = []
 
-    def __init__(self, choices=[], query_param_name_prefix="", **kwargs):
+    def __init__(self, choices: list = [], query_param_name_prefix: str = "", **kwargs):
         """Args:
-        choices (list): List of available choices in the format [(value, label), ...].
-        query_param_name_prefix (str): Prefix to be used in the URL parameters to represent the multiple choices.
+        choices: List of available choices in the format [(value, label), ...].
+        query_param_name_prefix: Prefix to be used in the URL parameters to represent the multiple choices.
         """
         self.choices = choices
         self.query_param_name_prefix = query_param_name_prefix
@@ -327,10 +332,10 @@ class SearchOptionRange(SearchOption):
     query_param_min = None
     query_param_max = None
 
-    def __init__(self, query_param_min=None, query_param_max=None, **kwargs):
+    def __init__(self, query_param_min: str | None = None, query_param_max: str | None = None, **kwargs):
         """Args:
-        query_param_min (str, optional): Name of the URL parameter to represent the minimum value of the range.
-        query_param_max (str, optional): Name of the URL parameter to represent the maximum value of the range.
+        query_param_min: Name of the URL parameter to represent the minimum value of the range.
+        query_param_max: Name of the URL parameter to represent the maximum value of the range.
         """
         self.query_param_min = query_param_min
         self.query_param_max = query_param_max
@@ -377,9 +382,9 @@ class SearchOptionBoolElementInPath(SearchOptionBool):
     The "element_in_path" is compared with the request path and the value of the option is set to True if the element is present.
     """
 
-    def __init__(self, element_in_path="", **kwargs):
+    def __init__(self, element_in_path: str = "", **kwargs):
         """Args:
-        element_in_path (str): Element to be checked in the request path.
+        element_in_path: Element to be checked in the request path.
         """
         self.element_in_path = element_in_path
         super().__init__(**kwargs)

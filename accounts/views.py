@@ -112,7 +112,7 @@ from utils.mirror_files import (
     remove_uploaded_file_from_mirror_locations,
 )
 from utils.pagination import paginate
-from utils.ratelimit import key_for_ratelimiting, rate_per_ip
+from utils.ratelimit import RequestLimitReason, count_request_limit_event, key_for_ratelimiting, rate_per_ip
 from utils.username import (
     get_parameter_user_or_404,
     get_user_by_username,
@@ -140,6 +140,7 @@ def ratelimited_error(request, exception):
     if not path.endswith("/"):
         path += "/"
     volatile_logger.info(f"Rate limited IP ({json.dumps({'ip': get_client_ip(request), 'path': path})})")
+    count_request_limit_event(request, RequestLimitReason.DJANGO_RATELIMIT, enforced=True)
     return render(request, "429.html", status=429)
 
 
@@ -780,9 +781,7 @@ def manage_sounds(request, tab):
                     session_key_prefix = str(uuid.uuid4())[
                         0:8
                     ]  # Use a new so we don't interfere with other active description/editing processes
-                    request.session[f"{session_key_prefix}-edit_sounds"] = (
-                        sounds  # Add the list of sounds to edit in the session object
-                    )
+                    request.session[f"{session_key_prefix}-edit_sounds"] = [s.id for s in sounds]
                     request.session[f"{session_key_prefix}-len_original_edit_sounds"] = len(sounds)
                     return HttpResponseRedirect(
                         reverse("accounts-edit-sounds") + f"?next={request.path}&session={session_key_prefix}"
@@ -930,7 +929,7 @@ def sounds_pending_description_helper(request, file_structure, files):
                     0:8
                 ]  # Use a new so we don't interfere with other active description/editing processes
                 request.session[f"{session_key_prefix}-describe_sounds"] = [
-                    files[x] for x in form.cleaned_data["files"]
+                    {"name": files[x].name, "full_path": files[x].full_path} for x in form.cleaned_data["files"]
                 ]
                 request.session[f"{session_key_prefix}-len_original_describe_sounds"] = len(
                     request.session[f"{session_key_prefix}-describe_sounds"]
@@ -963,7 +962,7 @@ def describe_license(request):
     if request.method == "POST":
         form = LicenseForm(request.POST, hide_old_license_versions=True)
         if form.is_valid():
-            request.session[f"{session_key_prefix}-describe_license"] = form.cleaned_data["license"]
+            request.session[f"{session_key_prefix}-describe_license"] = form.cleaned_data["license"].id
             return HttpResponseRedirect(reverse("accounts-describe-pack") + f"?session={session_key_prefix}")
     else:
         form = LicenseForm(hide_old_license_versions=True)
@@ -985,9 +984,9 @@ def describe_pack(request):
             data = form.cleaned_data
             if data["new_pack"]:
                 pack, created = Pack.objects.get_or_create(user=request.user, name=data["new_pack"])
-                request.session[f"{session_key_prefix}-describe_pack"] = pack
+                request.session[f"{session_key_prefix}-describe_pack"] = pack.id
             elif data["pack"]:
-                request.session[f"{session_key_prefix}-describe_pack"] = data["pack"]
+                request.session[f"{session_key_prefix}-describe_pack"] = data["pack"].id
             else:
                 request.session[f"{session_key_prefix}-describe_pack"] = False
             return HttpResponseRedirect(reverse("accounts-describe-sounds") + f"?session={session_key_prefix}")

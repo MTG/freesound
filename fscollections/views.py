@@ -26,6 +26,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -42,6 +43,13 @@ from fscollections.forms import (
 from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from sounds.models import Sound
 from sounds.views import add_sounds_modal_helper
+from utils.download_limit import (
+    DownloadType,
+    count_download_and_set_sentinel,
+    download_limit_reached_response,
+    new_download_blocked,
+    user_download_limit_reached,
+)
 from utils.downloads import download_sounds
 from utils.pagination import build_paginator_template_context, paginate, read_page
 
@@ -121,6 +129,7 @@ def collection(request, collection):
         "current_search": search,
     }
     tvars.update(pagination)
+    tvars["download_limit_reached"] = user_download_limit_reached(request)
     return render(request, "collections/collection.html", tvars)
 
 
@@ -129,7 +138,10 @@ def collections_for_user(request):
     user = request.user
     user_collections = Collection.objects.filter(user=user).order_by("-modified")
     maintainer_collections = Collection.objects.filter(maintainers__id=user.id).order_by("-modified")
-    tvars = {"user_collections": user_collections, "maintainer_collections": maintainer_collections}
+    tvars = {
+        "user_collections": user_collections,
+        "maintainer_collections": maintainer_collections,
+    }
     # one URL needed to display all collections and one URL to display ONE collection at a time
     # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
     return render(request, "collections/your_collections.html", tvars)
@@ -368,17 +380,14 @@ def edit_collection(request, collection):
 
 
 @login_required
+@transaction.atomic()
 @resolve_collection_from_url
 def download_collection(request, collection):
     sounds_list = Sound.objects.bulk_sounds_for_collection(collection.id)
 
-    if "range" not in request.headers:
-        """
-        Download managers and some browsers use the range header to download files in multiple parts. We have observed 
-        that all clients first make a GET with no range header (to get the file length) and then make multiple other 
-        requests. We ignore all requests that have range header because we assume that a first query has already been 
-        made. Unlike in pack downloads, here we do not guard against multiple consecutive downloads.
-        """
+    if new_download_blocked(request, DownloadType.COLLECTION, collection.id):
+        return download_limit_reached_response(request)
+    if count_download_and_set_sentinel(request, DownloadType.COLLECTION, collection.id):
         cd = CollectionDownload.objects.create(user=request.user, collection=collection)
         cds = []
         for sound in sounds_list:

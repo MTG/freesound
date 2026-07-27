@@ -18,9 +18,11 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
 
 import json
 import urllib.parse
+from typing import TYPE_CHECKING
 
 import luqum.exceptions
 import luqum.tree
@@ -38,6 +40,9 @@ from utils.encryption import create_hash
 from utils.search import SearchEngineException
 from utils.search.filter_validation import parse_filter, validate_filter_types
 from utils.search.search_sounds import allow_beta_search_features
+
+if TYPE_CHECKING:
+    from django.http import HttpRequest
 
 from .search_query_processor_options import (
     SearchOptionBool,
@@ -311,12 +316,12 @@ class SearchQueryProcessor:
         ),
     ]
 
-    def __init__(self, request, facets=None):
+    def __init__(self, request: HttpRequest, facets: dict | None = None):
         """Initializes the SearchQueryProcessor object by parsing data from the request and setting up search options.
 
         Args:
-            request (django.http.HttpRequest): request object from which to parse search options
-            facets (dict, optional): dictionary with facet options to be used in the search. If not provided, default
+            request: request object from which to parse search options
+            facets: dictionary with facet options to be used in the search. If not provided, default
               facets will be used. Default is None.
         """
 
@@ -464,24 +469,24 @@ class SearchQueryProcessor:
     # Filter-related methods
     def get_active_filters(
         self,
-        include_filters_from_options=True,
-        include_non_option_filters=True,
-        include_filters_from_facets=True,
-        extra_filters=None,
-        ignore_filters=None,
+        include_filters_from_options: bool = True,
+        include_non_option_filters: bool = True,
+        include_filters_from_facets: bool = True,
+        extra_filters: list | None = None,
+        ignore_filters: list | None = None,
     ):
         """Returns a list of all filters which are active in the query in a ["field:value", "field:value", ...] format. This method
         also allows to add extra filters to the list or ignore some of the existing filters.
 
         Args:
-            include_filters_from_options (bool, optional): If True, filters from search options will be included. Default is True.
-            include_non_option_filters (bool, optional): If True, filters from non-option filters will be included. Default is True.
-            include_filters_from_facets (bool, optional): If True, filters from search facets will be included. Note that if
+            include_filters_from_options: If True, filters from search options will be included. Default is True.
+            include_non_option_filters: If True, filters from non-option filters will be included. Default is True.
+            include_filters_from_facets: If True, filters from search facets will be included. Note that if
               include_non_option_filters is set to False, include_filters_from_facets will have no effect as facet filters are part of
               non-option filters. Default is True.
-            extra_filters (list, optional): List of extra filters to be added. Each filter should be a string in the format "field:value",
+            extra_filters: List of extra filters to be added. Each filter should be a string in the format "field:value",
               e.g.: extra_filters=["tag:tagname"]. Default is None.
-            ignore_filters (list, optional): List of filters to be ignored. Each filter should be a string in the format "field:value",
+            ignore_filters: List of filters to be ignored. Each filter should be a string in the format "field:value",
               e.g.: ignore_filters=["tag:tagname"]. Default is None.
         """
         # Create initial list of the active filters according to the types of filters that are requested to be included
@@ -628,7 +633,7 @@ class SearchQueryProcessor:
                         return True
         return False
 
-    def get_clustering_data_cache_key(self, include_filters_from_facets=False):
+    def get_clustering_data_cache_key(self, include_filters_from_facets: bool = False) -> str:
         """Generates a cache key used to store clustering results in the cache. Note that the key excludes facet filters
         by default because clusters are computed on the subset of results BEFORE applying the facet filters (this is by
         design to avoid recomputing clusters when changing facets). However, the key can be generated including facets as
@@ -636,12 +641,12 @@ class SearchQueryProcessor:
         are applied after the main clustering computation.
 
         Args:
-            include_filters_from_facets (bool): If True, the key will include filters from facets as well. Default is False.
+            include_filters_from_facets: If True, the key will include filters from facets as well. Default is False.
               Filters that are included in facets correspond to the facet fields defined in self.facets, which defaults to
               settings.SEARCH_SOUNDS_DEFAULT_FACETS.
 
         Returns:
-            str: Cache key for the clustering data
+            Cache key for the clustering data
         """
         query_filter = self.get_filter_string_for_search_engine(include_filters_from_facets=include_filters_from_facets)
         key = (
@@ -682,14 +687,14 @@ class SearchQueryProcessor:
             for filter in self.non_option_filters:
                 print("-", f"{filter[0]}={filter[1]}")
 
-    def as_query_params(self, exclude_facet_filters=False):
+    def as_query_params(self, exclude_facet_filters: bool = False) -> dict:
         """Returns a dictionary with the search options and filters to be used as parameters for the SearchEngine.search_sounds method.
         This method post-processes the data loaded into the SearchQueryProcessor to generate an appropriate query_params dict. Note that
         this method includes some complex logic that takes into account the interaction with some option values to calculate the
         query_params values to be used by the search engine.
 
         Args:
-            exclude_facet_filters (bool, optional): If True, facet filters will not be used to create the query_params dict. Default is False.
+            exclude_facet_filters: If True, facet filters will not be used to create the query_params dict. Default is False.
               This is useful as part of the clustering features for which we want to make a query which ignores the facet filters provided in the URL.
 
         Returns:
@@ -791,15 +796,15 @@ class SearchQueryProcessor:
             else settings.SIMILARITY_SPACE_LAION_CLAP,
         )
 
-    def get_url(self, add_filters=None, remove_filters=None):
+    def get_url(self, add_filters: list | None = None, remove_filters: list | None = None):
         """Returns the URL of the search page (or tags page, see below) corresponding to the current parameters loaded in the SearchQueryProcessor.
         This method also has parameters to "add_filters" and "remove_filters", which will return the URL to the search page corresponding to the
         current parameters loaded in the SearchQueryProcessor BUT with some filters added or removed.
 
         Args:
-            add_filters (list, optional): List of filters to be added. Each filter should be a string in the format "field:value",
+            add_filters: List of filters to be added. Each filter should be a string in the format "field:value",
               e.g.: add_filters=["tag:tagname"]. Default is None.
-            remove_filters (list, optional): List of filters to be ignored. Each filter should be a string in the format "field:value",
+            remove_filters: List of filters to be ignored. Each filter should be a string in the format "field:value",
               e.g.: remove_filters=["tag:tagname"]. Default is None.
         """
         # Decide the base url (if in the tags page, we'll use the base URL for tags, otherwise we use the one for the normal search page)

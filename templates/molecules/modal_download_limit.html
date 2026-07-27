@@ -1,0 +1,14 @@
+{% extends "molecules/modal_base.html" %}
+
+{% block id %}downloadLimitModal{% endblock %}
+{% block extra-class %}modal-width-60{% endblock %}
+{% block aria-label %}Download limit reached{% endblock %}
+
+{% block body %}
+<div class="col-10 offset-1">
+    <div class="text-center"><h4 class="v-spacing-5">Download limit reached</h4></div>
+    <div class="v-spacing-5">
+        {{ message }}
+    </div>
+</div>
+{% endblock %}

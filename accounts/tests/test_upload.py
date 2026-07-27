@@ -31,7 +31,6 @@ from django.urls import reverse
 from sounds.forms import PackForm
 from sounds.models import BulkUploadProgress, License, Pack, Sound
 from tags.models import Tag
-from utils.filesystem import File
 from utils.test_helpers import (
     create_test_files,
     create_user_and_sounds,
@@ -99,7 +98,7 @@ class UserUploadAndDescribeSounds(TestCase):
         )
         self.assertListEqual(
             sorted(
-                [os.path.basename(f.full_path) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
+                [os.path.basename(f["full_path"]) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
             ),
             sorted([filenames[idx] for idx in sounds_to_describe_idx]),
         )
@@ -122,7 +121,7 @@ class UserUploadAndDescribeSounds(TestCase):
         )
         self.assertListEqual(
             sorted(
-                [os.path.basename(f.full_path) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
+                [os.path.basename(f["full_path"]) for f in self.client.session[f"{session_key_prefix}-describe_sounds"]]
             ),
             sorted([filenames[idx] for idx in sounds_to_describe_idx]),
         )
@@ -159,12 +158,12 @@ class UserUploadAndDescribeSounds(TestCase):
         # Set license and pack data in session
         session = self.client.session
         session_key_prefix = "304298eb"
-        session[f"{session_key_prefix}-describe_license"] = License.objects.all()[0]
+        session[f"{session_key_prefix}-describe_license"] = License.objects.all()[0].id
         session[f"{session_key_prefix}-describe_pack"] = False
         session[f"{session_key_prefix}-len_original_describe_sounds"] = 2
         session[f"{session_key_prefix}-describe_sounds"] = [
-            File(1, filenames[0], os.path.join(user_upload_path, filenames[0]), False),
-            File(2, filenames[1], os.path.join(user_upload_path, filenames[1]), False),
+            {"name": filenames[0], "full_path": os.path.join(user_upload_path, filenames[0])},
+            {"name": filenames[1], "full_path": os.path.join(user_upload_path, filenames[1])},
         ]
         session.save()
 
@@ -385,3 +384,145 @@ class BulkDescribe(TestCase):
         self.client.force_login(user)
         resp = self.client.get(reverse("accounts-bulk-describe", args=[bulk.id]))
         self.assertContains(resp, "This bulk description process is closed")
+
+
+class SessionJsonSafetyTests(TestCase):
+    """Regression guard: every value the upload/describe/edit flow writes to request.session
+    must be JSON-serialisable, so SESSION_SERIALIZER can be flipped to JSONSerializer in a
+    follow-up PR. If this test goes red, something in the flow is putting a Python object
+    (Sound/License/Pack/File/...) back into the session."""
+
+    fixtures = ["licenses", "user_groups", "email_preference_type"]
+
+    def _assert_session_json_safe(self):
+        from django.contrib.sessions.serializers import JSONSerializer
+
+        serializer = JSONSerializer()
+        for key, value in self.client.session.items():
+            try:
+                serializer.dumps({key: value})
+            except TypeError as exc:
+                self.fail(f"Session key {key!r} holds a non-JSON-safe value (type={type(value).__name__!r}): {exc}")
+
+    def _assert_session_value(self, prefix, key, expected):
+        """The key must be present AND equal to `expected`, so that a producer write which
+        is silently skipped (the key never appears) fails loudly instead of letting the
+        json-safety sweep above pass over a session that never got the value at all."""
+        full_key = f"{prefix}-{key}"
+        self.assertIn(full_key, self.client.session, f"producer never wrote {full_key!r}")
+        self.assertEqual(self.client.session[full_key], expected)
+
+    @override_uploads_path_with_temp_directory
+    def test_describe_flow_session_is_json_safe(self):
+        filenames = ["file1.wav", "file2.wav"]
+        user = User.objects.create_user("testuser", email="json@xmpl.com", password="testpass")
+        self.client.force_login(user)
+        user_upload_path = settings.UPLOADS_PATH + "/%i/" % user.id
+        os.makedirs(user_upload_path, exist_ok=True)
+        create_test_files(filenames, user_upload_path)
+
+        # Step 1: select files from pending_description -> writes describe_sounds, len_original_describe_sounds.
+        # generate_tree() assigns file ids starting at "file0".
+        resp = self.client.post(
+            reverse("accounts-manage-sounds", args=["pending_description"]),
+            {"describe": "describe", "sound-files": ["file0", "file1"]},
+        )
+        self.assertEqual(resp.status_code, 302)
+        session_key_prefix = resp.url.split("session=")[1]
+        describe_sounds = self.client.session[f"{session_key_prefix}-describe_sounds"]
+        self.assertTrue(
+            isinstance(describe_sounds, list)
+            and all(isinstance(f, dict) and set(f) == {"name", "full_path"} for f in describe_sounds),
+            f"describe_sounds should be a list of name/full_path dicts, got {describe_sounds!r}",
+        )
+        self._assert_session_value(session_key_prefix, "len_original_describe_sounds", 2)
+        self._assert_session_json_safe()
+
+        # Step 2: pick a license -> writes describe_license.
+        # Must be a license that is actually valid in LicenseForm's queryset (the
+        # describe_license view uses hide_old_license_versions=True). "Attribution" (4.0) is
+        # in the queryset and survives the 3.0 clean check, so the producer actually runs --
+        # using License.objects.all()[0] would (nondeterministically) pick "Sampling+", which
+        # is not a valid choice, the form would be invalid and the write silently skipped.
+        attribution = License.objects.get(name="Attribution")
+        resp = self.client.post(
+            reverse("accounts-describe-license") + f"?session={session_key_prefix}",
+            {"license": str(attribution.id)},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self._assert_session_value(session_key_prefix, "describe_license", attribution.id)
+        self._assert_session_json_safe()
+
+        # Step 3: pick "no pack" -> writes describe_pack (= False sentinel)
+        resp = self.client.post(
+            reverse("accounts-describe-pack") + f"?session={session_key_prefix}",
+            {"pack-pack": PackForm.NO_PACK_CHOICE_VALUE, "pack-new_pack": ""},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self._assert_session_value(session_key_prefix, "describe_pack", False)
+        self._assert_session_json_safe()
+
+    def test_describe_pack_id_branches_are_json_safe(self):
+        # describe_pack writes the …-describe_pack key independently of earlier steps, so we
+        # exercise each branch against its own fresh session prefix. The two `.id` branches
+        # (existing pack, new pack) are the ones that previously stored a Pack instance and
+        # are not reached by the "no pack" path in test_describe_flow_session_is_json_safe.
+        user = User.objects.create_user("packuser", email="pack@xmpl.com", password="testpass")
+        self.client.force_login(user)
+
+        # Existing pack -> stores data["pack"].id
+        existing_pack = Pack.objects.create(user=user, name="Existing pack")
+        resp = self.client.post(
+            reverse("accounts-describe-pack") + "?session=packex00",
+            {"pack-pack": str(existing_pack.id), "pack-new_pack": ""},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self._assert_session_value("packex00", "describe_pack", existing_pack.id)
+        self.assertNotIsInstance(self.client.session["packex00-describe_pack"], bool)
+        self._assert_session_json_safe()
+
+        # New pack -> creates the pack and stores the new pack.id
+        resp = self.client.post(
+            reverse("accounts-describe-pack") + "?session=packnw00",
+            {"pack-pack": PackForm.NEW_PACK_CHOICE_VALUE, "pack-new_pack": "Brand new pack"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        new_pack = Pack.objects.get(user=user, name="Brand new pack")
+        self._assert_session_value("packnw00", "describe_pack", new_pack.id)
+        self.assertNotIsInstance(self.client.session["packnw00-describe_pack"], bool)
+        self._assert_session_json_safe()
+
+        # No pack -> stores the False sentinel (must be the bool False, not an int id)
+        resp = self.client.post(
+            reverse("accounts-describe-pack") + "?session=packno00",
+            {"pack-pack": PackForm.NO_PACK_CHOICE_VALUE, "pack-new_pack": ""},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertIs(self.client.session["packno00-describe_pack"], False)
+        self._assert_session_json_safe()
+
+    def test_edit_flow_session_is_json_safe(self):
+        user, _packs, sounds = create_user_and_sounds(
+            num_sounds=2,
+            num_packs=0,
+            processing_state="OK",
+            moderation_state="OK",
+        )
+        self.client.force_login(user)
+
+        # Select sounds for editing from manage_sounds/published -> writes edit_sounds, len_original_edit_sounds
+        resp = self.client.post(
+            reverse("accounts-manage-sounds", args=["published"]),
+            {"edit": "edit", "object-ids": ",".join(str(s.id) for s in sounds)},
+        )
+        self.assertEqual(resp.status_code, 302)
+        # The edit redirect appends `&session=<prefix>` after `next=`, so split defensively.
+        session_key_prefix = resp.url.split("session=")[1].split("&")[0]
+        edit_sounds = self.client.session[f"{session_key_prefix}-edit_sounds"]
+        self.assertTrue(
+            all(isinstance(i, int) and not isinstance(i, bool) for i in edit_sounds),
+            f"edit_sounds should be a list of int ids, got {edit_sounds!r}",
+        )
+        self.assertEqual(sorted(edit_sounds), sorted(s.id for s in sounds))
+        self._assert_session_value(session_key_prefix, "len_original_edit_sounds", len(sounds))
+        self._assert_session_json_safe()

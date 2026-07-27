@@ -354,6 +354,15 @@ Running this command will also mark sounds as index dirty so search index is upd
 The command has a number of options that can be set to skip some of the steps if needed, or run it only for a specific set of sound IDs.
 
 
+### Prometheus metrics
+
+From freesound you can count metrics by defining a `prometheus_client.Counter` and then calling `.inc()` on it.
+We prefer to define metrics close to the location where they are defined, especially if they are only emitted
+in that one place. A metric incremented from several modules should be defined in a generic "domain" module
+
+Metrics are periodically pulled from freesound by Prometheus. Freesound automatically serves an internal /metrics
+endpoint when running in production. 
+
 ### Considerations when updating Django version
 
 #### Preparation

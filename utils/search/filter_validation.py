@@ -1,5 +1,5 @@
+import luqum.thread
 import luqum.tree
-from luqum.parser import parser
 
 FIELD_TYPES_MAP = {
     "samplerate": int,
@@ -25,7 +25,8 @@ def parse_filter(filter_string):
     """
     if not filter_string:
         return []
-    tree = parser.parse(filter_string)
+    # use thread-safe parser
+    tree = luqum.thread.parse(filter_string)
     return [tree] if type(tree) == luqum.tree.SearchField else tree.children
 
 

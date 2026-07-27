@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
 import datetime
 import glob
 import json
@@ -988,11 +990,11 @@ class Sound(models.Model):
         """
         return " ".join(self.get_sound_tags(limit=limit))
 
-    def set_tags(self, tags):
+    def set_tags(self, tags: list):
         """
         Updates the tags of the Sound object. To do that it first removes all SoundTag objects which relate the sound
         with tags which are not in the provided list of tags, and then adds the new tags.
-        :param list tags: list of strings representing the new tags that the Sound object should be assigned
+        :param tags: list of strings representing the new tags that the Sound object should be assigned
         """
         # remove tags that are not in the list
         for tagged_item in self.soundtag_set.select_related("tag").all():
@@ -1006,11 +1008,11 @@ class Sound(models.Model):
                 tag_object, _ = Tag.objects.get_or_create(name=tag)
                 SoundTag.objects.get_or_create(tag=tag_object, sound=self, defaults={"user": self.user})
 
-    def set_license(self, new_license):
+    def set_license(self, new_license: License):
         """
         Set `new_license` as the current license of the sound. Create the corresponding SoundLicenseHistory object.
         Note that this method *does not save* the sound object, it needs to be manually done afterwards.
-        :param License new_license: License object representing the new license
+        :param new_license: License object representing the new license
         """
         self.license = new_license
         SoundLicenseHistory.objects.create(sound=self, license=new_license)
@@ -1021,7 +1023,7 @@ class Sound(models.Model):
         """
         return set(self.sources.values_list("id", flat=True))
 
-    def change_sources_and_propagate(self, new_sources):
+    def change_sources_and_propagate(self, new_sources: set):
         """
         Replace this sound's remix sources with ``new_sources`` and propagate the change to
         dependent systems:
@@ -1075,36 +1077,43 @@ class Sound(models.Model):
     # N.B. The set_xxx functions below are used in the distributed processing and other parts of the app where we only
     # want to save an individual field of the model to prevent overwriting other model fields.
 
-    def set_processing_ongoing_state(self, state):
+    def set_processing_ongoing_state(self, state: str):
         """
         Updates self.processing_ongoing_state field of the Sound object and saves to DB without updating other
         fields. This function is used in cases when two instances of the same Sound object could be edited by
         two processes in parallel and we want to avoid possible field overwrites.
-        :param str state: new state to which self.processing_ongoing_state should be set
+        :param state: new state to which self.processing_ongoing_state should be set
         """
         self.processing_ongoing_state = state
         self.save(update_fields=["processing_ongoing_state"])
 
-    def set_similarity_state(self, state):
+    def set_similarity_state(self, state: str):
         """
         Updates self.similarity_state field of the Sound object and saves to DB without updating other
         fields. This function is used in cases when two instances of the same Sound object could be edited by
         two processes in parallel and we want to avoid possible field overwrites.
-        :param str state: new state to which self.similarity_state should be set
+        :param state: new state to which self.similarity_state should be set
         """
         self.similarity_state = state
         self.save(update_fields=["similarity_state"])
 
-    def set_audio_info_fields(self, samplerate=None, bitrate=None, bitdepth=None, channels=None, duration=None):
+    def set_audio_info_fields(
+        self,
+        samplerate: int | None = None,
+        bitrate: int | None = None,
+        bitdepth: int | None = None,
+        channels: int | None = None,
+        duration: float | None = None,
+    ):
         """
         Updates several fields of the Sound object which store some audio properties and saves to DB without
         updating other fields. This function is used in cases when two instances of the same Sound object could be
         edited by two processes in parallel and we want to avoid possible field overwrites.
-        :param int samplerate: samplerate to store
-        :param int bitrate: bitrate to store
-        :param int bitdepth: bitdepth to store
-        :param int channels: number of channels to store
-        :param float duration: duration to store
+        :param samplerate: samplerate to store
+        :param bitrate: bitrate to store
+        :param bitdepth: bitdepth to store
+        :param channels: number of channels to store
+        :param duration: duration to store
         """
         update_fields = []
         if samplerate is not None:
@@ -1124,11 +1133,11 @@ class Sound(models.Model):
             update_fields.append("duration")
         self.save(update_fields=update_fields)
 
-    def change_moderation_state(self, new_state):
+    def change_moderation_state(self, new_state: str):
         """
         Change the moderation state of a sound and perform related tasks such as marking the sound as index dirty
         or sending a pack to process if required.
-        :param str new_state: new moderation state to which the sound should be set
+        :param new_state: new moderation state to which the sound should be set
         """
         current_state = self.moderation_state
         if current_state != new_state:
@@ -1154,13 +1163,13 @@ class Sound(models.Model):
 
         self.invalidate_template_caches()
 
-    def change_processing_state(self, new_state, processing_log=None):
+    def change_processing_state(self, new_state: str, processing_log: str | None = None):
         """
         Change the processing state of a sound and perform related tasks such as set the sound as index dirty if
         required. Only the fields that are changed are saved to the object. This is needed when the processing tasks
         change the processing state of the sound to avoid potential collisions when saving the whole object.
-        :param str new_state: new processing state to which the sound should be set
-        :param str processing_log: processing log to be saved in the Sound object
+        :param new_state: new processing state to which the sound should be set
+        :param processing_log: processing log to be saved in the Sound object
         """
         current_state = self.processing_state
         if current_state != new_state:
@@ -1192,14 +1201,14 @@ class Sound(models.Model):
 
         self.invalidate_template_caches()
 
-    def change_owner(self, new_owner):
+    def change_owner(self, new_owner: User):
         """
         Change the owner (i.e. author) of a Sound object by assigning a new User object to the user field.
         If sound is part of a Pack, when changing the owner a new Pack object is created for the new owner.
         Changing the owner of the sound also includes renaming and moving all associated files (i.e. sound, previews,
         displays and analysis) to include the ID of the new owner and be located accordingly.
         NOTE: see comments in https://github.com/MTG/freesound/issues/750 for more information
-        :param User new_owner: User object of the new sound owner
+        :param new_owner: User object of the new sound owner
         """
 
         def replace_user_id_in_path(path, old_owner_id, new_owner_id):
@@ -1407,7 +1416,7 @@ class Sound(models.Model):
 
     def consolidate_analysis(
         self,
-        no_db_operations=False,
+        no_db_operations: bool = False,
         fail_if_missing=False,
         verbose=True,
         existing_analyzer_object_names=None,
@@ -1419,7 +1428,7 @@ class Sound(models.Model):
         audio descriptors data from various analyzers that will be stored in the DB and also used for indexing in the
         search engine.
 
-        :param bool no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
+        :param no_db_operations: If True, the method only computes the data but does not save it in the DB. Also it returns
             the consolidated analysis data dictionary instead of the SoundAnalysis object.
         :param bool fail_if_missing: If True, the method raises an exception if any analyzer data or descriptor data is missing.
         :param bool verbose: If True, the method logs information about the consolidation process.

@@ -18,6 +18,9 @@
 #     See AUTHORS file.
 #
 
+from __future__ import annotations
+
+import enum
 import ipaddress
 import logging
 import random
@@ -25,16 +28,17 @@ import time
 
 from django.conf import settings
 from django.core.cache import cache
+from prometheus_client import Counter
 
 from utils.logging_filters import get_client_ip
 
 console_logger = logging.getLogger("console")
 
 last_cached_blocked_ips = []
-last_cached_blocked_ips_timestamp = 0
+last_cached_blocked_ips_timestamp: float = 0
 
 
-def get_ips_to_block():
+def get_ips_to_block() -> list[str]:
     """
     Get a list of IPs to block. Returned IPs include a combination of the IPs listed in settings.BLOCKED_IPS and
     a list of IPs cached with the key settings.CACHED_BLOCKED_IPS_KEY. To avoid many queries to the cache, this
@@ -43,7 +47,7 @@ def get_ips_to_block():
     adds a 2nd layer of cache.
 
     Returns:
-        List[str]: List of IPs to block
+        List of IPs to block
     """
     global last_cached_blocked_ips, last_cached_blocked_ips_timestamp
     now = time.time()
@@ -56,7 +60,7 @@ def get_ips_to_block():
         return settings.BLOCKED_IPS
 
 
-def add_new_ip_to_block(ip):
+def add_new_ip_to_block(ip: str) -> None:
     """
     Add a new IP to the cached list of IPs to block so that further requests to that IP will get blocked.
     Note that it might take up to settings.CACHED_BLOCKED_IPS_TIME before that IP actually starts to
@@ -70,7 +74,7 @@ def add_new_ip_to_block(ip):
         add_new_ip_to_block("1.2.3.4")
 
     Args:
-        ip (str): IP to block. Can also specify a range as described in ipaddress.IPv4Network docs.
+        ip: IP to block. Can also specify a range as described in ipaddress.IPv4Network docs.
     """
     try:
         ipaddress.ip_network(str(ip))
@@ -86,16 +90,16 @@ def add_new_ip_to_block(ip):
     cache.set(settings.CACHED_BLOCKED_IPS_KEY, cached_ips_to_block)
 
 
-def ip_is_blocked(ip):
+def ip_is_blocked(ip: str) -> bool:
     """
     Determines whether an IP should be blocked. To do that, it uses ipaddress.ip_network objects which support
     IP comparison using ranges.
 
     Args:
-        ip (str): IP to check. Can also specify a range as described in ipaddress.IPv4Network docs.
+        ip: IP to check. Can also specify a range as described in ipaddress.IPv4Network docs.
 
     Returns:
-        bool: True if the IP should be blocked, False otherwise.
+        True if the IP should be blocked, False otherwise.
 
     """
     for ip_to_block in get_ips_to_block():
@@ -122,3 +126,38 @@ def rate_per_ip(group, request):
     if ip_is_blocked(ip):
         return "0/s"
     return settings.RATELIMITS.get(group, settings.RATELIMIT_DEFAULT_GROUP_RATELIMIT)
+
+
+class RequestLimitReason(enum.Enum):
+    """Cause of a request-limit event, used as the `reason` label on request_limit_events_total."""
+
+    # An APIv2 request exceeded its throttling rate (apiv2/handlers.py)
+    API_THROTTLE = "api_throttle"
+    # An authenticated user exceeded the daily download limit (utils/download_limit.py)
+    DAILY_DOWNLOAD_LIMIT = "daily_download_limit"
+    # A view protected by the django-ratelimit decorator exceeded its rate (accounts/views.py ratelimited handler)
+    DJANGO_RATELIMIT = "django_ratelimit"
+    # A search requested a results page beyond the absolute maximum page number (search/views.py)
+    SEARCH_PAGE_LIMIT = "search_page_limit"
+
+
+# Emitted any time we return a 429 response to a user
+request_limit_events_total = Counter(
+    "freesound_request_limit_events_total",
+    "A user was limited for the given reason. enforced=true if we took action and returned 429. "
+    "enforced=false if we're only reporting (request is served normally). user_type=authenticated or anonymous.",
+    ["reason", "enforced", "user_type"],
+)
+
+
+def count_request_limit_event(request, reason: RequestLimitReason, *, enforced: bool):
+    """Increment the freesound_request_limit_events_total counter for the given labels.
+    Labels:
+      reason: type of rate limit event
+      enforced: true If we blocked the request or false if we're just reporting
+      user_type: authenticated or anonymous
+    """
+    user_type = "authenticated" if request.user.is_authenticated else "anonymous"
+    request_limit_events_total.labels(
+        reason=reason.value, enforced="true" if enforced else "false", user_type=user_type
+    ).inc()

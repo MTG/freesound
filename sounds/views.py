@@ -315,7 +315,6 @@ def sound(request, username, sound_id):
         "show_category_validation": show_category_validation,
         "category_validation_form": category_validation_form,
         "download_limit_reached": user_download_limit_reached(request),
-
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))
     return render(request, "sounds/sound.html", tvars)

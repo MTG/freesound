@@ -65,6 +65,10 @@ class Command(LoggingBaseCommand):
             if len(sound_ids) == 0:
                 continue
 
+            console_logger.info(
+                f"Exporting metadata for sounds with IDs in range [{id_range_start}, {id_range_start + 1000}) - {len(sound_ids)} sounds."
+            )
+
             csv_file_path = os.path.join(output_folder, f"metadata_{id_range_start // 1000:04}.csv")
             with open(csv_file_path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
@@ -92,7 +96,7 @@ class Command(LoggingBaseCommand):
                     ]
                 )
                 # Get corresponding Sound objects. include_audio_descriptors=True is used to avoid N+1 queries when accessing the generated bst category (if needed).
-                sound_objects = Sound.objects.ordered_ids(sound_ids, include_audio_descriptors=True)
+                sound_objects = Sound.objects.ordered_ids(sorted(sound_ids), include_audio_descriptors=True)
                 for sound in sound_objects:
                     fields = [
                         sound.id,

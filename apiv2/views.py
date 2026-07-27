@@ -1475,12 +1475,6 @@ class FreesoundApiV2Resources(GenericAPIView):
             },
         ]
 
-        # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested
-        if request.accepted_renderer.format in ["yaml"]:
-            for element in api_index:
-                for key, ordered_dict in element.items():
-                    element[key] = dict(ordered_dict)
-
         # Xml format seems to have problems with white spaces and numbers in dict keys...
         def key_to_valid_xml(key):
             # Remove white spaces, parenthesis, and add underscore in the beginning

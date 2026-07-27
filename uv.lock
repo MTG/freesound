@@ -390,15 +390,6 @@ wheels = [
 ]
 
 [[package]]
-name = "defusedxml"
-version = "0.7.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520, upload-time = "2021-03-08T10:59:26.269Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604, upload-time = "2021-03-08T10:59:24.45Z" },
-]
-
-[[package]]
 name = "dj-database-url"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -605,15 +596,6 @@ wheels = [
 ]
 
 [[package]]
-name = "djangorestframework-jsonp"
-version = "1.0.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/87/53/65bb4fb493575136ff3d066eb8485e92260b29d59a14af72a41faad0ffad/djangorestframework-jsonp-1.0.2.tar.gz", hash = "sha256:053c8dc58ff5c2f931834d6ec6568c308474912db2129af47c0683506e01b597", size = 2663, upload-time = "2015-09-10T22:01:35.869Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/08/178ca382236c658cd9d532ad0341ac8adba6d5548e0848320f5893442282/djangorestframework_jsonp-1.0.2-py2.py3-none-any.whl", hash = "sha256:fff4584e1a08f3c92f220eefb6f25907a54cc8fe39214ae058c572530f5c9277", size = 3701, upload-time = "2015-09-10T22:01:40.82Z" },
-]
-
-[[package]]
 name = "djangorestframework-stubs"
 version = "3.14.5"
 source = { registry = "https://pypi.org/simple" }
@@ -627,30 +609,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/cc/51/ef2f2196e81c261490e86c15b78f5a097d825b58f5ceb615bcece612eeb9/djangorestframework-stubs-3.14.5.tar.gz", hash = "sha256:5dd6f638aa5291fb7863e6166128a6ed20bf4986e2fc5cf334e6afc841797a09", size = 34281, upload-time = "2023-12-05T19:21:11.739Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/05/c98a1e3d3824dc9a330df26827935b5d7559a5c01bcfca8e18ab645dc758/djangorestframework_stubs-3.14.5-py3-none-any.whl", hash = "sha256:43d788fd50cda49b922cd411e59c5b8cdc3f3de49c02febae12ce42139f0269b", size = 53481, upload-time = "2023-12-05T19:21:09.215Z" },
-]
-
-[[package]]
-name = "djangorestframework-xml"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "defusedxml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/45/74/b75939a779fddef1d3e108991f7edb199e6240f23b6aef64f3a222e1b4dd/djangorestframework-xml-2.0.0.tar.gz", hash = "sha256:35f6c811d0ab8c8466b26db234e16a2ed32d76381715257aebf4c7be2c202ca1", size = 5412, upload-time = "2020-04-12T22:38:43.862Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/74/65485e0ceae183b9348cd080cc69126e498a95bcd5d37df84a598bf94bbd/djangorestframework_xml-2.0.0-py2.py3-none-any.whl", hash = "sha256:975955fbb0d49ac44a90bdeb33b7923d95b79884d283f983e116c80a936ef4d0", size = 6046, upload-time = "2020-04-12T22:38:43.087Z" },
-]
-
-[[package]]
-name = "djangorestframework-yaml"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/61/3f/3bfebf3d0bcfd3aa448534b0631efdf74851cc8777adf327a157ae800834/djangorestframework-yaml-2.0.0.tar.gz", hash = "sha256:1b2cfd7482425f3c6924a8eb803d6f73276e76b03293cd7144c755753e029f15", size = 5671, upload-time = "2020-04-27T01:19:31.06Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/d8/033eae74851b5c8894a5a35fb5bb3ec6d45714f3183962dbce5a2b17f18f/djangorestframework_yaml-2.0.0-py2.py3-none-any.whl", hash = "sha256:7fe744e6004d2191fa1cb8a4fc62f98150202bfebd60702a04f8187cc240b7c4", size = 6684, upload-time = "2020-04-27T01:19:29.99Z" },
 ]
 
 [[package]]
@@ -730,9 +688,6 @@ dependencies = [
     { name = "django-recaptcha" },
     { name = "django-silk" },
     { name = "djangorestframework" },
-    { name = "djangorestframework-jsonp" },
-    { name = "djangorestframework-xml" },
-    { name = "djangorestframework-yaml" },
     { name = "feedparser" },
     { name = "freezegun" },
     { name = "future" },
@@ -814,9 +769,6 @@ requires-dist = [
     { name = "django-recaptcha", specifier = "==4.0.0" },
     { name = "django-silk", specifier = "==5.3.2" },
     { name = "djangorestframework", specifier = "==3.15.2" },
-    { name = "djangorestframework-jsonp", specifier = "==1.0.2" },
-    { name = "djangorestframework-xml", specifier = "==2.0.0" },
-    { name = "djangorestframework-yaml", specifier = "==2.0.0" },
     { name = "feedparser", specifier = "~=6.0.10" },
     { name = "freezegun", specifier = "==1.2.2" },
     { name = "future", specifier = "~=0.18.2" },

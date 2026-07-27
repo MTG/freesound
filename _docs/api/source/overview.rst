@@ -120,18 +120,11 @@ For requests that do not include file uploads, we do also support ``application/
 Response Format
 ---------------
 
-The format of the response can be specified in the request and can be
-one of JSON, XML and YAML. We recommend using JSON, as this
-is currently the only response format we actively test.
-
-To specify the desired response format use a ``format`` request parameter.
-Specify the desired format in lowercase letters as follows:
+Responses are returned as JSON. You can request this explicitly with a ``format`` request parameter:
 
 ::
 
   https://freesound.org/apiv2/sounds/1234/?format=json
-  https://freesound.org/apiv2/sounds/1234/?format=xml
-  https://freesound.org/apiv2/sounds/1234/?format=yaml
 
 If the format is not specified, it will be automatically determined in the content-negotiation phase, typically defaulting to json.
 

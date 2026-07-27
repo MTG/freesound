@@ -27,7 +27,7 @@ from django.contrib.sites.models import Site
 from django.http import Http404, HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
@@ -44,6 +44,7 @@ from .exceptions import (
 )
 from .forms import SoundTextSearchFormAPI
 from .handlers import api_exception_handler
+from .renderers import XMLRenderer
 
 
 class TestAPiViews(TestCase):
@@ -903,3 +904,87 @@ class TestThrottledException(SimpleTestCase):
 
         assert response.status_code == 429
         assert self._samples()[("api_throttle", "true", "authenticated")] == before + 1
+
+
+class TestResponseFormatNegotiation(TestCase):
+    """JSON and XML are the only formats the API renders; yaml and jsonp were removed."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("format_user")
+        self.client.force_login(self.user)
+
+    def test_xml_via_format_parameter(self):
+        response = self.client.get("/apiv2/?format=xml", secure=True)
+
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/xml; charset=utf-8"
+        assert response.content.startswith(b'<?xml version="1.0" encoding="utf-8"?>')
+
+    def test_xml_via_accept_header(self):
+        response = self.client.get("/apiv2/", secure=True, HTTP_ACCEPT="application/xml")
+
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/xml; charset=utf-8"
+        assert response.content.startswith(b'<?xml version="1.0" encoding="utf-8"?>')
+
+    def test_api_index_sanitises_dict_keys_for_xml(self):
+        # Section names like "Search resources" are not valid XML tag names, so api_index rewrites them
+        response = self.client.get("/apiv2/?format=xml", secure=True)
+
+        assert b"<_Search_resources>" in response.content
+        assert b"<_01_Search>" in response.content
+
+    def test_removed_formats_are_not_found(self):
+        for format_name in ["yaml", "jsonp"]:
+            with self.subTest(format=format_name):
+                response = self.client.get(f"/apiv2/?format={format_name}", secure=True)
+
+                assert response.status_code == 404
+                assert response["Content-Type"] == "application/json"
+
+    def test_unauthenticated_request_for_removed_format_is_not_a_server_error(self):
+        # Regression guard for FREESOUND-WEB-2MT: the 401 raised by DRF carries an ErrorDetail, which
+        # the yaml renderer could not serialise, turning every such request into a 500. Content
+        # negotiation now rejects the format before authentication runs, so this must be a 404.
+        self.client.logout()
+
+        # Without the format parameter this endpoint is the 401 that used to trigger the 500
+        assert self.client.get("/apiv2/me/", secure=True).status_code == 401
+
+        response = self.client.get("/apiv2/me/?format=yaml", secure=True)
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Not found."}
+
+
+class TestVendoredXMLRenderer(SimpleTestCase):
+    """The renderer is vendored from the unmaintained djangorestframework-xml, so pin its output."""
+
+    def test_renders_nested_structures(self):
+        data = {
+            "count": 2,
+            "next": None,
+            "results": [
+                {"id": 1, "name": "a & b < c > d", "ok": True},
+                {"id": 2, "tags": [], "score": None},
+            ],
+            "nested": {"a": {"b": "deep"}},
+            "detail": ErrorDetail("Not found.", code="not_found"),
+        }
+
+        assert XMLRenderer().render(data) == (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            "<root>"
+            "<count>2</count>"
+            "<next></next>"
+            "<results>"
+            "<list-item><id>1</id><name>a &amp; b &lt; c &gt; d</name><ok>True</ok></list-item>"
+            "<list-item><id>2</id><tags></tags><score></score></list-item>"
+            "</results>"
+            "<nested><a><b>deep</b></a></nested>"
+            "<detail>Not found.</detail>"
+            "</root>"
+        )
+
+    def test_renders_empty_string_for_no_data(self):
+        assert XMLRenderer().render(None) == ""

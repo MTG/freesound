@@ -3,7 +3,7 @@ import hashlib
 from django.conf import settings
 
 from sounds.models import Sound
-from user_feedback.forms import CategoryValidationForm
+from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
 from user_feedback.models import FeedbackOptOut, UserFeedback
 
 
@@ -126,9 +126,41 @@ class CategoryValidation(Experiment):
         return f"{request.user.id}:{sound.id}" if sound else ""
 
 
+class CategoryFilterFeedback(Experiment):
+    """Search-page popup asking how useful it was to filter results by a category facet.
+
+    Measures the overall usefulness of the category filter. Shown only when the user is browsing
+    results that are filtered by a category, and once they have seen a filtered result set (handled in the search view).
+    """
+
+    experiment_id = "category_filter_feedback"
+    form_class = CategoryFilterFeedbackForm
+    modal_template = "user_feedback/modal_category_filter_feedback.html"
+
+    def is_context_eligible(self, request, sqp=None, **kwargs):
+        # Only when a category facet is actually applied to the current search.
+        return bool(sqp is not None and sqp.has_category_filter())
+
+    def sampling_key(self, request, category=None, **kwargs):
+        # Per (user, category): every user stays "in play" (the rate gates each category a user
+        # filters by, rather than fixing a permanent cohort of users).
+        return f"{request.user.id}:{category}" if category else ""
+
+    def is_throttled(self, request, category=None, **kwargs):
+        # Opt-out hides it everywhere; otherwise ask at most once per category per user.
+        if self.has_opted_out(request.user):
+            return True
+        if not category:
+            return True
+        return UserFeedback.objects.filter(
+            user=request.user, experiment_id=self.experiment_id, data__category=category
+        ).exists()
+
+
 # The registry: the single place experiments are listed. Add class + entry for a new experiment.
 EXPERIMENTS = {
     CategoryValidation.experiment_id: CategoryValidation(),
+    CategoryFilterFeedback.experiment_id: CategoryFilterFeedback(),
 }
 
 

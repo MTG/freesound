@@ -63,3 +63,33 @@ class CategoryValidationForm(forms.Form):
         if cleaned_data.get("answer") == "no" and not cleaned_data.get("selected_category"):
             self.add_error("selected_category", "Please choose the category that fits better.")
         return cleaned_data
+
+
+class CategoryFilterFeedbackForm(forms.Form):
+    """Rating form for the search-page "category filter" popup.
+
+    Fields:
+        rating: 1-5 usefulness rating of filtering results by the current category facet.
+        text: optional free-text comment.
+        category / query: hidden context, filled in by the server (the modal URL), stored on
+            the row so the answer can be analysed per category and per query. Not user-editable.
+    """
+
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
+
+    rating = forms.TypedChoiceField(
+        choices=RATING_CHOICES,
+        coerce=int,
+        widget=forms.RadioSelect,
+        label="How useful was filtering by this category?",
+    )
+    text = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 1}),
+        max_length=2000,
+        label="Anything else? (optional)",
+    )
+
+    # Server-supplied context (hidden). category drives the per-(user, category) throttle.
+    category = forms.CharField(widget=forms.HiddenInput)
+    query = forms.CharField(required=False, widget=forms.HiddenInput)

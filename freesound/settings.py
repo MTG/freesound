@@ -472,7 +472,7 @@ BST_SUBCATEGORY_CHOICES = [
 
 # Fraction of eligible users shown each experiment: 0.0 = off, 1.0 = everyone.
 # local_settings.py overrides these for local testing.
-FEEDBACK_SAMPLE_RATES = {"category_validation": 0.0}
+FEEDBACK_SAMPLE_RATES = {"category_validation": 0.0, "category_filter_feedback": 0.0}
 
 
 # -------------------------------------------------------------------------------

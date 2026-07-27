@@ -470,7 +470,8 @@ BST_SUBCATEGORY_CHOICES = [
 # -------------------------------------------------------------------------------
 # User feedback experiments (user_feedback app)
 
-# Fraction of eligible users shown each experiment: 0.0 = off, 1.0 = everyone.
+# Sampling rate per experiment, keyed per (user, sound/category): fraction of eligible views that show it.
+# Every user can be shown it; each sees it on ~rate of the eligible sounds/searches they open/do. 0.0 = off, 1.0 = every view.
 # local_settings.py overrides these for local testing.
 FEEDBACK_SAMPLE_RATES = {"category_validation": 0.0, "category_filter_feedback": 0.0}
 

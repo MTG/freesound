@@ -221,7 +221,7 @@ def create_datapack_variant(
     # Add an extra manifest file for the metadata
     metadata_manifest_file_path = manifests_dir / "metadata"
     metadata_manifest_lines = [
-        f"{metadata_file_data['crc32']} {metadata_file_data['size']} {metadata_file_data['path']} metadata/{os.path.basename(metadata_file_data['path'])}\n"
+        f"{metadata_file_data['crc32']} {metadata_file_data['size']} /secret/data_packs/{str(output_dir).split('/')[-1]}/{metadata_file_data['path']} metadata/{os.path.basename(metadata_file_data['path'])}\n"
         for metadata_file_data in metadata_for_variant["metadata_files"]
     ]
     metadata_manifest_file_path.write_text("".join(metadata_manifest_lines), encoding="utf-8")

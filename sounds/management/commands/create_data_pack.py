@@ -228,7 +228,12 @@ def create_datapack_variant(
     metadata_for_variant["manifest_files"] = [
         {
             "path": str(metadata_manifest_file_path.relative_to(output_dir)),
-            "size": metadata_manifest_file_path.stat().st_size,
+            "size": sum(
+                [
+                    (output_dir / metadata_file_data["path"]).stat().st_size
+                    for metadata_file_data in metadata_for_variant["metadata_files"]
+                ]
+            ),
         }
     ] + metadata_for_variant["manifest_files"]
 

@@ -31,6 +31,33 @@ from utils.management_commands import LoggingBaseCommand
 console_logger = logging.getLogger("console")
 
 
+fields = [
+    ("id", lambda sound: sound.id),
+    ("created", lambda sound: sound.created.strftime("%Y-%m-%d %H:%M:%S")),
+    ("username", lambda sound: sound.username),
+    ("user_id", lambda sound: sound.user_id),
+    ("title", lambda sound: sound.original_filename),
+    ("description", lambda sound: sound.description),
+    ("tags", lambda sound: " ".join(sound.tag_array)),
+    ("pack_name", lambda sound: sound.pack_name),
+    ("bst_category_code", lambda sound: sound.category_code),
+    ("geotag", lambda sound: sound.geotag.get_lat_lon_as_string() if hasattr(sound, "geotag") else ""),
+    ("license", lambda sound: sound.license.name),
+    (
+        "generative_ai_preference",
+        lambda sound: sound.user.profile.get_gen_ai_preference(category_code=sound.category_code),
+    ),
+    ("type", lambda sound: sound.type),
+    ("duration", lambda sound: sound.duration),
+    ("filesize", lambda sound: sound.filesize),
+    ("crc32", lambda sound: sound.crc),
+    ("avg_rating", lambda sound: sound.avg_rating),
+    ("num_ratings", lambda sound: sound.num_ratings),
+    ("num_downloads", lambda sound: sound.num_downloads),
+    ("num_comments", lambda sound: sound.num_comments),
+]
+
+
 class Command(LoggingBaseCommand):
     help = """This command export sounds metadata to a number of .CSV files. These files will be later used to 
     generate the data packs available through the Freesound Data Packs portal."""
@@ -72,55 +99,13 @@ class Command(LoggingBaseCommand):
             csv_file_path = os.path.join(output_folder, f"metadata_{id_range_start // 1000:04}.csv")
             with open(csv_file_path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
-                writer.writerow(
-                    [
-                        "id",
-                        "username",
-                        "title",
-                        "description",
-                        "tags",
-                        "license",
-                        "duration",
-                        "filesize",
-                        "crc32",
-                        "bst_category_code",
-                        "generative_ai_preference",
-                        "created",
-                        "avg_rating",
-                        "num_ratings",
-                        "num_downloads",
-                        "num_comments",
-                        "pack_name",
-                        "type",
-                        "geotag",
-                    ]
-                )
+                writer.writerow([h for h, _ in fields])  # Write header row
+
                 # Get corresponding Sound objects. include_audio_descriptors=True is used to avoid N+1 queries when accessing the generated bst category (if needed).
                 sound_objects = Sound.objects.ordered_ids(sorted(sound_ids), include_audio_descriptors=True)
                 for sound in sound_objects:
-                    fields = [
-                        sound.id,
-                        sound.username,
-                        sound.original_filename,
-                        sound.description,
-                        " ".join(sound.tag_array),
-                        sound.license.name,
-                        sound.duration,
-                        sound.filesize,
-                        sound.crc,
-                        sound.category_code,
-                        sound.user.profile.get_gen_ai_preference(category_code=sound.category_code),
-                        sound.created.strftime("%Y-%m-%d %H:%M:%S"),
-                        sound.avg_rating,
-                        sound.num_ratings,
-                        sound.num_downloads,
-                        sound.num_comments,
-                        sound.pack_name,
-                        sound.type,
-                        str(sound.geotag.lat) + " " + str(sound.geotag.lon) if hasattr(sound, "geotag") else "",
-                    ]
-                    writer.writerow(fields)
-
+                    fields_values = [l(sound) for _, l in fields]
+                    writer.writerow(fields_values)
                     num_sounds_included += 1
                     if options["limit"] is not None and num_sounds_included >= int(options["limit"]):
                         break

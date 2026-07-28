@@ -312,7 +312,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         if hasattr(sound, "geotag"):
             document["is_geotagged"] = True
             if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
-                document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
+                document["geotag"] = sound.geotag.get_lat_lon_as_string()
 
         document["in_remix_group"] = sound.was_remixed or sound.is_remix
 

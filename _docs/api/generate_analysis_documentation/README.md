@@ -4,8 +4,8 @@ These scripts regenerate the audio-descriptor documentation and its plots.
 Run them from inside this folder.
 
 Everything starts from **`descriptors.csv`** — one row per descriptor. 
-Edit it whenever the descriptors change. The distribution plots also read the per-descriptor value
-dumps from `../audio_descriptors_values/`.
+Edit it whenever the descriptors change. 
+The distribution plots also read the per-descriptor value dumps from `audio_descriptors_values/`.
 
 ### The scripts
 

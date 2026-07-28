@@ -87,7 +87,7 @@ bpm
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/bpm
 
-**Description:** BPM value estimated by beat tracking algorithm.
+**Description:** BPM value of the audio, estimated by a beat tracking algorithm.
 
 **Type:** integer
 
@@ -379,34 +379,11 @@ pitch
 
 **Values:** 0-25000
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/pitch.png
-        :height: 300px
-
-
-pitch_salience
--------------------------
-
-::
-
-    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_salience
-
-**Description:** Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.
-
-**Mode:** mean
-
-**Type:** numeric
-
-**Values:** 0-1
-
-**More information:** https://essentia.upf.edu/reference/streaming_PitchSalience.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/pitch_salience.png
         :height: 300px
 
 
@@ -430,6 +407,29 @@ pitch_confidence
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/pitch_confidence.png
+        :height: 300px
+
+
+pitch_salience
+-------------------------
+
+::
+
+    curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_salience
+
+**Description:** Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.
+
+**Mode:** mean
+
+**Type:** numeric
+
+**Values:** 0-1
+
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/pitch_salience.png
         :height: 300px
 
 
@@ -1039,7 +1039,7 @@ pitch_max
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
@@ -1060,7 +1060,7 @@ pitch_min
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
@@ -1081,7 +1081,7 @@ pitch_var
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html, https://en.wikipedia.org/wiki/Variance
 
 **Distribution in Freesound**
 
@@ -1253,7 +1253,7 @@ spectral_skewness
 
 **Type:** numeric
 
-**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html, https://en.wikipedia.org/wiki/Skewness
 
 **Distribution in Freesound**
 
@@ -1310,7 +1310,7 @@ temporal_centroid_ratio
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_centroid_ratio
 
-**Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is ‘balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
+**Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is 'balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
 
 **Type:** numeric
 
@@ -1356,7 +1356,7 @@ temporal_skewness
 
 **Type:** numeric
 
-**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html, https://en.wikipedia.org/wiki/Skewness
 
 **Distribution in Freesound**
 

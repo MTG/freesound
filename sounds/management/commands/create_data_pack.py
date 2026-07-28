@@ -378,7 +378,10 @@ class Command(LoggingBaseCommand):
         max_sound_id = max(all_sound_ids)
         sounds_metadata = []
         num_non_existing = 0
+        total_chunks = (max_sound_id // 1000) + 1
         for chunk_start in range(0, max_sound_id + 1, 1000):
+            chunk_index = (chunk_start // 1000) + 1
+
             # Get corresponding Sound objects. include_audio_descriptors=True is used to avoid N+1 queries when accessing the generated bst category (if needed).
             sound_ids = all_sound_ids[chunk_start : chunk_start + 1000]
             sound_objects = Sound.objects.ordered_ids(sorted(sound_ids), include_audio_descriptors=True)
@@ -389,6 +392,7 @@ class Command(LoggingBaseCommand):
                         continue
                 sound_dict = {f: l(sound) for f, l in fields}
                 sounds_metadata.append(sound_dict)
+            console_logger.info(f"Loaded sounds from chunk {chunk_index}/{total_chunks}")
 
         # Skip sampling + sounds
         num_sounds_before_sampling_plus_removal = len(sounds_metadata)

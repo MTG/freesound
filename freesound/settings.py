@@ -995,7 +995,7 @@ ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR: str = os.path.join(DATA_PATH, "tmp_processing/")
 PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
-DATA_PACKS_EXPORT_PATH = os.path.join(DATA_PATH, "data_packs_export/")
+DATA_PACKS_PATH = os.path.join(DATA_PATH, "data_packs/")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"

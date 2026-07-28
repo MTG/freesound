@@ -83,6 +83,7 @@ def plot_histogram(data, label, out_folder, remove_outliers=True):
 
     plt.xticks(fontsize=10)
     plt.yticks(fontsize=10)
+    plt.gca().xaxis.get_offset_text().set_fontsize(10)  # shrink the sci-notation
     plt.title(label, fontsize=11)
     plt.xlabel("Value", fontsize=10)
     plt.ylabel("Frequency (%)", fontsize=10)

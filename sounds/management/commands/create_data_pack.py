@@ -151,6 +151,7 @@ def create_datapack_variant(
         manifest_lines = []
         csv_rows = []
         fields_to_include_in_csv = [
+            "filepath",
             "id",
             "created",
             "username",
@@ -173,9 +174,11 @@ def create_datapack_variant(
 
         manifest_files_content_total_size[id_range_number] = 0  # Initialize total size for this manifest file
         for sound in group:
+            dest_filepath = f"{id_range_number}/{sound['id']}.{sound['type']}"
             manifest_lines.append(
-                f"{sound['crc32']} {sound['filesize']} /secret/sounds/{id_range_number}/{sound['id']}_{sound['user_id']}.{sound['type']} {id_range_number}/{sound['id']}.{sound['type']}"
+                f"{sound['crc32']} {sound['filesize']} /secret/sounds/{id_range_number}/{sound['id']}_{sound['user_id']}.{sound['type']} {dest_filepath}"
             )
+            sound["filepath"] = dest_filepath  # Add the destiny filepath as it is included in fields_to_include_in_csv
             csv_rows.append({field: sound.get(field, "") for field in fields_to_include_in_csv})
             manifest_files_content_total_size[id_range_number] += int(sound["filesize"])
 

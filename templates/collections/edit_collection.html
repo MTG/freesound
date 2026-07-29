@@ -53,7 +53,6 @@
                 </div>
             </div>
             <div class="v-spacing-4">
-                {# Initial sound IDs are derived from sounds-data JSON in JS #}
                 {{ form.added_sounds }}
                 {{ form.removed_sounds }}
                 {{ form.featured_sounds }}
@@ -63,24 +62,24 @@
                     <div class="between middle no-gutters">
                         <div class="no-wrap">
                             <label>Sounds in collection (<span id="element-count">0</span>)</label>
-                            <span class="text-light-grey h-spacing-left-1"><span id="featured-count">0</span>/{{ page_config.max_featured }} featured</span>
+                            <span class="text-light-grey h-spacing-left-1"><span id="featured-count">0</span>/{{ max_featured }} featured</span>
                         </div>
                     </div>
                     <div class="between middle no-gutters v-spacing-top-4">
                         <div class="input-wrapper w-100" style="max-width: 250px;">
-                            <i class="bw-icon-search input-icon"></i><input id="edit-collection-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" value="{{ current_search|default:'' }}">
+                            <i class="bw-icon-search input-icon"></i><input id="sounds-search" type="search" placeholder="Search in collection..." role="searchbox" autocomplete="off" value="{{ current_search|default:'' }}">
                         </div>
                         <div class="no-wrap browse__search-overview-sorter" id="sort-container">
                             <label class="text-light-grey d-none d-md-inline">Sort by:</label>
                             <select id="sort-select">
                                 {% for key, option in sort_options.items %}
-                                    <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.0 }}</option>
+                                    <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.label }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
                 <div>{{form.added_sounds.errors}}</div>
-                <div id="sounds-section" data-render-cards-url="{{ render_cards_url }}">
+                <div id="sounds-section" data-render-cards-url="{{ render_cards_url }}" data-max-featured="{{ max_featured }}" data-featured-ids="{{ featured_ids }}">
                     <div id="sounds-grid"></div>
                     <div id="sounds-pagination" class="v-spacing-top-3"></div>
                 </div>
@@ -102,8 +101,6 @@
         {% endif %}
     </div>
 </div>
-{{ sounds_data|json_script:"sounds-data" }}
-{{ page_config|json_script:"page-config" }}
 {% endblock %}
 
 {% block extrabody %}

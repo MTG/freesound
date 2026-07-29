@@ -60,6 +60,12 @@ from sounds.models import (
     Sound,
     SoundOfTheDay,
 )
+from sounds.sound_grid_editor import (
+    add_sounds_modal_helper,
+    render_edit_cards,
+    resolve_sort,
+    sorted_paginated_edit_sounds,
+)
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
 from user_feedback.experiments import get_experiment
@@ -81,7 +87,6 @@ from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_sounds import (
     allow_beta_search_features,
     get_random_sound_id_from_search_engine,
-    perform_search_engine_query,
 )
 from utils.sound_upload import (
     AlreadyExistsException,
@@ -818,12 +823,10 @@ def pack_edit(request, username, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     if pack.user.username.lower() != username.lower():
         raise Http404
-    pack_sounds = ",".join([str(s.id) for s in pack.sounds.all()])
 
     if not (request.user.has_perm("pack.can_change") or pack.user == request.user):
         raise PermissionDenied
 
-    current_sounds = list()
     if request.method == "POST":
         form = PackEditForm(request.POST, instance=pack, label_suffix="")
         if form.is_valid():
@@ -837,18 +840,49 @@ def pack_edit(request, username, pack_id):
                 redirect_to = request.GET.get("next", pack.get_absolute_url())
                 return HttpResponseRedirect(redirect_to)
     else:
-        form = PackEditForm(instance=pack, initial=dict(pack_sounds=pack_sounds), label_suffix="")
-        current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
-        form.pack_sound_objects = current_sounds
-    if request.method == "POST":
-        current_sounds = Sound.objects.bulk_sounds_for_pack(pack_id=pack.id)
-        form.pack_sound_objects = current_sounds
+        form = PackEditForm(instance=pack, label_suffix="")
+
+    sort_options, current_sort = resolve_sort(request)
     tvars = {
         "pack": pack,
         "form": form,
-        "current_sounds": current_sounds,
+        "render_cards_url": reverse("pack-render-cards", args=[pack.user.username, pack.id]),
+        "sort_options": sort_options,
+        "current_sort": current_sort,
     }
     return render(request, "sounds/pack_edit.html", tvars)
+
+
+def _pack_own_sounds(pack):
+    return Sound.objects.filter(user=pack.user, moderation_state="OK", processing_state="OK")
+
+
+def _pack_saved_meta(pack, own_sounds_qs):
+    return [
+        {"id": sid, "name": name, "username": pack.user.username, "date_added": created}
+        for sid, name, created in own_sounds_qs.filter(pack=pack).values_list("id", "original_filename", "created")
+    ]
+
+
+@login_required
+def render_pack_edit_cards(request, username, pack_id):
+    """Search/sort/paginated edit-grid cards for a pack the user may edit."""
+    pack = get_object_or_404(Pack, id=pack_id)
+    if pack.user.username.lower() != username.lower():
+        raise Http404
+    if not (request.user.has_perm("pack.can_change") or pack.user == request.user):
+        raise PermissionDenied
+
+    own_sounds = _pack_own_sounds(pack)
+    saved_meta = _pack_saved_meta(pack, own_sounds)
+    sounds, tvars = sorted_paginated_edit_sounds(
+        request,
+        saved_meta,
+        addable_sounds_qs=own_sounds,
+        per_page=settings.SOUNDS_PER_PAGE_PROFILE_PACK_PAGE,
+    )
+    tvars.update({"object_noun": "pack"})
+    return render_edit_cards(request, sounds, tvars)
 
 
 @login_required
@@ -856,36 +890,14 @@ def sound_edit_sources(request, username, sound_id):
     return HttpResponseRedirect(reverse("sound-edit", args=[username, sound_id]))
 
 
-def add_sounds_modal_helper(request, username=None):
-    tvars = {"sounds_to_select": [], "q": request.GET.get("q", ""), "search_executed": False}
-    if request.GET.get("q", None) is not None:
-        tvars["search_executed"] = True
-        exclude_sound_ids = request.GET.get("exclude", "")
-        if request.GET["q"] != "" or username is not None:
-            query = request.GET["q"]
-            query_filter = ""
-            if username is not None or exclude_sound_ids is not None:
-                filter_parts = []
-                if username is not None:
-                    filter_parts.append(f"username:{username}")
-                if exclude_sound_ids:
-                    exclude_parts = []
-                    for sound_id in exclude_sound_ids.split(","):
-                        exclude_parts.append(f"id:{sound_id}")
-                    exclude_part = "NOT (" + " OR ".join(exclude_parts) + ")"
-                    filter_parts.append(exclude_part)
-                query_filter = " AND ".join(filter_parts)
-            results, _ = perform_search_engine_query(
-                {"textual_query": query, "query_filter": query_filter, "num_sounds": 9}
-            )
-            tvars["sounds_to_select"] = [doc["id"] for doc in results.docs]
-    return tvars
-
-
 @login_required
 def add_sounds_modal_for_pack_edit(request, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
-    tvars = add_sounds_modal_helper(request, username=pack.user.username)
+    tvars = add_sounds_modal_helper(
+        request,
+        username=pack.user.username,
+        exclude_sound_ids=_pack_own_sounds(pack).filter(pack=pack).values_list("id", flat=True),
+    )
     tvars.update(
         {
             "modal_title": "Add sounds to pack",

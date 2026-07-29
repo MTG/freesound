@@ -939,13 +939,6 @@ RABBITMQ_API_PORT = "5673"
 ENABLE_COLLECTIONS = False
 MAX_SOUNDS_PER_COLLECTION = 250
 MAX_FEATURED_SOUNDS_PER_COLLECTION = 6
-COLLECTION_SORT_OPTIONS = {
-    "featured": ("Featured first", "featured_order"),
-    "created_desc": ("Date added (newest first)", "-collectionsound__created"),
-    "created_asc": ("Date added (oldest first)", "collectionsound__created"),
-    "name": ("Name (A to Z)", "original_filename"),
-}
-COLLECTION_SORT_DEFAULT = "featured"
 
 # -------------------------------------------------------------------------------
 # Import local settings
@@ -1006,7 +999,7 @@ ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR: str = os.path.join(DATA_PATH, "tmp_processing/")
 PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
-DATA_PACKS_EXPORT_PATH = os.path.join(DATA_PATH, "data_packs_export/")
+DATA_PACKS_PATH = os.path.join(DATA_PATH, "data_packs/")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"

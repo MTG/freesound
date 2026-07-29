@@ -51,7 +51,7 @@ fields = [
         "bst_category",
         lambda sound: sound.category_names_as_str,
     ),
-    ("geotag", lambda sound: sound.geotag.get_lat_lon_as_string() if hasattr(sound, "geotag") else ""),
+    ("geotag", lambda sound: sound.geotag.get_lon_lat_as_string() if hasattr(sound, "geotag") else ""),
     ("license", lambda sound: sound.license.name),
     (
         "generative_ai_preference",
@@ -197,6 +197,14 @@ def create_datapack_variant(
                 writer.writeheader()
                 writer.writerows(csv_rows)
 
+    # Create big attribution.txt file with all the attribution information for the sounds in this variant
+    attribution_file_path = metadata_dir / "attribution.txt"
+    file_contents = ""
+    for sound in filtered_sounds:
+        file_contents += f'{sound["id"]}: "{sound["title"]}" by {sound["username"]} | License: {sound["license"]}\n'
+    with attribution_file_path.open("w", encoding="utf-8") as handle:
+        handle.write(file_contents)
+
     metadata_for_variant = {
         "name": variant_name,
         "num_sounds": len(filtered_sounds),
@@ -223,6 +231,7 @@ def create_datapack_variant(
             "license": compute_field_stats("license", filtered_sounds),
             "type": compute_field_stats("type", filtered_sounds),
         },
+        "attribution_file": {"path": str(attribution_file_path)},
     }
 
     # Make sure manifest files are sorted alphabetically
@@ -389,8 +398,8 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         # Load all sounds metadata from the database. Do it in chunks.
-        limit = int(options.get("limit", -1))
-        all_sound_ids = list(Sound.objects.values_list("id", flat=True))[:limit]
+        limit = options.get("limit", None)
+        all_sound_ids = list(Sound.objects.values_list("id", flat=True))[: int(limit) if limit is not None else None]
         max_sound_id = max(all_sound_ids)
         sounds_metadata = []
         num_non_existing = 0

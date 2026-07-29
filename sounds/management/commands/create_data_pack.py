@@ -231,7 +231,11 @@ def create_datapack_variant(
             "license": compute_field_stats("license", filtered_sounds),
             "type": compute_field_stats("type", filtered_sounds),
         },
-        "attribution_file": {"path": str(attribution_file_path)},
+        "attribution_file": {
+            "path": str(attribution_file_path),
+            "url": f"/secret/data_packs/{str(output_dir).split('/')[-1]}/metadata/{variant_slug}/attribution.txt",
+            "size": attribution_file_path.stat().st_size,
+        },
     }
 
     # Make sure manifest files are sorted alphabetically

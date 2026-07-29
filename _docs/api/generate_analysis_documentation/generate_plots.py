@@ -16,6 +16,15 @@ import numpy as np
 DATA_FOLDER = "audio_descriptors_values"  # json files for each descriptor extracted from DB
 OUT_FOLDER = "../source/_static/descriptors"
 
+# Interim: drop "not real value" outputs from the plots until fixed at extraction (True = remove).
+SENTINELS = {
+    # C-1 = "no note" (MIDI 0); G#9 and up are above the MIDI max (G9 = 127), artifacts
+    "note_name": lambda v: v in {"C-1", "G#9", "A9", "A#9", "B9", "C10", "C#10", "D10", "D#10", "E10", "F10"},
+    "note_midi": lambda v: v == 0 or v > 127,
+    "tonality_confidence": lambda v: v == -1,  # real range is 0-1
+    "pitch_confidence": lambda v: v > 1,  # real range is 0-1
+}
+
 def sort_key(s):
     ''' Sort string labels, and fix note order. '''
     m = re.match(r"([A-Za-z]+)(#?)(\d+)", s)
@@ -62,7 +71,7 @@ def plot_histogram(data, label, out_folder, remove_outliers=True):
         if len_vals > 20: 
             plt.figure(figsize=(15,5))
             plt.xticks(rotation=60) 
-        if len_vals > 100: 
+        if len_vals > 127: 
             # Keep only the 20 most frequent categories while preserving counts.
             top_labels = {label for label, _ in Counter(data).most_common(20)}
             data = [value for value in data if value in top_labels]
@@ -135,6 +144,8 @@ if __name__ == "__main__":
         with open(json_path, "r") as f:
             values = json.load(f)
         values = [v for v in values if v is not None]
+        if descriptor_name in SENTINELS:
+            values = [v for v in values if not SENTINELS[descriptor_name](v)]
         print(f"Processing {descriptor_name} ..")
 
         if not values:

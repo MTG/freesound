@@ -389,7 +389,8 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         # Load all sounds metadata from the database. Do it in chunks.
-        all_sound_ids = list(Sound.objects.values_list("id", flat=True))[: options.get("limit", None)]
+        limit = int(options.get("limit", -1))
+        all_sound_ids = list(Sound.objects.values_list("id", flat=True))[:limit]
         max_sound_id = max(all_sound_ids)
         sounds_metadata = []
         num_non_existing = 0

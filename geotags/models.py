@@ -44,8 +44,8 @@ class GeoTag(models.Model):
     def get_absolute_url(self):
         return reverse("geotag", args=[smart_str(self.id)])
 
-    def get_lat_lon_as_string(self):
-        return str(self.lat) + " " + str(self.lon)
+    def get_lon_lat_as_string(self):
+        return str(self.lon) + " " + str(self.lat)
 
     def retrieve_location_information(self):
         """Use the mapbox API to retrieve information about the latitude and longitude of this geotag.

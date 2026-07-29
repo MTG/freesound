@@ -26,28 +26,7 @@ from django.forms import Textarea, TextInput
 
 from fscollections.models import Collection, CollectionSound
 from sounds.models import Sound
-
-
-class CommaSeparatedIdField(forms.CharField):
-    """CharField that coerces a comma-separated string of ints into a set (or list)."""
-
-    def __init__(self, *args, as_list=False, **kwargs):
-        self._as_list = as_list
-        super().__init__(*args, **kwargs)
-
-    def clean(self, value):
-        value = super().clean(value)
-        if not value:
-            return [] if self._as_list else set()
-        if self._as_list:
-            seen = set()
-            ids = []
-            for i in value.replace(" ", "").split(","):
-                if i.isdigit() and int(i) not in seen:
-                    seen.add(int(i))
-                    ids.append(int(i))
-            return ids
-        return {int(i) for i in value.replace(" ", "").split(",") if i.isdigit()}
+from utils.forms import CommaSeparatedIdField
 
 
 class SelectCollectionForm(forms.Form):
@@ -172,13 +151,14 @@ class SelectCollectionForm(forms.Form):
 
 
 class CollectionEditForm(forms.ModelForm):
+    # data-grid-value names the id list the grid editor writes into the field on submit
     added_sounds = CommaSeparatedIdField(
-        widget=forms.widgets.HiddenInput(attrs={"id": "added_sound_ids"}),
+        widget=forms.widgets.HiddenInput(attrs={"data-grid-value": "added"}),
         required=False,
     )
 
     removed_sounds = CommaSeparatedIdField(
-        widget=forms.widgets.HiddenInput(attrs={"id": "removed_sound_ids"}),
+        widget=forms.widgets.HiddenInput(attrs={"data-grid-value": "removed"}),
         required=False,
     )
 
@@ -188,7 +168,7 @@ class CollectionEditForm(forms.ModelForm):
 
     featured_sounds = CommaSeparatedIdField(
         as_list=True,
-        widget=forms.widgets.HiddenInput(attrs={"id": "featured_sounds", "name": "featured_sounds"}),
+        widget=forms.widgets.HiddenInput(attrs={"data-grid-value": "featured"}),
         required=False,
     )
 
@@ -243,8 +223,10 @@ class CollectionEditForm(forms.ModelForm):
                 ),
             )
 
-        added = cleaned_data.get("added_sounds", set())
         removed = cleaned_data.get("removed_sounds", set())
+        # Ids in both lists cancel out (added then removed again before saving)
+        added = cleaned_data.get("added_sounds", set()) - removed
+        cleaned_data["added_sounds"] = added
         current_sound_ids = set(
             CollectionSound.objects.filter(collection=self.instance).values_list("sound_id", flat=True)
         )

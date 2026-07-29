@@ -127,7 +127,8 @@ const updateActionUI = (container, actionName, isActive) => {
   btn.blur();
 };
 
-const initializeObjectSelectorActions = (parentElement, store) => {
+// ``editor`` is the SoundGridEditor holding the pending per-sound flags
+const initializeObjectSelectorActions = (parentElement, editor) => {
   const containers = parentElement.querySelectorAll(
     '.bw-selectable-object.with-actions'
   );
@@ -138,15 +139,15 @@ const initializeObjectSelectorActions = (parentElement, store) => {
     const objectId = parseInt(container.dataset.objectId, 10);
 
     // Restore persisted state for all registered actions
-    store.actionNames.forEach(name => {
-      updateActionUI(container, name, store.has(objectId, name));
+    editor.actionNames.forEach(name => {
+      updateActionUI(container, name, editor.has(objectId, name));
     });
 
     // Bind action buttons identified by data-action attribute
     container.querySelectorAll('[data-action]').forEach(btn => {
       btn.addEventListener('click', evt => {
         evt.preventDefault();
-        const nowActive = store.toggleAction(objectId, btn.dataset.action);
+        const nowActive = editor.toggleAction(objectId, btn.dataset.action);
         if (nowActive !== undefined) {
           updateActionUI(container, btn.dataset.action, nowActive);
         }

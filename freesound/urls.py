@@ -93,6 +93,11 @@ urlpatterns = [
         name="pack-stats-section",
     ),
     path("people/<username>/packs/<int:pack_id>/edit/", sounds.views.pack_edit, name="pack-edit"),
+    path(
+        "people/<username>/packs/<int:pack_id>/edit/render-cards/",
+        sounds.views.render_pack_edit_cards,
+        name="pack-render-cards",
+    ),
     path("people/<username>/packs/<int:pack_id>/download/", sounds.views.pack_download, name="pack-download"),
     path("people/<username>/packs/<int:pack_id>/downloaders/", sounds.views.pack_downloaders, name="pack-downloaders"),
     path("people/<username>/packs/<int:pack_id>/licenses/", sounds.views.pack_licenses, name="pack-licenses"),

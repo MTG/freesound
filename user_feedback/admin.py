@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import UserFeedback
+from .models import FeedbackOptOut, UserFeedback
 
 
 @admin.register(UserFeedback)
@@ -20,3 +20,10 @@ class UserFeedbackAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+# Add FeedbackOptOut model to admin
+@admin.register(FeedbackOptOut)
+class FeedbackOptOutAdmin(admin.ModelAdmin):
+    raw_id_fields = ("user",)
+    list_display = ("user", "experiment_id")

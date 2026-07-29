@@ -122,6 +122,9 @@ def create_datapack_variant(
     # Filter sounds with the condition
     filtered_sounds = [sound for sound in sounds_metadata if condition(sound)]
 
+    # Sort filtered sounds by ID to ensure consistent ordering
+    filtered_sounds.sort(key=lambda sound: int(sound["id"]))
+
     # Group sounds by their thousand ID (ID 0-999, 1000-1999, etc.) to create manifest and metadata files. Make a list of lists
     grouped_sounds = []
     for sound in filtered_sounds:
@@ -233,7 +236,6 @@ def create_datapack_variant(
         },
         "attribution_file": {
             "path": str(attribution_file_path),
-            "url": f"/secret/data_packs/{str(output_dir).split('/')[-1]}/metadata/{variant_slug}/attribution.txt",
             "size": attribution_file_path.stat().st_size,
         },
     }

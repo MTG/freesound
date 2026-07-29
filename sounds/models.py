@@ -1758,6 +1758,15 @@ class Sound(models.Model):
         return bst_taxonomy_category_key_to_category_names(self.bst_category)
 
     @property
+    def category_names_as_str(self):
+        category_names = self.category_names
+        if category_names == [None, None]:
+            return "No category"
+        if category_names[1] is None:
+            return category_names[0]
+        return " -> ".join(category_names)
+
+    @property
     def category_code(self):
         return bst_taxonomy_category_names_to_category_key(*self.category_names)
 

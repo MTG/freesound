@@ -47,7 +47,10 @@ fields = [
     ("description", lambda sound: sound.description),
     ("tags", lambda sound: " ".join(sound.tag_array)),
     ("pack_name", lambda sound: sound.pack_name),
-    ("bst_category_code", lambda sound: sound.category_code),
+    (
+        "bst_category",
+        lambda sound: sound.category_names_as_str,
+    ),
     ("geotag", lambda sound: sound.geotag.get_lat_lon_as_string() if hasattr(sound, "geotag") else ""),
     ("license", lambda sound: sound.license.name),
     (
@@ -87,9 +90,9 @@ def format_bytes(num_bytes: int) -> str:
     return f"{value:.2f} {units[unit_index]}"
 
 
-def compute_taxonomy_stats(sounds: list[dict[str, MetadataValue]]) -> list[dict[str, MetadataValue]]:
-    sound_categories = [sound["bst_category_code"] for sound in sounds if "bst_category_code" in sound]
-    return Counter(sound_categories).most_common()
+def compute_field_stats(field_name: str, sounds: list[dict[str, MetadataValue]]) -> list[dict[str, MetadataValue]]:
+    field_values = [sound[field_name] for sound in sounds if field_name in sound]
+    return Counter(field_values).most_common()
 
 
 def compute_crc32(file_path: Path) -> str:
@@ -159,7 +162,7 @@ def create_datapack_variant(
             "description",
             "tags",
             "pack_name",
-            "bst_category_code",
+            "bst_category",
             "geotag",
             "license",
             "generative_ai_preference",
@@ -215,7 +218,11 @@ def create_datapack_variant(
             }
             for metadata_file in metadata_dir.iterdir()
         ],
-        "taxonomy_stats": compute_taxonomy_stats(filtered_sounds),
+        "stats": {
+            "category": compute_field_stats("bst_category", filtered_sounds),
+            "license": compute_field_stats("license", filtered_sounds),
+            "type": compute_field_stats("type", filtered_sounds),
+        },
     }
 
     # Make sure manifest files are sorted alphabetically

@@ -1174,11 +1174,13 @@ temporal_skewness
 temporal_spread
 -------------------------
 
-**Description:** Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.
+**Description:** Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean on a time axis (normalized to 0-1) and is a key indicator of the distribution's shape.
 
 **Mode:** mean
 
 **Type:** numeric
+
+**Values:** 0-0.25
 
 **More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
 

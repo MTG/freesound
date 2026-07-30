@@ -314,7 +314,7 @@ onset_times
 pitch
 -------------------------
 
-**Description:** Mean (average) fundamental frequency derived from the audio signal, computed with the YinFFT algorithm.
+**Description:** Mean (average) fundamental frequency (Hz) derived from the audio signal, computed with the YinFFT algorithm.
 
 **Mode:** mean
 
@@ -793,7 +793,7 @@ hpcp_entropy
 log_attack_time
 -------------------------
 
-**Description:** Log (base 10) of the attack time of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
+**Description:** Log (base 10) of the attack time (in seconds) of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
 
 **Type:** numeric
 
@@ -890,7 +890,7 @@ mfcc_var
 pitch_max
 -------------------------
 
-**Description:** Maximum fundamental frequency observed throughout the audio signal.
+**Description:** Maximum fundamental frequency (Hz) observed throughout the audio signal.
 
 **Mode:** max
 
@@ -909,7 +909,7 @@ pitch_max
 pitch_min
 -------------------------
 
-**Description:** Minimum fundamental frequency observed throughout the audio signal.
+**Description:** Minimum fundamental frequency (Hz) observed throughout the audio signal.
 
 **Mode:** min
 
@@ -928,7 +928,7 @@ pitch_min
 pitch_var
 -------------------------
 
-**Description:** Variance of the fundamental frequency of the audio signal.
+**Description:** Variance (Hz²) of the fundamental frequency of the audio signal.
 
 **Mode:** var
 
@@ -945,7 +945,7 @@ pitch_var
 spectral_centroid
 -------------------------
 
-**Description:** Spectral centroid of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.
+**Description:** Spectral centroid (Hz) of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.
 
 **Mode:** mean
 
@@ -1053,7 +1053,7 @@ spectral_flatness
 spectral_rolloff
 -------------------------
 
-**Description:** Roll-off frequency of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).
+**Description:** Roll-off frequency (Hz) of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).
 
 **Mode:** mean
 
@@ -1089,7 +1089,7 @@ spectral_skewness
 spectral_spread
 -------------------------
 
-**Description:** Spread (variance) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.
+**Description:** Spread (variance in Hz²) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.
 
 **Mode:** mean
 

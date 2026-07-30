@@ -47,7 +47,7 @@ image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 
 descriptors = []
-with open("descriptors.csv") as f:
+with open("descriptors.csv", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         descriptors.append({

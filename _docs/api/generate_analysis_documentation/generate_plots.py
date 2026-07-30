@@ -120,7 +120,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    with open("descriptors.csv", "r", newline="") as f:
+    with open("descriptors.csv", "r", newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         next(reader)
         descriptor_names = [row[0] for row in reader]

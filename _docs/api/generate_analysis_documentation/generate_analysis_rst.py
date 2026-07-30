@@ -29,15 +29,25 @@ to mono. For most descriptors, the frame size is 2,048 samples with a hop size o
 while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
+Analysis values
+>>>>>>>>>>>>>>>>>
+
+Descriptors that list a **Values** range are bounded by definition. The ones without it
+(counts, variances, durations, energies, and similar) are unbounded, so their range depends
+on the sound.
+
+Values are retrieved all at once with the :ref:`sound-analysis` resource, or one at a time with the
+``fields`` parameter of any resource that returns sounds, such as :ref:`sound-sound`.
+
+
 """
 
-curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"
 image_folder = '../source/_static/descriptors/'
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 
 descriptors = []
-with open("descriptors.csv") as f:
+with open("descriptors.csv", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         descriptors.append({
@@ -56,8 +66,6 @@ def print_descriptor(descriptor):
     """Print a single descriptor in formatted documentation style."""
     print(descriptor["name"])
     print("-------------------------")
-    print("\n::\n")
-    print(curl_str + descriptor["name"])
 
     print("\n**Description:** " + descriptor["description"])
 

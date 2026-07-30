@@ -393,7 +393,7 @@ class Command(LoggingBaseCommand):
             help="Enable verbose logging.",
         )
         parser.add_argument(
-            "--datapack-dir-name",
+            "--dirname",
             action="store",
             dest="datapack_dir_name",
             default="",
@@ -404,15 +404,13 @@ class Command(LoggingBaseCommand):
         self.log_start()
 
         # Load all sounds metadata from the database. Do it in chunks.
+        # Only include sounds that are moderated and processed ok.
         limit = options.get("limit", None)
-        all_sound_ids = list(Sound.objects.values_list("id", flat=True))[: int(limit) if limit is not None else None]
-        max_sound_id = max(all_sound_ids)
+        all_sound_ids = list(Sound.public.values_list("id", flat=True))[: int(limit) if limit is not None else None]
         sounds_metadata = []
         num_non_existing = 0
-        total_chunks = (max_sound_id // 1000) + 1
-        for chunk_start in range(0, max_sound_id + 1, 1000):
-            chunk_index = (chunk_start // 1000) + 1
-
+        total_chunks = (len(all_sound_ids) // 1000) + 1
+        for chunk_index, chunk_start in enumerate(range(0, len(all_sound_ids), 1000), start=1):
             # Get corresponding Sound objects. include_audio_descriptors=True is used to avoid N+1 queries when accessing the generated bst category (if needed).
             sound_ids = all_sound_ids[chunk_start : chunk_start + 1000]
             sound_objects = Sound.objects.ordered_ids(sorted(sound_ids), include_audio_descriptors=True)
@@ -438,9 +436,12 @@ class Command(LoggingBaseCommand):
             print(f"Number of sampling+ sounds skipped: {num_skipped_sampling_plus}")
 
         # Create output directory if missing, or delete it if existing
-        date_prefix = datetime.now().strftime("%Y-%m-%d")
         datapack_dir_name = (options.get("datapack_dir_name") or "").strip()
-        output_dir_basename = f"{date_prefix}-{datapack_dir_name}" if datapack_dir_name else date_prefix
+        if datapack_dir_name:
+            output_dir_basename = datapack_dir_name
+        else:
+            # If no dir name is provided, use date prefix
+            output_dir_basename = datetime.now().strftime("%Y-%m-%d")
         output_dir_path = Path(settings.DATA_PACKS_PATH) / "data_packs" / output_dir_basename
         if output_dir_path.exists():
             shutil.rmtree(output_dir_path)

@@ -22,6 +22,14 @@ to mono. For most descriptors, the frame size is 2,048 samples with a hop size o
 while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
+Analysis values
+>>>>>>>>>>>>>>>>>
+
+Descriptors that list a **Values** range are bounded by definition. The ones without it
+(counts, variances, durations, energies, and similar) are unbounded, so their range depends
+on the sound.
+
+
 
 Main set of descriptors
 >>>>>>>>>>>>>>>>
@@ -169,6 +177,8 @@ dissonance
 
 **Type:** numeric
 
+**Values:** 0-1
+
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Dissonance.html
 
 **Distribution in Freesound**
@@ -249,6 +259,8 @@ loopable
 
 **Type:** boolean
 
+**Values:** 0/1
+
 **More information:** https://en.wikipedia.org/wiki/Loop_(music)
 
 **Distribution in Freesound**
@@ -267,6 +279,8 @@ loudness
 **Description:** Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.
 
 **Type:** numeric
+
+**Values:** -70 to 0
 
 **More information:** https://en.wikipedia.org/wiki/LUFS
 
@@ -305,6 +319,8 @@ note_midi
 **Description:** MIDI value corresponding to the estimated note (computed by the note_name descriptor).
 
 **Type:** integer
+
+**Values:** 0-127
 
 **Distribution in Freesound**
 
@@ -377,7 +393,7 @@ pitch
 
 **Type:** numeric
 
-**Values:** 0-25000
+**Values:** 0-22050
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
@@ -443,6 +459,8 @@ reverbness
 **Description:** Whether the signal is reverberated or not.
 
 **Type:** boolean
+
+**Values:** 0/1
 
 **More information:** https://en.wikipedia.org/wiki/Reverberation
 
@@ -523,6 +541,8 @@ single_event
 **Description:** Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.
 
 **Type:** boolean
+
+**Values:** 0/1
 
 **Distribution in Freesound**
 
@@ -903,11 +923,13 @@ hpcp_entropy
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/hpcp_entropy
 
-**Description:** Uniformity of the pitch-class distribution, computed as the Shannon entropy of the HPCP (computed by the hpcp descriptor).
+**Description:** Uniformity of the pitch-class distribution, computed as the Shannon entropy (base 2) of the HPCP (computed by the hpcp descriptor). Max log2(36) = 5.17.
 
 **Mode:** mean
 
 **Type:** numeric
+
+**Values:** 0-5.17
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Entropy.html, http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
 
@@ -1039,6 +1061,8 @@ pitch_max
 
 **Type:** numeric
 
+**Values:** 0-22050
+
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
@@ -1059,6 +1083,8 @@ pitch_min
 **Mode:** min
 
 **Type:** numeric
+
+**Values:** 0-22050
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
@@ -1101,6 +1127,8 @@ spectral_centroid
 **Mode:** mean
 
 **Type:** numeric
+
+**Values:** 0-22050
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Centroid.html, https://en.wikipedia.org/wiki/Spectral_centroid
 
@@ -1180,11 +1208,13 @@ spectral_entropy
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/spectral_entropy
 
-**Description:** Shannon entropy in the frequency domain of the audio signal, measuring the unpredictability in the spectrum.
+**Description:** Shannon entropy (base 2) in the frequency domain of the audio signal, measuring the unpredictability in the spectrum. Max log2(1025 bins) = 10.
 
 **Mode:** mean
 
 **Type:** numeric
+
+**Values:** 0-10
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Entropy.html
 
@@ -1230,7 +1260,7 @@ spectral_rolloff
 
 **Type:** numeric
 
-**Values:** 0-25000
+**Values:** 0-22050
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_RollOff.html
 
@@ -1313,6 +1343,8 @@ temporal_centroid_ratio
 **Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is 'balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
 
 **Type:** numeric
+
+**Values:** 0-1
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_TCToTotal.html
 

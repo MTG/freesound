@@ -29,6 +29,14 @@ to mono. For most descriptors, the frame size is 2,048 samples with a hop size o
 while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
+Analysis values
+>>>>>>>>>>>>>>>>>
+
+Descriptors that list a **Values** range are bounded by definition. The ones without it
+(counts, variances, durations, energies, and similar) are unbounded, so their range depends
+on the sound.
+
+
 """
 
 curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"

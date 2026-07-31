@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django_recaptcha",
     "adminsortable",
     "fscollections",
+    "user_feedback",
 ]
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -473,6 +474,16 @@ BST_CATEGORY_CHOICES = [
 BST_SUBCATEGORY_CHOICES: list = [
     (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key
 ]  # Second-level categories
+
+
+# -------------------------------------------------------------------------------
+# User feedback experiments (user_feedback app)
+
+# Sampling rate per experiment, keyed per (user, sound/category): fraction of eligible views that show it.
+# Every user can be shown it; each sees it on ~rate of the eligible sounds/searches they open/do. 0.0 = off, 1.0 = every view.
+# local_settings.py overrides these for local testing.
+FEEDBACK_SAMPLE_RATES = {"category_validation": 0.0, "category_filter_feedback": 0.0}
+
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls

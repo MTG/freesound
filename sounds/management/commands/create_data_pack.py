@@ -31,6 +31,8 @@ from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
+from django.core.management.base import CommandError
+from django.utils import timezone
 
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
@@ -399,6 +401,13 @@ class Command(LoggingBaseCommand):
             default="",
             help="Optional suffix to append to the YYYYMMDD output directory name.",
         )
+        parser.add_argument(
+            "--max-date",
+            action="store",
+            dest="max_date",
+            default=None,
+            help="Maximum upload date in YYYYMMDD format (excluded).",
+        )
 
     def handle(self, *args, **options):
         self.log_start()
@@ -406,7 +415,19 @@ class Command(LoggingBaseCommand):
         # Load all sounds metadata from the database. Do it in chunks.
         # Only include sounds that are moderated and processed ok.
         limit = options.get("limit", None)
-        all_sound_ids = list(Sound.public.values_list("id", flat=True))[: int(limit) if limit is not None else None]
+        max_date = options.get("max_date")
+        sounds_qs = Sound.public
+        if max_date is not None:
+            try:
+                max_date_as_datetime = timezone.make_aware(datetime.strptime(max_date, "%Y%m%d"))
+            except ValueError as error:
+                raise CommandError("Invalid --max-date format. Use YYYYMMDD.") from error
+            sounds_qs = sounds_qs.filter(created__lt=max_date_as_datetime)
+
+        sound_ids_qs = sounds_qs.values_list("id", flat=True)
+        if limit is not None:
+            sound_ids_qs = sound_ids_qs[: int(limit)]
+        all_sound_ids = list(sound_ids_qs)
         sounds_metadata = []
         num_non_existing = 0
         total_chunks = (len(all_sound_ids) // 1000) + 1

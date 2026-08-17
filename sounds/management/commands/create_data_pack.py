@@ -328,6 +328,16 @@ def create_data_pack_files(
             },
         ),
         (
+            "Commercial use + No Generative AI",
+            lambda sound: condition_commercial_allowed(sound),
+            {
+                "gen_ai_allowed": False,
+                "commercial_use_allowed": True,
+                "attribution_required": True,
+                "open_source_gen_ai_model_required": True,
+            },
+        ),
+        (
             "Commercial use + Generative AI (Open source model)",
             lambda sound: condition_commercial_allowed(sound)
             and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=True),

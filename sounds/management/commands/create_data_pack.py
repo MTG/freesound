@@ -266,7 +266,7 @@ def create_datapack_variant(
 
 
 def condition_commercial_allowed(sound: dict[str, MetadataValue]) -> bool:
-    return sound.get("license") not in ["Attribution-NonCommercial"]
+    return sound.get("license") not in ["Attribution NonCommercial"]
 
 
 def condition_gen_ai_allowed(

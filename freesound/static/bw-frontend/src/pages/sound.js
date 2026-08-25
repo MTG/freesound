@@ -1,9 +1,15 @@
 import './page-polyfills';
 import { showToast } from '../components/toast';
+import { makePostRequest } from '../utils/postRequest';
 import { playAtTime } from '../components/player/utils';
-import { handleGenericModalWithForm, dismissModal } from '../components/modal';
+import {
+  handleGenericModalWithForm,
+  dismissModal,
+  activateModal,
+} from '../components/modal';
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload';
 import { prepareAfterDownloadSoundModals } from '../components/afterDownloadModal.js';
+import { prepareCategoryFormFields } from '../components/bstCategoryFormField';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -16,6 +22,50 @@ const shareLinkElement = document.getElementById('share-link');
 const urlParams = new URLSearchParams(window.location.search);
 
 prepareAfterDownloadSoundModals();
+
+// Bound here instead of the declarative data-toggle: the category field inside the
+// modal only works if prepareCategoryFormFields runs once the contents are loaded.
+[...document.querySelectorAll('[data-category-feedback-url]')].forEach(element => {
+  element.addEventListener('click', () => {
+    handleGenericModalWithForm(
+      element.dataset.categoryFeedbackUrl,
+      modalContainer => prepareCategoryFormFields(modalContainer),
+      undefined,
+      () => showToast('Thanks for your feedback!'),
+      () => showToast('There were errors processing the form...'),
+      true,
+      false,
+      undefined,
+      true
+    );
+  });
+});
+
+// "Don't ask again" opt-out: AJAX so we can acknowledge with a toast and drop the box
+// without a full reload. Falls back to a plain POST + redirect if this JS never runs.
+[...document.querySelectorAll('form[data-category-optout]')].forEach(form => {
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const experimentId = form.querySelector('[name="experiment_id"]').value;
+    makePostRequest(
+      `${form.action}?ajax=1`,
+      { experiment_id: experimentId },
+      () => {
+        const box = form.closest('#categoryValidationBox');
+        if (box) box.remove();
+        showToast("Got it, we won't ask you this again.");
+      },
+      () => showToast('Something went wrong, please try again.')
+    );
+  });
+});
+
+// Study info sheet: the button shows the self-contained modal already in the DOM.
+[...document.querySelectorAll('[data-info-modal]')].forEach(button => {
+  button.addEventListener('click', () =>
+    activateModal(button.dataset.infoModal)
+  );
+});
 
 const copyFromInputElement = inputElement => {
   inputElement.select();

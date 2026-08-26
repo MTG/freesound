@@ -7,14 +7,14 @@
     <button type="button" data-info-modal="categoryValidationInfoModal" title="About this study" aria-label="About this study"
             class="cursor-pointer text-light-grey"
             style="position: absolute; top: 8px; right: 10px; margin: 0; padding: 0; background: none; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
-    <b class="h-spacing-3">{{ category_validation_form.answer.label }}</b>
-    {# Buttons grouped in one inline-block so Yes+No stay together and wrap as a pair #}
-    <span class="display-inline-block no-text-wrap">
+    {# Question on its own line; Yes/No on the row below. #}
+    <div><b>Does this sound belong to the <span style="color: #c99700;">{{ sound.category_names.0 }} > {{ sound.category_names.1 }}</span> category?</b></div>
+    <div class="v-spacing-top-2">
         {% for value, label in category_validation_form.fields.answer.choices %}
-            <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-1 display-inline-block"
+            <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block"
                data-category-feedback-url="{% url 'user-feedback-modal' %}?experiment_id=category_validation&sound_id={{ sound.id }}&answer={{ value }}&ajax=1">{{ label }}</a>
         {% endfor %}
-    </span>
+    </div>
 </div>
 
 {# Study information sheet + opt-out. Self-contained modal (no view/URL), opened with the top-right "i". #}

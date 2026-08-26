@@ -139,13 +139,16 @@ class SubmitAndModalViewTest(TestCase):
     # -- submit: rejected, nothing saved --
     def test_no_without_category_is_rejected(self):
         response = self._submit(ajax=True, answer="no")
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn("application/json", response["content-type"])  # re-rendered form HTML
+        # Rejected ajax submit returns a 400, so the caller can't mistake it for a save.
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("application/json", response["content-type"])
+        self.assertIn("selected_category", response.json()["errors"])
         self.assertEqual(self._rows().count(), 0)
 
     def test_tampered_sound_id_is_rejected(self):
         response = self._submit(ajax=True, answer="yes", sound_id=999999999)
-        self.assertNotIn("application/json", response["content-type"])
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("sound_id", response.json()["errors"])
         self.assertEqual(self._rows().count(), 0)
 
     def test_unknown_experiment_returns_404(self):

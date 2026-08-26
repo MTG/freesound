@@ -17,9 +17,8 @@ def submit(request):
     experiment supplies its own form (``form_class``), which validates its own
     fields; so this view stays the same.
 
-    Two response modes: a normal POST gets a redirect back, while a POST with
-    ``?ajax=1`` gets JSON on success or the re-rendered form HTML on validation
-    error so a JS caller can swap the errors in place.
+    Two response modes: a normal POST redirects back and an ``?ajax=1`` POST instead gets
+    JSON with the saved answer, or the validation errors with a 400.
     """
     experiment = get_experiment(request.POST.get("experiment_id", ""))
     if experiment is None:
@@ -34,7 +33,8 @@ def submit(request):
         if is_ajax:
             return JsonResponse({"success": True})
     elif is_ajax:
-        return render(request, experiment.modal_template, {"form": form, **experiment.modal_context(request, form)})
+        # Errors as JSON with a 400 so the JS takes its error path (200 would read as success).
+        return JsonResponse({"success": False, "errors": form.errors.get_json_data()}, status=400)
     return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
 

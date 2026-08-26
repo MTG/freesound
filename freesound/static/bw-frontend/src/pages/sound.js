@@ -63,12 +63,28 @@ if (categoryValidationBox) {
       categoryPicker.style.display = chosenAnswer === 'no' ? '' : 'none';
     });
   });
+  // First field error message from the JSON 400 body.
+  const firstFormError = responseText => {
+    try {
+      const errors = JSON.parse(responseText).errors || {};
+      const firstField = Object.keys(errors)[0];
+      return firstField ? errors[firstField][0].message : null;
+    } catch {
+      return null;
+    }
+  };
   if (sendButton) {
     sendButton.addEventListener('click', () => {
       const selectedCategory = categoryValidationBox.querySelector('[name="selected_category"]').value;
       // For "no", require a category and subcategory.
       if (chosenAnswer === 'no' && !selectedCategory.includes('-')) {
         showToast('Please choose a category and subcategory.');
+        return;
+      }
+      const text = categoryValidationBox.querySelector('[data-feedback-text]').value;
+      // Catch the form's max_length here so we can show a "shorten it" error.
+      if (text.length > 2000) {
+        showToast('Please keep your comment under 2000 characters.');
         return;
       }
       makePostRequest(
@@ -78,12 +94,12 @@ if (categoryValidationBox) {
           sound_id: categoryValidationBox.dataset.soundId,
           answer: chosenAnswer,
           selected_category: selectedCategory,
-          text: categoryValidationBox.querySelector('[data-feedback-text]').value,
+          text,
         },
         () => {
           categoryValidationBox.innerHTML = '<b>Thanks for your feedback!</b>';
         },
-        () => showToast('Something went wrong, please try again.')
+        responseText => showToast(firstFormError(responseText) || 'Something went wrong, please try again.')
       );
     });
   }

@@ -41,8 +41,8 @@ prepareAfterDownloadSoundModals();
   });
 });
 
-// "Don't ask again" opt-out: AJAX so we can acknowledge with a toast and drop the box
-// without a full reload. Falls back to a plain POST + redirect if this JS never runs.
+// "Don't ask again" opt-out (inside the info modal): AJAX so we can acknowledge with a toast and
+// drop the box without a full reload. Falls back to a plain POST + redirect if this JS never runs.
 [...document.querySelectorAll('form[data-category-optout]')].forEach(form => {
   form.addEventListener('submit', event => {
     event.preventDefault();
@@ -51,7 +51,8 @@ prepareAfterDownloadSoundModals();
       `${form.action}?ajax=1`,
       { experiment_id: experimentId },
       () => {
-        const box = form.closest('#categoryValidationBox');
+        dismissModal('categoryValidationInfoModal');
+        const box = document.getElementById('categoryValidationBox');
         if (box) box.remove();
         showToast("Got it, we won't ask you this again.");
       },

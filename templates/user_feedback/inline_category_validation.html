@@ -2,16 +2,8 @@
 {# Inline "category validation" box; shown by sounds.views.sound only when the category_validation experiment is on. #}
 {# Neither answer saves on click: both open a modal where Send confirms it, so a misclick costs nothing. #}
 {# Bound in pages/sound.js (not the declarative data-toggle) because the modal needs an onLoaded hook to initialise the category field. #}
-<style>
-    /* Drop opt-out link in really small screens, where it may overlap with other buttons. */
-    @media (max-width: 800px) {
-        #categoryValidationBox form { display: none; }
-    }
-    /* Underline on hover to signal it is clickable. */
-    #categoryValidationBox form button:hover { text-decoration: underline; }
-</style>
-<div id="categoryValidationBox" class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-bottom: 24px; padding-right: 34px;">
-    {# Info sheet: circled "i" pinned top-right; opens the self-contained modal below (sound.js -> activateModal). #}
+<div id="categoryValidationBox" class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-right: 34px;">
+    {# Circled "i" pinned top-right; opens the info + opt-out modal below (sound.js -> activateModal). #}
     <button type="button" data-info-modal="categoryValidationInfoModal" title="About this study" aria-label="About this study"
             class="cursor-pointer text-light-grey"
             style="position: absolute; top: 8px; right: 10px; margin: 0; padding: 0; background: none; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
@@ -23,16 +15,9 @@
                data-category-feedback-url="{% url 'user-feedback-modal' %}?experiment_id=category_validation&sound_id={{ sound.id }}&answer={{ value }}&ajax=1">{{ label }}</a>
         {% endfor %}
     </span>
-    {# Opt-out: plain POST -> "don't ask again" -> reload -> box throttled. #}
-    {# JS uses AJAX (no reload), otherwise reloads. #}
-    <form method="post" action="{% url 'user-feedback-opt-out' %}" data-category-optout style="position: absolute; bottom: 6px; right: 12px; margin: 0;">
-        {% csrf_token %}
-        <input type="hidden" name="experiment_id" value="category_validation">
-        <button type="submit" class="no-border text-light-grey cursor-pointer" style="background: none; padding: 0; font-weight: normal; font-size: 11px;">don't ask again</button>
-    </form>
 </div>
 
-{# Study information sheet. Self-contained modal (no view/URL), opened with the top-right "i". #}
+{# Study information sheet + opt-out. Self-contained modal (no view/URL), opened with the top-right "i". #}
 <div class="modal" id="categoryValidationInfoModal" tabindex="-1" role="dialog" aria-label="About this study" aria-hidden="true">
     <div class="modal-wrapper">
         <div class="modal-dialog modal-dialog-centered">
@@ -52,38 +37,18 @@
                         better understand how users perceive sound categories.
                     </p>
 
-                    <p>
-                        <b>What we record:</b> your response, the sound being evaluated, the time of your
-                        response, your suggested category (if applicable), and any optional feedback you
-                        provide.
-                    </p>
+                    <p><b>Participation:</b> Taking part is voluntary, and the "Don't ask again" button below will permanently stop them.</p>
 
-                    <p>
-                        <b>Privacy:</b> Responses are analyzed for research purposes only. No information
-                        that could directly identify your Freesound profile will be published in papers,
-                        datasets, or other public outputs. We may use aggregated statistics, such as the
-                        number of sounds you have uploaded, to analyze trends across groups of users.
-                    </p>
+                    <p><b>Contact:</b> If you would like further information about this research, please contact us through the <a href="{% url 'contact' %}">contact page</a>.</p>
 
-                    <p>
-                        <b>Participation:</b> Taking part is entirely voluntary. You can ignore these
-                        questions, and selecting "don't ask again" will permanently stop them from
-                        appearing.
-                    </p>
-
-                    <p>
-                        <b>Institute:</b> Music Technology Group (MTG), Department of Engineering,
-                        Universitat Pompeu Fabra (UPF), Barcelona, Spain &mdash; the research group behind Freesound.
-                    </p>
-
-                    <p>
-                        <b>Contact:</b> If you would like further information about this research,
-                        please contact Panagiota Anastasopoulou (panagiota.anastasopoulou@upf.edu) 
-                        or Frederic Font (frederic.font@upf.edu).
-                    </p>
+                    {# "Don't ask again": plain POST -> reload -> box throttled. #}
+                    <form method="post" action="{% url 'user-feedback-opt-out' %}" data-category-optout class="v-spacing-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="experiment_id" value="category_validation">
+                        <button type="submit" class="btn-inverse" style="align-self: center;">Don't ask again</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-

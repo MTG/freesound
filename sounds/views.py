@@ -299,14 +299,9 @@ def sound(request, username, sound_id):
     is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
-    # Category-validation experiment
-    # The experiment object owns all the rules (auth, sampling, throttling).
-    # Wiring is kept explicit on purpose for now.
-    category_validation = get_experiment("category_validation")
-    show_category_validation = category_validation.should_show(request, sound=sound)
-    category_validation_form = (
-        category_validation.form_class(initial={"sound_id": sound.id}) if show_category_validation else None
-    )
+    # Category-validation experiment: the experiment owns all the rules and renders
+    # its own box (empty string when it should not show), so this view stays generic.
+    category_validation_html = get_experiment("category_validation").render_inline_html(request, sound=sound)
 
     tvars = {
         "sound": sound,
@@ -317,9 +312,7 @@ def sound(request, username, sound_id):
         "is_explicit": is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         "sizes": settings.IFRAME_PLAYER_SIZE,
         "min_num_ratings": settings.MIN_NUMBER_RATINGS,
-        "show_category_validation": show_category_validation,
-        "category_validation_form": category_validation_form,
-        "bst_top_level_categories": settings.BST_CATEGORY_CHOICES if show_category_validation else None,
+        "category_validation_html": category_validation_html,
         "download_limit_reached": user_download_limit_reached(request),
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))

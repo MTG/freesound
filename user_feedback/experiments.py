@@ -1,7 +1,9 @@
 import hashlib
 
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.utils.module_loading import import_string
+from django.utils.safestring import mark_safe
 
 from sounds.models import Sound
 from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
@@ -20,6 +22,7 @@ class Experiment:
     experiment_id = None  # unique id, also stored on each UserFeedback row
     form_class = None  # form the generic submit view validates for this experiment
     modal_template = None  # optional follow-up modal, rendered by the modal view
+    inline_template = None  # optional inline box rendered on a host page
 
     @property
     def sample_rate(self):
@@ -55,6 +58,20 @@ class Experiment:
         """Extra template context for this experiment's modal, so the views that
         render it do not need to know what any experiment shows."""
         return {}
+
+    def inline_context(self, request, **kwargs):
+        """Extra template context for this experiment's inline box (its form, etc.),
+        so the host page does not need to know what any experiment renders."""
+        return {}
+
+    def render_inline_html(self, request, **kwargs):
+        """Rendered inline box for this request, or "" when it should not show now.
+        The host page just outputs the string; all the wiring stays in here."""
+        if self.inline_template is None or not self.should_show(request, **kwargs):
+            return ""
+        return mark_safe(
+            render_to_string(self.inline_template, self.inline_context(request, **kwargs), request=request)
+        )
 
     def is_throttled(self, request, **kwargs):
         """True if we should NOT show it because of 'do not nag' rules.
@@ -95,10 +112,20 @@ class CategoryValidation(Experiment):
     experiment_id = "category_validation"
     form_class = CategoryValidationForm
     modal_template = "user_feedback/modal_category_validation.html"
+    inline_template = "user_feedback/inline_category_validation.html"
 
     def is_context_eligible(self, request, sound=None, **kwargs):
         # Only ask about sounds that actually have a category to validate.
         return bool(sound is not None and sound.bst_category)
+
+    def inline_context(self, request, sound=None, **kwargs):
+        # The box shows which category is being judged and offers a correction form.
+        # bst_top_level_categories drives the category field, same as the describe form.
+        return {
+            "sound": sound,
+            "category_validation_form": self.form_class(initial={"sound_id": sound.id}),
+            "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
+        }
 
     def modal_context(self, request, form):
         # The modal shows which category is being judged. Taken from the form so it

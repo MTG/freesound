@@ -272,3 +272,30 @@ class PerUserSoundSamplingTest(TestCase):
             self.experiment.is_sampled_in(request, sound=sound),
             self.experiment.is_sampled_in(request, sound=sound),
         )
+
+
+class RenderInlineHtmlTest(TestCase):
+    """render_inline_html: the experiment renders its own box, so the host page just
+    outputs the string (empty when it should not show) and stays experiment-agnostic."""
+
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.user, _, sounds = create_user_and_sounds(bst_category="fx-o")
+        self.sound = sounds[0]
+        self.experiment = CategoryValidation()
+
+    def _request(self):
+        request = RequestFactory().get("/")
+        request.user = self.user
+        return request
+
+    @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 1.0}})
+    def test_renders_box_when_shown(self):
+        html = self.experiment.render_inline_html(self._request(), sound=self.sound)
+        self.assertIn("categoryValidationBox", html)
+        self.assertIn('name="selected_category"', html)  # the correction form is built in
+
+    @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 0.0}})
+    def test_empty_string_when_not_shown(self):
+        self.assertEqual(self.experiment.render_inline_html(self._request(), sound=self.sound), "")

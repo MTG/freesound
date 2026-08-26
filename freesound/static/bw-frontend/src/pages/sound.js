@@ -41,6 +41,54 @@ prepareAfterDownloadSoundModals();
   });
 });
 
+// Category validation, inline: It reveals an optional comment, "No" answer also the category picker.
+// Send saves via AJAX. Buttons stay visible so the choice can change.
+const categoryValidationBox = document.getElementById('categoryValidationBox');
+if (categoryValidationBox) {
+  prepareCategoryFormFields(categoryValidationBox); // wire the two-level category picker
+  const expand = categoryValidationBox.querySelector('[data-feedback-expand]');
+  const categoryPicker = categoryValidationBox.querySelector('[data-feedback-category]');
+  const sendButton = categoryValidationBox.querySelector('[data-feedback-send]');
+  let chosenAnswer = null;
+  const answerButtons = [...categoryValidationBox.querySelectorAll('[data-feedback-answer]')];
+  answerButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      chosenAnswer = button.dataset.feedbackAnswer;
+      // Highlight the chosen answer so it is clear which one is selected.
+      answerButtons.forEach(other => {
+        other.classList.toggle('btn-primary', other === button);
+        other.classList.toggle('btn-inverse', other !== button);
+      });
+      expand.style.display = '';
+      categoryPicker.style.display = chosenAnswer === 'no' ? '' : 'none';
+    });
+  });
+  if (sendButton) {
+    sendButton.addEventListener('click', () => {
+      const selectedCategory = categoryValidationBox.querySelector('[name="selected_category"]').value;
+      // For "no", require a category and subcategory.
+      if (chosenAnswer === 'no' && !selectedCategory.includes('-')) {
+        showToast('Please choose a category and subcategory.');
+        return;
+      }
+      makePostRequest(
+        `${categoryValidationBox.dataset.submitUrl}?ajax=1`,
+        {
+          experiment_id: categoryValidationBox.dataset.experimentId,
+          sound_id: categoryValidationBox.dataset.soundId,
+          answer: chosenAnswer,
+          selected_category: selectedCategory,
+          text: categoryValidationBox.querySelector('[data-feedback-text]').value,
+        },
+        () => {
+          categoryValidationBox.innerHTML = '<b>Thanks for your feedback!</b>';
+        },
+        () => showToast('Something went wrong, please try again.')
+      );
+    });
+  }
+}
+
 // "Don't ask again" opt-out (inside the info modal): AJAX so we can acknowledge with a toast and
 // drop the box without a full reload. Falls back to a plain POST + redirect if this JS never runs.
 [...document.querySelectorAll('form[data-category-optout]')].forEach(form => {

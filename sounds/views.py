@@ -319,6 +319,7 @@ def sound(request, username, sound_id):
         "min_num_ratings": settings.MIN_NUMBER_RATINGS,
         "show_category_validation": show_category_validation,
         "category_validation_form": category_validation_form,
+        "bst_top_level_categories": settings.BST_CATEGORY_CHOICES if show_category_validation else None,
         "download_limit_reached": user_download_limit_reached(request),
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))

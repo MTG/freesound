@@ -21,7 +21,7 @@ class _FakeSound:
         self.bst_category = bst_category
 
 
-@override_settings(FEEDBACK_SAMPLE_RATES={"toy": 1.0})
+@override_settings(FEEDBACK_EXPERIMENTS={"toy": {"sample_rate": 1.0}})
 class ExperimentBaseTest(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
@@ -35,14 +35,14 @@ class ExperimentBaseTest(TestCase):
     def test_anonymous_never_shown(self):
         self.assertFalse(_ToyExperiment().should_show(self._request(AnonymousUser())))
 
-    @override_settings(FEEDBACK_SAMPLE_RATES={"toy": 0.0})
+    @override_settings(FEEDBACK_EXPERIMENTS={"toy": {"sample_rate": 0.0}})
     def test_rate_zero_never_sampled(self):
         self.assertFalse(_ToyExperiment().is_sampled_in(self._request(self.user)))
 
     def test_rate_one_always_sampled(self):
         self.assertTrue(_ToyExperiment().is_sampled_in(self._request(self.user)))
 
-    @override_settings(FEEDBACK_SAMPLE_RATES={"toy": 0.5})
+    @override_settings(FEEDBACK_EXPERIMENTS={"toy": {"sample_rate": 0.5}})
     def test_sampling_is_deterministic(self):
         experiment = _ToyExperiment()
         request = self._request(self.user)
@@ -200,7 +200,7 @@ class SubmitAndModalViewTest(TestCase):
         self.assertEqual(self.client.get(reverse("user-feedback-opt-out")).status_code, 405)
 
 
-@override_settings(FEEDBACK_SAMPLE_RATES={"category_validation": 1.0})
+@override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 1.0}})
 class PerSoundThrottleTest(TestCase):
     """Answering about one sound must not stop the box appearing on other sounds:
     category_validation throttles per sound, not once per user like the base class."""
@@ -236,7 +236,7 @@ class PerSoundThrottleTest(TestCase):
         self.assertFalse(self.experiment.should_show(request, sound=second))
 
 
-@override_settings(FEEDBACK_SAMPLE_RATES={"category_validation": 0.5})
+@override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 0.5}})
 class PerUserSoundSamplingTest(TestCase):
     """category_validation samples per (user, sound): every user can be asked and the
     rate gates each sound they open, rather than a fixed cohort of users."""

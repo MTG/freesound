@@ -1,6 +1,7 @@
 import hashlib
 
 from django.conf import settings
+from django.utils.module_loading import import_string
 
 from sounds.models import Sound
 from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
@@ -23,7 +24,7 @@ class Experiment:
     @property
     def sample_rate(self):
         """Fraction of eligible people to show it to (from settings; 0.0 = off)."""
-        return settings.FEEDBACK_SAMPLE_RATES.get(self.experiment_id, 0.0)
+        return settings.FEEDBACK_EXPERIMENTS.get(self.experiment_id, {}).get("sample_rate", 0.0)
 
     def sampling_key(self, request, **kwargs):
         """What we sample on. Default = the user (stable per user). Override to
@@ -157,10 +158,9 @@ class CategoryFilterFeedback(Experiment):
         ).exists()
 
 
-# The registry: the single place experiments are listed. Add class + entry for a new experiment.
+# The registry is built from settings.FEEDBACK_EXPERIMENTS, the place experiments are.
 EXPERIMENTS = {
-    CategoryValidation.experiment_id: CategoryValidation(),
-    CategoryFilterFeedback.experiment_id: CategoryFilterFeedback(),
+    experiment_id: import_string(config["class"])() for experiment_id, config in settings.FEEDBACK_EXPERIMENTS.items()
 }
 
 

@@ -479,11 +479,19 @@ BST_SUBCATEGORY_CHOICES: list = [
 # -------------------------------------------------------------------------------
 # User feedback experiments (user_feedback app)
 
-# Sampling rate per experiment, keyed per (user, sound/category): fraction of eligible views that show it.
-# Every user can be shown it; each sees it on ~rate of the eligible sounds/searches they open/do. 0.0 = off, 1.0 = every view.
+# Registry of feedback experiments: each experiment_id maps to its class (resolved in user_feedback/experiments.py)
+# and its sample_rate = fraction of eligible views that show it (0.0 = off, 1.0 = every view).
 # local_settings.py overrides these for local testing.
-FEEDBACK_SAMPLE_RATES = {"category_validation": 0.0, "category_filter_feedback": 0.0}
-
+FEEDBACK_EXPERIMENTS = {
+    "category_validation": {
+        "class": "user_feedback.experiments.CategoryValidation",
+        "sample_rate": 0.0,
+    },
+    "category_filter_feedback": {
+        "class": "user_feedback.experiments.CategoryFilterFeedback",
+        "sample_rate": 0.0,
+    },
+}
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls

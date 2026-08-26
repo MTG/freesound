@@ -5,7 +5,6 @@ from django.template.loader import render_to_string
 from django.utils.module_loading import import_string
 from django.utils.safestring import mark_safe
 
-from sounds.models import Sound
 from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
 from user_feedback.models import FeedbackOptOut, UserFeedback
 
@@ -111,7 +110,6 @@ class CategoryValidation(Experiment):
 
     experiment_id = "category_validation"
     form_class = CategoryValidationForm
-    modal_template = "user_feedback/modal_category_validation.html"
     inline_template = "user_feedback/inline_category_validation.html"
 
     def is_context_eligible(self, request, sound=None, **kwargs):
@@ -126,14 +124,6 @@ class CategoryValidation(Experiment):
             "category_validation_form": self.form_class(initial={"sound_id": sound.id}),
             "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
         }
-
-    def modal_context(self, request, form):
-        # The modal shows which category is being judged. Taken from the form so it
-        # works both when first opened (initial) and when redisplayed with errors (POST).
-        sound_id = form["sound_id"].value()
-        sound = Sound.objects.filter(id=sound_id).first() if str(sound_id or "").isdigit() else None
-        # bst_top_level_categories drives the category field, same as the describe form.
-        return {"sound": sound, "bst_top_level_categories": settings.BST_CATEGORY_CHOICES}
 
     def is_throttled(self, request, sound=None, **kwargs):
         # Opt-out wins over everything: "don't ask again" hides the box on every sound.

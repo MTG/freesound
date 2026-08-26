@@ -13,13 +13,12 @@ class CategoryValidationForm(forms.Form):
         selected_category: which category fits better. Required when answer is "no".
         text: optional free-text comment.
 
-    The inline box saves nothing on click: each answer opens a follow-up modal, and
-    the row is only stored when that modal's Send is pressed. Both modals collect the
-    optional `text`; the "no" modal also asks for `selected_category`. Keeping every
-    field on one form means the same generic submit endpoint handles both answers.
-    `selected_category` is declared required=False at field level (so a "yes"
-    submission validates without it) and is enforced in clean() only when the answer
-    is "no".
+    The inline box saves nothing on click: clicking an answer expands the box (the
+    "no" answer also reveals the category picker) and only Send stores the row.
+    Keeping every field on one form means the same generic submit endpoint handles
+    both answers. `selected_category` is declared required=False at field level (so a
+    "yes" submission validates without it) and is enforced in clean() only when the
+    answer is "no".
     """
 
     ANSWER_CHOICES = [("yes", "Yes"), ("no", "No")]
@@ -33,8 +32,8 @@ class CategoryValidationForm(forms.Form):
     # Sound ID filled in by the server
     sound_id = forms.IntegerField(widget=forms.HiddenInput)
 
-    # Asked only in the "no" modal (the correction). Subcategory level, same choices
-    # as the upload/describe form so the modal can reuse its category field.
+    # Asked only for the "no" answer (the correction). Subcategory level, same choices
+    # as the upload/describe form so the box can reuse its category field.
     # required=False so a "yes" submission validates without it; clean() then makes
     # it compulsory when the answer is "no".
     selected_category = forms.ChoiceField(

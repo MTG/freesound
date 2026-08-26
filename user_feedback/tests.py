@@ -165,19 +165,7 @@ class SubmitAndModalViewTest(TestCase):
         self.assertIn("login", response["Location"])
         self.assertEqual(self._rows().count(), 0)
 
-    # -- modal view --
-    def _modal(self, answer):
-        return self.client.get(
-            self.modal_url,
-            {"experiment_id": "category_validation", "sound_id": self.sound.id, "answer": answer, "ajax": "1"},
-        )
-
-    def test_modal_no_variant_has_category_field(self):
-        self.assertContains(self._modal("no"), 'name="selected_category"')
-
-    def test_modal_yes_variant_has_no_category_field(self):
-        self.assertNotContains(self._modal("yes"), 'name="selected_category"')
-
+    # -- modal view (generic) --
     def test_modal_unknown_experiment_404(self):
         self.assertEqual(self.client.get(self.modal_url, {"experiment_id": "nope"}).status_code, 404)
 

@@ -1,7 +1,7 @@
 {% load bw_templatetags bst_category %}
 {# Inline "category validation" box; shown by sounds.views.sound only when the category_validation experiment is on. #}
-{# Neither answer saves on click: both open a modal where Send confirms it, so a misclick costs nothing. #}
-{# Bound in pages/sound.js (not the declarative data-toggle) because the modal needs an onLoaded hook to initialise the category field. #}
+{# Neither answer saves on click: it expands the box and only Send confirms it, so a misclick costs nothing. #}
+{# Bound in pages/sound.js because the category picker needs prepareCategoryFormFields to wire it up. #}
 <div id="categoryValidationBox" data-experiment-id="category_validation" data-sound-id="{{ sound.id }}" data-submit-url="{% url 'user-feedback-submit' %}"
      class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-right: 34px;">
     {# Circled "i" pinned top-right; opens the info + opt-out modal below (sound.js -> activateModal). #}

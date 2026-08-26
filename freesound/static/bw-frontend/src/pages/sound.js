@@ -23,24 +23,6 @@ const urlParams = new URLSearchParams(window.location.search);
 
 prepareAfterDownloadSoundModals();
 
-// Bound here instead of the declarative data-toggle: the category field inside the
-// modal only works if prepareCategoryFormFields runs once the contents are loaded.
-[...document.querySelectorAll('[data-category-feedback-url]')].forEach(element => {
-  element.addEventListener('click', () => {
-    handleGenericModalWithForm(
-      element.dataset.categoryFeedbackUrl,
-      modalContainer => prepareCategoryFormFields(modalContainer),
-      undefined,
-      () => showToast('Thanks for your feedback!'),
-      () => showToast('There were errors processing the form...'),
-      true,
-      false,
-      undefined,
-      true
-    );
-  });
-});
-
 // Category validation, inline: It reveals an optional comment, "No" answer also the category picker.
 // Send saves via AJAX. Buttons stay visible so the choice can change.
 const categoryValidationBox = document.getElementById('categoryValidationBox');

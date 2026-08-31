@@ -450,6 +450,14 @@ class Command(LoggingBaseCommand):
                     if not os.path.exists(sound.locations("path")):
                         num_non_existing += 1
                         continue
+                if sound.crc == "":
+                    # If the sound has no CRC, compute it and save it to the database first
+                    try:
+                        sound.compute_crc()
+                    except Exception as e:
+                        # If for some reason crc computation fails, skip this sound
+                        console_logger.warning(f"Failed to compute CRC for sound {sound.id}: {e}")
+                        continue
                 sound_dict = {f: l(sound) for f, l in fields}
                 sounds_metadata.append(sound_dict)
             console_logger.info(f"Loaded sounds from chunk {chunk_index}/{total_chunks}")

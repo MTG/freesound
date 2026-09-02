@@ -78,7 +78,7 @@ class CollectionTest(TestCase):
             reverse("delete-collection", args=[delete_collection.id, slugify(delete_collection.name)])
         )
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual("/collections/", resp.url)
+        self.assertEqual(reverse("your-collections"), resp.url)
 
         # Test collection URL for collection.id does not exist
         resp = self.client.get(reverse("collection", args=[delete_collection.id, slugify(delete_collection.name)]))

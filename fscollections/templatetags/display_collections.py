@@ -39,12 +39,9 @@ def display_collection(context, collection):
     else:
         header_sounds = Sound.objects.bulk_sounds_for_collection(collection.id, limit=1)
 
-    show_visibility = collection.user_is_owner_or_maintainer(request.user if request else None)
-
     tvars = {
         "collection": collection,
         "header_sounds": header_sounds,
         "request": request,
-        "show_visibility": show_visibility,
     }
     return tvars

@@ -12,24 +12,15 @@
 <div class="v-spacing-top-5">
     <div class="row no-gutters">
         <div class="col-lg-2 offset-lg-1 order-lg-last v-spacing-3">
-            <h4>Your collections</h4>
             <div class="v-spacing-top-3">
                 <div>
-                    <a class="cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'create-collection' %}?ajax=1" data-reload-on-success= "true" title="Create new collection" aria-label="Create new collection">
-                        Create a new collection</a>
-                </div>
-                {% if user_collections %}
-                    <div class="v-spacing-top-2">Your collections: {{user_collections|length}} </div>
-                {% else %}
-                    <div class="v-spacing-top-2 text-grey">You don't have any collections yet... </div>
-                {% endif %}
-                {% if maintainer_collections %}
-                    <div class="v-spacing-top-2">Collections where you're a maintainer: {{maintainer_collections|length}} </div>
-                {% endif %}                
+                    <a class="btn btn-primary cursor-pointer" data-toggle="modal-default-with-form" data-modal-content-url="{% url 'create-collection' %}?ajax=1" data-reload-on-success= "true" title="Create new collection" aria-label="Create new collection">
+                        {% bw_icon "plus" %} New collection</a>
+                </div>      
             </div>
         </div>
         <div class="col-lg-9">
-            <h3>Owned</h3>
+            <h3>Owned ({{user_collections|length}})</h3>
             <div class="v-spacing-top-3">
                 {% if user_collections %}
                 <div class="row">
@@ -46,7 +37,7 @@
                 {% endif %}
             </div>
             <div class="v-spacing-top-5">
-                <h3>Maintained</h3>
+                <h3>Maintained ({{maintainer_collections|length}})</h3>
                 <div class="v-spacing-top-3">
                     {% if maintainer_collections %}
                     <div class="row">

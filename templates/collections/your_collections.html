@@ -20,6 +20,36 @@
             </div>
         </div>
         <div class="col-lg-9">
+            <div class="between middle v-spacing-4">
+                <div>
+                    <form method="get" class="inline-block">
+                        <div class="input-wrapper w-100">
+                            <i class="bw-icon-search input-icon"></i>
+                            <input
+                                id="collections-search"
+                                type="search"
+                                name="q"
+                                value="{{ current_search|default:'' }}"
+                                placeholder="Search collections..."
+                                aria-label="Search collections"
+                            >
+                        </div>
+                        <input type="hidden" name="sort" value="{{ current_sort }}">
+                    </form>
+                </div>
+                <div>
+                    <b>{{ total_collections }} collection{{ total_collections|pluralize }}</b>
+                </div>
+                <form method="get" class="inline-block">
+                    <input type="hidden" name="q" value="{{ current_search|default:'' }}">
+                    <label for="collections-sort" class="text-grey h-spacing-right-1"><b>Sort by:</b></label>
+                    <select id="collections-sort" name="sort" onchange="this.form.submit()">
+                        {% for option_key, option_data in sort_options.items %}
+                            <option value="{{ option_key }}" {% if current_sort == option_key %}selected{% endif %}>{{ option_data.label }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
             <h3>Owned ({{user_collections|length}})</h3>
             <div class="v-spacing-top-3">
                 {% if user_collections %}

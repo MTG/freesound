@@ -125,6 +125,37 @@ class CollectionTest(TestCase):
         self.assertIn("Ocean Waves", listed_names)
         self.assertNotIn("Forest Birds", listed_names)
 
+    def test_collections_for_user_filter_by_name(self):
+        self.client.force_login(self.user)
+        Collection.objects.create(user=self.user, name="Ocean Waves")
+        Collection.objects.create(user=self.user, name="Forest Birds")
+
+        resp = self.client.get(reverse("your-collections") + "?q=Ocean")
+        self.assertEqual(resp.status_code, 200)
+
+        owned_names = [collection.name for collection in resp.context["user_collections"]]
+        self.assertIn("Ocean Waves", owned_names)
+        self.assertNotIn("Forest Birds", owned_names)
+
+    def test_collections_for_user_sorting(self):
+        self.client.force_login(self.user)
+        collection_a = Collection.objects.create(user=self.user, name="Alpha")
+        collection_b = Collection.objects.create(user=self.user, name="Beta")
+
+        collection_a.add_sound(self.sound, user=self.user)
+        collection_a.refresh_from_db()
+        collection_b.refresh_from_db()
+
+        resp_by_name = self.client.get(reverse("your-collections") + "?sort=name")
+        self.assertEqual(resp_by_name.status_code, 200)
+        sorted_by_name = [collection.name for collection in resp_by_name.context["user_collections"]]
+        self.assertLess(sorted_by_name.index("Alpha"), sorted_by_name.index("Beta"))
+
+        resp_by_sounds = self.client.get(reverse("your-collections") + "?sort=sounds")
+        self.assertEqual(resp_by_sounds.status_code, 200)
+        sorted_by_sounds = [collection.name for collection in resp_by_sounds.context["user_collections"]]
+        self.assertLess(sorted_by_sounds.index("Alpha"), sorted_by_sounds.index("Beta"))
+
     def test_add_remove_sounds_as_user(self):
         # test edit collection's parameters as owner of the collection
         # collection edit should include: adding and removing sounds, editing collection's name (consider bookmark's restriction)

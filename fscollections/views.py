@@ -169,11 +169,29 @@ def collection(request, collection):
 @login_required
 def collections_for_user(request):
     user = request.user
-    user_collections = Collection.objects.filter(user=user).order_by("-modified")
-    maintainer_collections = Collection.objects.filter(maintainers__id=user.id).order_by("-modified")
+    sort = request.GET.get("sort", PUBLIC_COLLECTIONS_DEFAULT_SORT)
+    if sort not in PUBLIC_COLLECTIONS_SORT_OPTIONS:
+        sort = PUBLIC_COLLECTIONS_DEFAULT_SORT
+    search = request.GET.get("q", "").strip()
+
+    ordering = PUBLIC_COLLECTIONS_SORT_OPTIONS[sort]["ordering"]
+
+    user_collections = Collection.objects.filter(user=user)
+    maintainer_collections = Collection.objects.filter(maintainers__id=user.id)
+    if search:
+        user_collections = user_collections.filter(name__icontains=search)
+        maintainer_collections = maintainer_collections.filter(name__icontains=search)
+
+    user_collections = user_collections.order_by(*ordering)
+    maintainer_collections = maintainer_collections.order_by(*ordering)
+
     tvars = {
         "user_collections": user_collections,
         "maintainer_collections": maintainer_collections,
+        "total_collections": user_collections.count() + maintainer_collections.count(),
+        "sort_options": PUBLIC_COLLECTIONS_SORT_OPTIONS,
+        "current_sort": sort,
+        "current_search": search,
     }
     # one URL needed to display all collections and one URL to display ONE collection at a time
     # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display

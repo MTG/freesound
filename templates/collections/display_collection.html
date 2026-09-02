@@ -25,6 +25,11 @@
     <div class="between">
         <div class="ellipsis">
             <a href="{% url "account" collection.user.username %}" title="Username: {{ collection.user.username }}">{{ collection.user.username|truncate_string:15 }}</a><span class="text-grey h-spacing-left-1 h-spacing-1"></span>
+            {% with collection.num_maintainers as num_maintainers %}
+            {% if num_maintainers %}
+                <span class="text-grey">({{ num_maintainers }} maintainer{{ num_maintainers|pluralize }})</span>
+            {% endif %}
+            {% endwith %}
         </div>
         <div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">
             <div class="h-spacing-left-1" title="This collection has {{ collection.num_sounds }} sound{{ collection.num_sounds|pluralize }}">

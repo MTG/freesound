@@ -1,0 +1,56 @@
+{% extends "simple_page.html" %}
+{% load bw_templatetags %}
+{% load display_collections %}
+
+{% block title %}Collections{% endblock title %}
+{% block page-title %}Collections{% endblock page-title %}
+
+{% block page-content %}
+<div class="v-spacing-top-5">
+    <div class="between v-spacing-bottom-3">
+        <form method="get" class="inline-block">
+            <div class="input-wrapper w-100">
+                <i class="bw-icon-search input-icon"></i>
+                <input
+                    id="collections-search"
+                    type="search"
+                    name="q"
+                    value="{{ current_search|default:'' }}"
+                    placeholder="Search collections..."
+                    aria-label="Search collections"
+                >
+            </div>
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+        </form>
+        <div>
+            <b>{{ paginator.count }} collection{{ paginator.count|pluralize }}</b>
+        </div>
+        <form method="get" class="inline-block">
+            <input type="hidden" name="q" value="{{ current_search|default:'' }}">
+            <label for="collections-sort" class="text-grey h-spacing-right-1"><b>Sort by:</b></label>
+            <select id="collections-sort" name="sort" onchange="this.form.submit()">
+                {% for option_key, option_data in sort_options.items %}
+                    <option value="{{ option_key }}" {% if current_sort == option_key %}selected{% endif %}>{{ option_data.label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    {% if collections %}
+        <div class="row">
+            {% for collection in collections %}
+                <div class="col-md-6 col-lg-4 v-spacing-top-3">
+                    {% display_collection collection %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="v-spacing-top-4 center">
+            {% bw_paginator page request %}
+        </div>
+    {% else %}
+        <div class="v-spacing-top-3">
+            <span class="text-grey">No public collections yet...</span>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -191,6 +191,10 @@ class Collection(LicenseSummaryMixin, models.Model):
 
         super().save(*args, **kwargs)
 
+    @property
+    def num_maintainers(self):
+        return self.maintainers.count()
+
 
 class CollectionSound(models.Model):
     # this model relates collections and sounds

@@ -59,6 +59,13 @@ from utils.download_limit import (
 from utils.downloads import download_sounds
 from utils.pagination import paginate
 
+PUBLIC_COLLECTIONS_SORT_OPTIONS = {
+    "recent": {"label": "Recently updated", "ordering": ["-modified", "name"]},
+    "name": {"label": "Name (A-Z)", "ordering": ["name", "-modified"]},
+    "sounds": {"label": "Number of sounds", "ordering": ["-num_sounds", "name"]},
+}
+PUBLIC_COLLECTIONS_DEFAULT_SORT = "recent"
+
 
 def resolve_collection_from_url(view_func):
     """Fetches collection, redirects to canonical URL if name doesn't match, passes collection to view."""
@@ -78,6 +85,29 @@ def resolve_collection_from_url(view_func):
         return view_func(request, collection, *args, **kwargs)
 
     return _wrapped_view
+
+
+def collections(request):
+    sort = request.GET.get("sort", PUBLIC_COLLECTIONS_DEFAULT_SORT)
+    if sort not in PUBLIC_COLLECTIONS_SORT_OPTIONS:
+        sort = PUBLIC_COLLECTIONS_DEFAULT_SORT
+    search = request.GET.get("q", "").strip()
+
+    ordering = PUBLIC_COLLECTIONS_SORT_OPTIONS[sort]["ordering"]
+    public_collections = Collection.objects.filter(public=True)
+    if search:
+        public_collections = public_collections.filter(name__icontains=search)
+    public_collections = public_collections.order_by(*ordering)
+    pagination = paginate(request, public_collections, settings.COLLECTIONS_PER_PAGE)
+
+    tvars = {
+        "collections": list(pagination["page"]),
+        "sort_options": PUBLIC_COLLECTIONS_SORT_OPTIONS,
+        "current_sort": sort,
+        "current_search": search,
+    }
+    tvars.update(pagination)
+    return render(request, "collections/collections.html", tvars)
 
 
 @resolve_collection_from_url

@@ -84,6 +84,47 @@ class CollectionTest(TestCase):
         resp = self.client.get(reverse("collection", args=[delete_collection.id, slugify(delete_collection.name)]))
         self.assertEqual(resp.status_code, 404)
 
+    def test_public_collections_view_lists_only_public(self):
+        private_collection = Collection.objects.create(user=self.user, name="Private Collection", public=False)
+        public_collection = Collection.objects.create(user=self.user, name="Public Collection", public=True)
+
+        resp = self.client.get(reverse("collections"))
+        self.assertEqual(resp.status_code, 200)
+
+        listed_names = [collection.name for collection in resp.context["collections"]]
+        self.assertIn(public_collection.name, listed_names)
+        self.assertNotIn(private_collection.name, listed_names)
+
+    def test_public_collections_view_sorting(self):
+        collection_a = Collection.objects.create(user=self.user, name="Alpha", public=True)
+        collection_b = Collection.objects.create(user=self.user, name="Beta", public=True)
+
+        # Make sure collections have different num_sounds for "sounds" sorting
+        collection_a.add_sound(self.sound, user=self.user)
+        collection_a.refresh_from_db()
+        collection_b.refresh_from_db()
+
+        resp_by_name = self.client.get(reverse("collections") + "?sort=name")
+        self.assertEqual(resp_by_name.status_code, 200)
+        sorted_by_name = [collection.name for collection in resp_by_name.context["collections"]]
+        self.assertLess(sorted_by_name.index("Alpha"), sorted_by_name.index("Beta"))
+
+        resp_by_sounds = self.client.get(reverse("collections") + "?sort=sounds")
+        self.assertEqual(resp_by_sounds.status_code, 200)
+        sorted_by_sounds = [collection.name for collection in resp_by_sounds.context["collections"]]
+        self.assertLess(sorted_by_sounds.index("Alpha"), sorted_by_sounds.index("Beta"))
+
+    def test_public_collections_view_filter_by_name(self):
+        Collection.objects.create(user=self.user, name="Ocean Waves", public=True)
+        Collection.objects.create(user=self.user, name="Forest Birds", public=True)
+
+        resp = self.client.get(reverse("collections") + "?q=Ocean")
+        self.assertEqual(resp.status_code, 200)
+
+        listed_names = [collection.name for collection in resp.context["collections"]]
+        self.assertIn("Ocean Waves", listed_names)
+        self.assertNotIn("Forest Birds", listed_names)
+
     def test_add_remove_sounds_as_user(self):
         # test edit collection's parameters as owner of the collection
         # collection edit should include: adding and removing sounds, editing collection's name (consider bookmark's restriction)

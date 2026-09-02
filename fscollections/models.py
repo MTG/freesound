@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from urllib.parse import quote
 
 from django.contrib.auth.models import User
@@ -39,7 +40,75 @@ from sounds.models import License, LicenseSummaryMixin, Sound
 from tags.models import Tag
 
 
+class CollectionsManager(models.Manager):
+    def bulk_query_id(self, collection_ids):
+        """
+        Return collections with commonly needed related data and annotations.
+
+        This method does not preserve the order of collection_ids. Use ordered_ids
+        when order must match the input list.
+        """
+        if not isinstance(collection_ids, list):
+            collection_ids = [collection_ids]
+        collections = list(
+            self.get_queryset()
+            .select_related("user", "user__profile")
+            .prefetch_related("maintainers")
+            .filter(id__in=collection_ids)
+        )
+
+        if not collections:
+            return collections
+
+        fallback_collection_ids = [c.id for c in collections if not c.featured_sound_ids]
+        first_sound_ids_by_collection_id = defaultdict(list)
+        if fallback_collection_ids:
+            sounds_for_fallback = (
+                Sound.objects.filter(
+                    moderation_state="OK",
+                    processing_state="OK",
+                    collectionsound__collection_id__in=fallback_collection_ids,
+                    collectionsound__status="OK",
+                )
+                .values_list("collectionsound__collection_id", "id")
+                .order_by("collectionsound__collection_id", "-created")
+            )
+            for collection_id, sound_id in sounds_for_fallback:
+                if len(first_sound_ids_by_collection_id[collection_id]) < 3:
+                    first_sound_ids_by_collection_id[collection_id].append(sound_id)
+
+        header_sound_ids = set()
+        header_sound_ids.update(sound_id for ids in first_sound_ids_by_collection_id.values() for sound_id in ids)
+        for collection in collections:
+            header_sound_ids.update(collection.featured_sound_ids or [])
+
+        sounds_by_id = {sound.id: sound for sound in Sound.objects.bulk_query_id_public(list(header_sound_ids))}
+
+        for collection in collections:
+            if collection.featured_sound_ids:
+                collection.header_sounds_precomputed = [
+                    sounds_by_id[sound_id] for sound_id in collection.featured_sound_ids if sound_id in sounds_by_id
+                ]
+            else:
+                collection.header_sounds_precomputed = [
+                    sounds_by_id[sound_id]
+                    for sound_id in first_sound_ids_by_collection_id.get(collection.id, [])
+                    if sound_id in sounds_by_id
+                ]
+
+        return collections
+
+    def dict_ids(self, collection_ids):
+        return {collection_obj.id: collection_obj for collection_obj in self.bulk_query_id(collection_ids)}
+
+    def ordered_ids(self, collection_ids):
+        collections = self.dict_ids(collection_ids)
+        return [collections[collection_id] for collection_id in collection_ids if collection_id in collections]
+
+
 class Collection(LicenseSummaryMixin, models.Model):
+    objects = CollectionsManager()
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     created = models.DateTimeField(db_index=True, auto_now_add=True)

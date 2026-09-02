@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.text import slugify
 
@@ -155,6 +157,71 @@ class CollectionTest(TestCase):
         self.assertEqual(resp_by_sounds.status_code, 200)
         sorted_by_sounds = [collection.name for collection in resp_by_sounds.context["user_collections"]]
         self.assertLess(sorted_by_sounds.index("Alpha"), sorted_by_sounds.index("Beta"))
+
+    def test_public_collections_view_num_queries_does_not_scale_with_num_collections(self):
+        def build_public_collections(num_collections):
+            collections = []
+            for i in range(num_collections):
+                collection = Collection.objects.create(user=self.user, name=f"Public {i}", public=True)
+                collection.add_sound(self.sound, user=self.user)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+                collection.maintainers.add(self.maintainer)
+                collections.append(collection)
+            return collections
+
+        def get_num_queries():
+            with CaptureQueriesContext(connection) as ctx:
+                resp = self.client.get(reverse("collections"))
+                self.assertEqual(resp.status_code, 200)
+            return len(ctx.captured_queries)
+
+        build_public_collections(1)
+        queries_with_one = get_num_queries()
+
+        Collection.objects.exclude(id=self.collection.id).delete()
+        build_public_collections(10)
+        queries_with_ten = get_num_queries()
+
+        # Listing more collections should not trigger per-collection DB query growth.
+        self.assertLessEqual(queries_with_ten, queries_with_one + 2)
+
+    def test_collections_for_user_view_num_queries_does_not_scale_with_num_collections(self):
+        self.client.force_login(self.user)
+
+        def build_owned_and_maintained_collections(num_owned, num_maintained):
+            for i in range(num_owned):
+                collection = Collection.objects.create(user=self.user, name=f"Owned {i}")
+                collection.add_sound(self.sound, user=self.user)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+
+            owner = User.objects.create_user(username=f"owner_{num_maintained}", email=f"o{num_maintained}@a.com")
+            for i in range(num_maintained):
+                collection = Collection.objects.create(user=owner, name=f"Maintained {i}")
+                collection.add_sound(self.sound1, user=owner)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound1.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+                collection.maintainers.add(self.user)
+
+        def get_num_queries():
+            with CaptureQueriesContext(connection) as ctx:
+                resp = self.client.get(reverse("your-collections"))
+                self.assertEqual(resp.status_code, 200)
+            return len(ctx.captured_queries)
+
+        build_owned_and_maintained_collections(1, 1)
+        queries_with_few = get_num_queries()
+
+        Collection.objects.exclude(id=self.collection.id).delete()
+        build_owned_and_maintained_collections(10, 10)
+        queries_with_many = get_num_queries()
+
+        # Rendering should remain near-constant regardless of list sizes.
+        self.assertLessEqual(queries_with_many, queries_with_few + 3)
 
     def test_add_remove_sounds_as_user(self):
         # test edit collection's parameters as owner of the collection

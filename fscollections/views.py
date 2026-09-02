@@ -97,17 +97,53 @@ def collections(request):
     public_collections = Collection.objects.filter(public=True)
     if search:
         public_collections = public_collections.filter(name__icontains=search)
-    public_collections = public_collections.order_by(*ordering)
-    pagination = paginate(request, public_collections, settings.COLLECTIONS_PER_PAGE)
+    public_collection_ids = list(public_collections.order_by(*ordering).values_list("id", flat=True))
+    pagination = paginate(request, public_collection_ids, settings.COLLECTIONS_PER_PAGE)
+    page_collection_ids = list(pagination["page"])
+    page_collections = Collection.objects.ordered_ids(page_collection_ids)
 
     tvars = {
-        "collections": list(pagination["page"]),
+        "collections": page_collections,
         "sort_options": PUBLIC_COLLECTIONS_SORT_OPTIONS,
         "current_sort": sort,
         "current_search": search,
     }
     tvars.update(pagination)
     return render(request, "collections/collections.html", tvars)
+
+
+@login_required
+def collections_for_user(request):
+    user = request.user
+    sort = request.GET.get("sort", PUBLIC_COLLECTIONS_DEFAULT_SORT)
+    if sort not in PUBLIC_COLLECTIONS_SORT_OPTIONS:
+        sort = PUBLIC_COLLECTIONS_DEFAULT_SORT
+    search = request.GET.get("q", "").strip()
+
+    ordering = PUBLIC_COLLECTIONS_SORT_OPTIONS[sort]["ordering"]
+
+    user_collections = Collection.objects.filter(user=user)
+    maintainer_collections = Collection.objects.filter(maintainers__id=user.id)
+    if search:
+        user_collections = user_collections.filter(name__icontains=search)
+        maintainer_collections = maintainer_collections.filter(name__icontains=search)
+
+    user_collection_ids = list(user_collections.order_by(*ordering).values_list("id", flat=True))
+    maintainer_collection_ids = list(maintainer_collections.order_by(*ordering).values_list("id", flat=True))
+    user_collections = Collection.objects.ordered_ids(user_collection_ids)
+    maintainer_collections = Collection.objects.ordered_ids(maintainer_collection_ids)
+
+    tvars = {
+        "user_collections": user_collections,
+        "maintainer_collections": maintainer_collections,
+        "total_collections": len(user_collections) + len(maintainer_collections),
+        "sort_options": PUBLIC_COLLECTIONS_SORT_OPTIONS,
+        "current_sort": sort,
+        "current_search": search,
+    }
+    # one URL needed to display all collections and one URL to display ONE collection at a time
+    # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
+    return render(request, "collections/your_collections.html", tvars)
 
 
 @resolve_collection_from_url
@@ -164,38 +200,6 @@ def collection(request, collection):
     tvars.update(pagination)
     tvars["download_limit_reached"] = user_download_limit_reached(request)
     return render(request, "collections/collection.html", tvars)
-
-
-@login_required
-def collections_for_user(request):
-    user = request.user
-    sort = request.GET.get("sort", PUBLIC_COLLECTIONS_DEFAULT_SORT)
-    if sort not in PUBLIC_COLLECTIONS_SORT_OPTIONS:
-        sort = PUBLIC_COLLECTIONS_DEFAULT_SORT
-    search = request.GET.get("q", "").strip()
-
-    ordering = PUBLIC_COLLECTIONS_SORT_OPTIONS[sort]["ordering"]
-
-    user_collections = Collection.objects.filter(user=user)
-    maintainer_collections = Collection.objects.filter(maintainers__id=user.id)
-    if search:
-        user_collections = user_collections.filter(name__icontains=search)
-        maintainer_collections = maintainer_collections.filter(name__icontains=search)
-
-    user_collections = user_collections.order_by(*ordering)
-    maintainer_collections = maintainer_collections.order_by(*ordering)
-
-    tvars = {
-        "user_collections": user_collections,
-        "maintainer_collections": maintainer_collections,
-        "total_collections": user_collections.count() + maintainer_collections.count(),
-        "sort_options": PUBLIC_COLLECTIONS_SORT_OPTIONS,
-        "current_sort": sort,
-        "current_search": search,
-    }
-    # one URL needed to display all collections and one URL to display ONE collection at a time
-    # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
-    return render(request, "collections/your_collections.html", tvars)
 
 
 @login_required

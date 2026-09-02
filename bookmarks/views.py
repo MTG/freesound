@@ -60,6 +60,7 @@ def bookmarks(request, category_id=None):
         "n_uncat": n_uncat,
         "category": category,
         "bookmark_categories": bookmark_categories,
+        "edit_allowed": settings.ENABLE_CREATE_EDIT_BOOKMARKS,  # This will only be used while collection objects are created and the feature is not shown to public yet
     }
 
     paginator = paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE)
@@ -89,6 +90,8 @@ def bookmarks_for_user(request, username, category_id=None):
 @login_required
 @transaction.atomic()
 def delete_bookmark_category(request, category_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
     if request.method == "POST":
         category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
         # Remove only the bookmarks that would become duplicates after the category disappears.
@@ -133,6 +136,9 @@ def bookmark_category_licenses(request, category_id):
 @login_required
 @transaction.atomic()
 def edit_bookmark_category(request, category_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
+
     if not request.GET.get("ajax"):
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
@@ -157,6 +163,9 @@ def edit_bookmark_category(request, category_id):
 @login_required
 @transaction.atomic()
 def add_bookmark(request, sound_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
+
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ""
     if request.method == "POST":
@@ -182,6 +191,9 @@ def add_bookmark(request, sound_id):
 
 @login_required
 def delete_bookmark(request, bookmark_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
+
     if request.method == "POST":
         bookmark = get_object_or_404(Bookmark, id=bookmark_id, user=request.user)
         msg = f"""Removed bookmark for sound "{bookmark.sound.original_filename}"."""
@@ -234,5 +246,6 @@ def get_form_for_sound(request, sound_id):
         "sound_has_bookmark_without_category": sound_has_bookmark_without_category,
         "categories_aready_containing_sound": categories_already_containing_sound,
         "add_bookmark_url": add_bookmark_url,
+        "edit_allowed": settings.ENABLE_CREATE_EDIT_BOOKMARKS,  # This will only be used while collection objects are created and the feature is not shown to public yet
     }
     return render(request, "bookmarks/modal_bookmark_sound.html", tvars)

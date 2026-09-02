@@ -1008,6 +1008,9 @@ class BookmarkSound(WriteRequiredGenericAPIView):
         )
 
     def post(self, request, *args, **kwargs):
+        if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+            raise BadRequestException(msg="Bookmarking sounds is current disabled.", resource=self)
+
         sound_id = kwargs["pk"]
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")

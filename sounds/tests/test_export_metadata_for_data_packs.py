@@ -3,6 +3,8 @@ import tempfile
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
+from sounds.models import Sound
+
 
 class CreateDataPackCommandTests(TestCase):
     fixtures = ["licenses", "sounds"]
@@ -14,5 +16,10 @@ class CreateDataPackCommandTests(TestCase):
                 # The command should run with 2 queries:
                 # 1. Get all sound IDs
                 # 2. Get the sound objects for those IDs
+
+                # To avoid triggering crc computation for sounds that don't have it, set
+                # ranbdom crcs now
+                Sound.objects.filter(crc="").update(crc="dummycrc")
+
                 with self.assertNumQueries(2):
                     call_command("create_data_pack")

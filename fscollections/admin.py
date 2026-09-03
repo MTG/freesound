@@ -13,11 +13,6 @@ class CollectionAdmin(admin.ModelAdmin):
     readonly_fields = ["created"]
     actions = ["make_public", "make_private"]
 
-    def has_delete_permission(self, request, obj=None):
-        if obj and obj.sounds.count() > 0:
-            return False
-        return True
-
     def get_sounds(self, obj):
         return ", ".join(str(sound.id) for sound in obj.sounds.all())
 

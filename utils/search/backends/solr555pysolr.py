@@ -49,6 +49,7 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_NAME: "name",
     settings.SEARCH_SOUNDS_FIELD_TAGS: {"field": "tag", "facet": "tagfacet"},
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: "description",
+    settings.SEARCH_SOUNDS_FIELD_COLLECTION_NAMES: "collection_names",
     settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: "collection",
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"field": "username", "facet": "username_facet"},
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: "pack",
@@ -301,12 +302,18 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         )  # This is called outside the if "sound.pack" as in some cases it might still need ot be set
 
         collections = []
-        for collection_data in sound.collections_array:
+        for collection_data in sound.public_collections_array:
             collections.append(
                 str(collection_data["collection_id"]) + "_" + remove_control_chars(collection_data["collection_name"])
             )
         if collections:
             document["collection"] = collections
+            document["collection_names"] = " ".join(
+                [
+                    remove_control_chars(collection_data["collection_name"])
+                    for collection_data in sound.public_collections_array
+                ]
+            )
 
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):

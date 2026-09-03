@@ -427,7 +427,7 @@ class SoundManager(models.Manager):
             .filter(sound=OuterRef("id"), collection__public=True, status="OK")
             .values(data=JSONObject(collection_id="collection__id", collection_name="collection__name"))
         )
-        qs = qs.annotate(collections_array=ArraySubquery(collections_subquery))
+        qs = qs.annotate(public_collections_array=ArraySubquery(collections_subquery))
 
         return qs
 

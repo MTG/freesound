@@ -280,6 +280,13 @@
       "required": false
     },
     {
+      "name": "pack_grouping",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "required": false
+    },
+    {
       "name": "collection",
       "type": "string",
       "indexed": true,
@@ -288,8 +295,8 @@
       "multiValued": true
     },
     {
-      "name": "pack_grouping",
-      "type": "string",
+      "name": "collection_names",
+      "type": "freesound_text",
       "indexed": true,
       "stored": true,
       "required": false

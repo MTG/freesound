@@ -131,7 +131,7 @@ class SearchQueryProcessor:
                     (settings.SEARCH_SOUNDS_FIELD_NAME, "Sound name"),
                     (settings.SEARCH_SOUNDS_FIELD_DESCRIPTION, "Description"),
                     (settings.SEARCH_SOUNDS_FIELD_PACK_NAME, "Pack name"),
-                    (settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING, "Collections"),
+                    (settings.SEARCH_SOUNDS_FIELD_COLLECTION_NAMES, "Collections"),
                     (settings.SEARCH_SOUNDS_FIELD_ID, "Sound ID"),
                     (settings.SEARCH_SOUNDS_FIELD_USER_NAME, "Username"),
                 ]

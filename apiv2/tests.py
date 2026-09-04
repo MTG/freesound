@@ -424,7 +424,7 @@ class TestMeResources(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        # 200 response on getting sounds for bookmark category without name
+        # 200 response on getting sounds for bookmark category with name
         resp = self.client.get(
             reverse("apiv2-me-bookmark-category-sounds", kwargs={"category_id": self.category.id}) + "?fields=*",
             secure=True,

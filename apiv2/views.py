@@ -1290,7 +1290,12 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
                     # This is for backwards compatibility, but it could be removed in the future
                     # This only make sense in the context of this API endpoint where user is specified as the logged
                     # in user and there'll be only one collection named "My bookmnarks"
-                    collection_id = Collection.objects.filter(name="My bookmarks", user=self.user).first().id
+                    collection = Collection.objects.filter(name="My bookmarks", user=self.user)
+                    if collection.exists():
+                        collection_id = collection.first().id
+                    else:
+                        # User has no uncategorized bookmarks
+                        return []
                 try:
                     queryset = [
                         cs.sound

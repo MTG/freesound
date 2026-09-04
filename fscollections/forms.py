@@ -92,7 +92,10 @@ class SelectCollectionForm(forms.Form):
         sound = Sound.objects.get(id=self.sound_id)
 
         if self.cleaned_data["use_last_collection"]:
-            collection_to_use = Collection.objects.filter(user=self.user_saving_sound).order_by("-created").first()
+            last_sounds_added_to_collection = (
+                CollectionSound.objects.filter(user=self.user_saving_sound).order_by("-created").first()
+            )
+            collection_to_use = last_sounds_added_to_collection.collection if last_sounds_added_to_collection else None
         elif self.cleaned_data["collection"] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
             collection_to_use, _ = Collection.objects.get_or_create(
                 name="My bookmarks", user=self.user_saving_sound, is_default_collection=True

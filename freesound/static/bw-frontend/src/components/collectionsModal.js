@@ -10,6 +10,30 @@ import {
   updateObjectSelectorDataProperties,
 } from './objectSelector';
 import { combineIdsLists, serializedIdListToIntList } from '../utils/data';
+import { makePostRequest } from '../utils/postRequest';
+
+
+const addSoundToLastCollectionWithoutModal = (addSoundToCollectionUrl) => {
+  makePostRequest(
+    addSoundToCollectionUrl,
+    { collection: 1, use_last_collection: true }, // note collection number here is irrelevant since use_last_collection is true
+    (responseText) => {
+      // Sound added to collection successfully. Show feedback
+      try {
+        console.log(responseText);
+        showToast(JSON.parse(responseText).message);
+      } catch (error) {
+        // If not logged in, the url will respond with a redirect and JSON parsing will fail
+        showToast('You need to be logged in before adding sounds to collections.');
+      }
+    },
+    () => {
+      // Unexpected errors happened while processing request: show error in toast
+      showToast('Some errors occurred while adding the sound to the collection.');
+    }
+  );
+}
+
 
 const initCollectionFormModal = () => {
   const modalContainer = document.getElementById('addSoundToCollectionModal');
@@ -84,6 +108,8 @@ const bindCollectionModals = container => {
           undefined,
           false
         );
+      } else {
+        addSoundToLastCollectionWithoutModal(element.dataset.modalContentUrl);
       }
     });
   });

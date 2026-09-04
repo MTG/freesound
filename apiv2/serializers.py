@@ -26,6 +26,7 @@ from rest_framework import serializers
 
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
+from fscollections.models import Collection
 from sounds.models import Pack, Sound
 from utils.forms import filename_has_valid_extension
 from utils.tags import clean_and_split_tags
@@ -562,9 +563,9 @@ class PackSerializer(serializers.HyperlinkedModelSerializer):
         return obj.created.replace(microsecond=0)
 
 
-##################
-# BOOKMARK SERIALIZERS
-##################
+#################################
+# BOOKMARK/COLLECTION SERIALIZERS
+#################################
 
 
 class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
@@ -606,6 +607,8 @@ class BookmarkCategorySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CreateBookmarkSerializer(serializers.Serializer):
+    # NOTE: this is currently used to add sounds to a collection through the backwards-compatible bookmark endpoint.
+    # In the future, we should deprecate this and use a new collection endpoint instead.
     category = serializers.CharField(
         max_length=128,
         required=False,
@@ -617,6 +620,30 @@ class CreateBookmarkSerializer(serializers.Serializer):
         if value.isspace():
             value = None
         return value
+
+
+class CollectionSerializer(serializers.HyperlinkedModelSerializer):
+    # NOTE: this is a minimal implementation of the serializer for the backwards-compatible bookmark endpoints.
+    # In the future, we should implement proper collections support through the API.
+    class Meta:
+        model = Collection
+        fields = ("id", "url", "name", "num_sounds", "sounds")
+
+    url = serializers.SerializerMethodField()
+
+    def get_url(self, obj):
+        return prepend_base(
+            obj.get_url(),
+            request_is_secure=self.context["request"].is_secure(),
+        )
+
+    sounds = serializers.SerializerMethodField()
+
+    def get_sounds(self, obj):
+        return prepend_base(
+            reverse("apiv2-me-bookmark-category-sounds", args=[obj.id]),
+            request_is_secure=self.context["request"].is_secure(),
+        )
 
 
 ####################

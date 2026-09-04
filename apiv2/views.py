@@ -62,6 +62,7 @@ from apiv2.forms import (
 from apiv2.models import ApiV2Client
 from apiv2.serializers import (
     BookmarkCategorySerializer,
+    CollectionSerializer,
     CreateBookmarkSerializer,
     CreateCommentSerializer,
     CreateRatingSerializer,
@@ -76,6 +77,7 @@ from apiv2.serializers import (
 )
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
+from fscollections.models import Collection, CollectionSound
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from sounds.models import License, Pack, Sound
@@ -1029,15 +1031,31 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                     status=status.HTTP_201_CREATED,
                 )
             else:
-                category_name = serializer.data.get("category", None)
-                if category_name is not None:
-                    category, _ = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
-                    Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=category)
+                if settings.ENABLE_COLLECTIONS:
+                    collection_name = serializer.data.get("category", None)
+                    if collection_name is not None:
+                        collection, _ = Collection.objects.get_or_create(user=self.user, name=collection_name)
+                    else:
+                        collection_name = "My bookmarks"
+                        collection, _ = Collection.objects.get_or_create(
+                            user=self.user, name="My bookmarks", is_default_collection=True
+                        )
+                    collection.add_sound(sound, self.user)
+
+                    return Response(
+                        data={"detail": f"Successfully added sound {sound_id} to collection {collection_name}."},
+                        status=status.HTTP_201_CREATED,
+                    )
                 else:
-                    Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=None)
-                return Response(
-                    data={"detail": f"Successfully bookmarked sound {sound_id}."}, status=status.HTTP_201_CREATED
-                )
+                    category_name = serializer.data.get("category", None)
+                    if category_name is not None:
+                        category, _ = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
+                        Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=category)
+                    else:
+                        Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=None)
+                    return Response(
+                        data={"detail": f"Successfully bookmarked sound {sound_id}."}, status=status.HTTP_201_CREATED
+                    )
         else:
             return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1187,7 +1205,7 @@ class Me(OauthRequiredAPIView):
 
 
 class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
-    serializer_class = BookmarkCategorySerializer
+    serializer_class = BookmarkCategorySerializer if not settings.ENABLE_COLLECTIONS else CollectionSerializer
 
     @classmethod
     def get_description(cls):
@@ -1207,21 +1225,30 @@ class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
 
     def get_queryset(self):
         if self.user:
-            categories = BookmarkCategory.objects.filter(user__username=self.user.username)
-            try:
-                user = User.objects.get(username=self.user.username, is_active=True)
-            except User.DoesNotExist:
-                raise NotFoundException(resource=self)
+            if settings.ENABLE_COLLECTIONS:
+                try:
+                    user = User.objects.get(username=self.user.username, is_active=True)
+                except User.DoesNotExist:
+                    raise NotFoundException(resource=self)
+                categories = Collection.objects.filter(user__username=self.user.username)
 
-            if (
-                Bookmark.objects.select_related("sound")
-                .filter(user__username=self.user.username, category=None)
-                .count()
-            ):
-                uncategorized = BookmarkCategory(name="Uncategorized", user=user, id=0)
-                return [uncategorized] + list(categories)
-            else:
                 return list(categories)
+            else:
+                categories = BookmarkCategory.objects.filter(user__username=self.user.username)
+                try:
+                    user = User.objects.get(username=self.user.username, is_active=True)
+                except User.DoesNotExist:
+                    raise NotFoundException(resource=self)
+
+                if (
+                    Bookmark.objects.select_related("sound")
+                    .filter(user__username=self.user.username, category=None)
+                    .count()
+                ):
+                    uncategorized = BookmarkCategory(name="Uncategorized", user=user, id=0)
+                    return [uncategorized] + list(categories)
+                else:
+                    return list(categories)
         else:
             raise ServerErrorException(resource=self)
 
@@ -1255,17 +1282,36 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
             kwargs = dict()
             kwargs["user__username"] = self.user.username
 
-            if "category_id" in self.kwargs:
+            if settings.ENABLE_COLLECTIONS:
                 if int(self.kwargs["category_id"]) != 0:
-                    kwargs["category__id"] = self.kwargs["category_id"]
+                    collection_id = self.kwargs["category_id"]
+                else:
+                    # NOTE: If the category ID is 0, it is assumed to be user's "My bookmarks" collection
+                    # This is for backwards compatibility, but it could be removed in the future
+                    # This only make sense in the context of this API endpoint where user is specified as the logged
+                    # in user and there'll be only one collection named "My bookmnarks"
+                    collection_id = Collection.objects.filter(name="My bookmarks", user=self.user).first().id
+                try:
+                    queryset = [
+                        cs.sound
+                        for cs in CollectionSound.objects.select_related("sound").filter(collection_id=collection_id)
+                    ]
+                except:
+                    raise NotFoundException(resource=self)
+            else:
+                if "category_id" in self.kwargs:
+                    if int(self.kwargs["category_id"]) != 0:
+                        kwargs["category__id"] = self.kwargs["category_id"]
+                    else:
+                        kwargs["category"] = None
                 else:
                     kwargs["category"] = None
-            else:
-                kwargs["category"] = None
-            try:
-                queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
-            except:
-                raise NotFoundException(resource=self)
+                try:
+                    queryset = [
+                        bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)
+                    ]
+                except:
+                    raise NotFoundException(resource=self)
             return queryset
         else:
             raise ServerErrorException(resource=self)

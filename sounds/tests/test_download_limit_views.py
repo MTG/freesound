@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group, User
 from django.core.cache import cache, caches
 from django.core.management import call_command
 from django.http import Http404, HttpResponse
+from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils.text import slugify
 from pytest_django.asserts import assertContains, assertNotContains
@@ -247,6 +248,7 @@ def test_collection_page_hides_download_href_when_over_limit(client, settings, p
     assertContains(response, "download-limit-modal")
 
 
+@override_settings(ENABLE_COLLECTIONS=False)
 def test_bookmarks_page_hides_download_href_when_over_limit(client, settings, bookmark_category, downloader):
     settings.MAX_DOWNLOADS_PER_DAY = 1
     download_path = reverse("download-bookmark-category", args=[bookmark_category.id])

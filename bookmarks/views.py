@@ -29,6 +29,7 @@ from django.urls import reverse
 
 from bookmarks.forms import BookmarkCategoryForm, BookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
+from fscollections.models import Collection
 from sounds.models import Sound
 from utils.download_limit import (
     DownloadType,
@@ -47,12 +48,20 @@ def bookmarks(request, category_id=None):
     user = request.user
     is_owner = True
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()
+    corresponding_colection_name = None
     if not category_id:
+        if settings.ENABLE_COLLECTIONS:
+            return HttpResponseRedirect(reverse("your-collections"))
         category = None
         bookmarked_sounds = Bookmark.objects.filter(user=user, category=None)
     else:
         category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
+        if settings.ENABLE_COLLECTIONS:
+            # Find if there's a corresponding collection and redirect to its page
+            collection = get_object_or_404(Collection, name=category.name, user=user)
+            return HttpResponseRedirect(collection.get_absolute_url())
         bookmarked_sounds = category.bookmarks.all()
+
     bookmark_categories = BookmarkCategory.objects.filter(user=user).annotate(num_bookmarks=Count("bookmarks"))
     tvars = {
         "user": user,
@@ -76,6 +85,15 @@ def bookmarks(request, category_id=None):
 def bookmarks_for_user(request, username, category_id=None):
     user = get_parameter_user_or_404(request)
     is_owner = request.user.is_authenticated and user == request.user
+
+    if settings.ENABLE_COLLECTIONS:
+        if category_id:
+            category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
+            collection = get_object_or_404(Collection, name=category.name, user=user)
+            return HttpResponseRedirect(collection.get_absolute_url())
+        else:
+            return HttpResponseRedirect(reverse("collections"))
+
     if is_owner:
         # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
         if category_id:

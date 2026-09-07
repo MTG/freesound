@@ -21,6 +21,7 @@
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
 
 import bookmarks.models
@@ -30,6 +31,7 @@ from sounds.models import Sound
 class BookmarksTest(TestCase):
     fixtures = ["licenses", "sounds"]
 
+    @override_settings(ENABLE_COLLECTIONS=False)
     def test_old_bookmarks_for_user_redirect(self):
         user = User.objects.get(username="Anton")
         category = bookmarks.models.BookmarkCategory.objects.create(name="Category1", user=user)
@@ -52,6 +54,7 @@ class BookmarksTest(TestCase):
         )
         self.assertRedirects(resp, reverse("bookmarks-category", kwargs={"category_id": category.id}))
 
+    @override_settings(ENABLE_COLLECTIONS=False)
     def test_bookmarks(self):
         user = User.objects.get(username="Anton")
         self.client.force_login(user)

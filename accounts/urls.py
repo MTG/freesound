@@ -25,6 +25,7 @@ import accounts.views as accounts
 import apiv2.views as api
 import bookmarks.views as bookmarks
 import follow.views as follow
+import fscollections.views as fscollections
 import messages.views as messages
 from accounts.forms import FsAuthenticationForm, FsPasswordResetForm
 from utils.session_checks import login_redirect
@@ -125,6 +126,7 @@ urlpatterns = [
     path(
         "bookmarks/category/<int:category_id>/licenses/", bookmarks.bookmark_category_licenses, name="category-licenses"
     ),
+    path("collections/", fscollections.collections_for_user, name="your-collections"),
     path("messages/", messages.inbox, name="messages"),
     path("messages/sent/", messages.sent_messages, name="messages-sent"),
     path("messages/archived/", messages.archived_messages, name="messages-archived"),

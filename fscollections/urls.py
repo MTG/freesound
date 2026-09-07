@@ -5,7 +5,7 @@ from . import views
 urlpatterns = [
     path("", views.collections, name="collections"),
     path("<int:collection_id>-<slug:collection_name>/", views.collection, name="collection"),
-    path("home/", views.collections_for_user, name="your-collections"),
+    # path("home/", views.collections_for_user, name="your-collections"),  // To keep URL path consistency, the path pointing to user collections home page is defined in accounts/urls.py
     path("create/", views.create_collection, name="create-collection"),
     path(
         "<int:collection_id>-<slug:collection_name>/render-cards/",

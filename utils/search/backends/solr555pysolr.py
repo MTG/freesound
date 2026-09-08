@@ -522,7 +522,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # NOTE: in the future filter handling should be refactored and we should use a proper filter parser
         # that allows us to define our own filter syntax and then represent filters as some intermediate structure that can later
         # be converted to valid lucene/dismax syntax.
-        query_filter = re.sub(r"\b([a-zA-Z_]+:)", r"+\1", query_filter)
+        # Match either a quoted string (left untouched) or a filter name followed by ':' (gets a '+' prefix), so
+        # that filter values such as pack/collection names containing "word:" patterns are not affected.
+        def add_plus(match):
+            if match.group(1) is not None:
+                return f"+{match.group(1)}"
+            return match.group(0)
+
+        query_filter = re.sub(r'"[^"]*"|\b([a-zA-Z_]+:)', add_plus, query_filter)
         query_filter = re.sub(
             r"(\+)\1+", r"\1", query_filter
         )  # This is to avoid having multiple + in a row if user already has added them

@@ -7,11 +7,12 @@ from .models import Collection, CollectionSound
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    fields = ["user", "name", "num_sounds", "public", "featured_sound_ids"]
+    fields = ["user", "name", "num_sounds", "public", "featured_sound_ids", "description"]
     filter_horizontal = ["sounds"]
-    list_display = ("name", "user", "num_sounds", "public", "get_sounds", "featured_sound_ids")
+    list_display = ("name", "user", "num_sounds", "public")
     readonly_fields = ["created"]
     actions = ["make_public", "make_private"]
+    raw_id_fields = ["user"]
 
     def get_sounds(self, obj):
         return ", ".join(str(sound.id) for sound in obj.sounds.all())

@@ -175,6 +175,9 @@
                     {% if is_owner or is_maintainer %}
                         <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{{ collection.edit_url }}" title="Edit collection">Edit collection</a>
                     {% endif %}
+                    {% if request.user.is_staff %}
+                        <a class="no-hover btn-inverse display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'admin:fscollections_collection_change' collection.id %}">Edit in the admin</a>
+                    {% endif %}
                 </div>
             </div>
         </div>

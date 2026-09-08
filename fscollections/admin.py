@@ -19,6 +19,11 @@ class CollectionAdmin(admin.ModelAdmin):
 
     get_sounds.short_description = "Sounds"
 
+    def save_related(self, request, form, formsets, change):
+        # sounds m2m is saved here (after save_model), so mark them dirty once it's up to date
+        super().save_related(request, form, formsets, change)
+        form.instance.sounds.update(is_index_dirty=True)
+
     @admin.action(description="Make selected collections public")
     def make_public(self, request, queryset):
         queryset.update(public=True)

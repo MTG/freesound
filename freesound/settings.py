@@ -927,7 +927,7 @@ RABBITMQ_API_PORT = "5673"
 
 # -------------------------------------------------------------------------------
 # Collections
-ENABLE_COLLECTIONS = False
+ENABLE_COLLECTIONS = True
 ENABLE_CREATE_EDIT_BOOKMARKS = (
     True  # This will only be used while collection objects are created and the feature is not shown to public yet
 )

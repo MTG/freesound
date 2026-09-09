@@ -33,11 +33,11 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.text import slugify
 
 from freesound import settings
 from sounds.models import License, LicenseSummaryMixin, Sound
 from tags.models import Tag
+from utils.text import slugify
 
 
 class CollectionsManager(models.Manager):
@@ -138,7 +138,10 @@ class Collection(LicenseSummaryMixin, models.Model):
 
     @property
     def url_kwargs(self):
-        return {"collection_id": self.id, "collection_name": slugify(self.name)}
+        collection_name_slug = slugify(self.name, replace_unicode=True)
+        if collection_name_slug == "":
+            collection_name_slug = "_"
+        return {"collection_id": self.id, "collection_name": collection_name_slug}
 
     def get_url(self, url_name="collection"):
         return reverse(url_name, kwargs=self.url_kwargs)

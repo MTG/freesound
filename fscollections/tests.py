@@ -5,11 +5,11 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
-from django.utils.text import slugify
 
 from fscollections.models import Collection, CollectionSound
 from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
+from utils.text import slugify
 
 
 class CollectionTest(TestCase):

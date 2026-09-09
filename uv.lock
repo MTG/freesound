@@ -758,6 +758,7 @@ dependencies = [
     { name = "pytest" },
     { name = "pytest-django" },
     { name = "python-louvain" },
+    { name = "python-slugify" },
     { name = "pyyaml" },
     { name = "redis" },
     { name = "scikit-learn" },
@@ -841,6 +842,7 @@ requires-dist = [
     { name = "pytest", specifier = "~=8.0.2" },
     { name = "pytest-django", specifier = "~=4.8.0" },
     { name = "python-louvain", specifier = "==0.16" },
+    { name = "python-slugify", specifier = ">=9.0.0" },
     { name = "pyyaml", specifier = "==6.0.1" },
     { name = "redis", specifier = "==5.2.1" },
     { name = "scikit-learn", specifier = "==1.4.1.post1" },
@@ -1523,6 +1525,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7c/0d/8787b021d52eb8764c0bb18ab95f720cf554902044c6a5cb1865daf45763/python-louvain-0.16.tar.gz", hash = "sha256:b7ba2df5002fd28d3ee789a49532baad11fe648e4f2117cf0798e7520a1da56b", size = 204641, upload-time = "2022-01-29T15:53:03.532Z" }
 
 [[package]]
+name = "python-slugify"
+version = "9.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "text-unidecode" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/e7/dc2331a18e4b18721d6382468d2ca163fabacba45d2185945557f364ab39/python_slugify-9.0.0.tar.gz", hash = "sha256:1cd20fe7ebf941b11964a92aba9e5319edfe18606276c6e2481b92e737cde44a", size = 60189, upload-time = "2026-09-08T20:56:07.965Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/cc/bf2237784cddf5c37f5e4cb25f60670a0c57c3d8ce15d43da16f472c08ef/python_slugify-9.0.0-py3-none-any.whl", hash = "sha256:b1180fb0fd6b3590e7fbd8328b08d56cde9dcac736527a070c0a811480621316", size = 13133, upload-time = "2026-09-08T20:56:06.953Z" },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1788,6 +1802,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/0e/a2/bacfb5f962c115cfc85e4f05c1732beca22b0f1155d43d417316d52431ae/stripe-2.28.1.tar.gz", hash = "sha256:242a27691e319e1c57b3dd63297feeeda0d56ce5856f25a21cdc573281cd2736", size = 204529, upload-time = "2019-05-20T18:08:40.287Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a0/2b/5e669b5012047d95552ff7f6f7639cc61b15ec38346e964615342c49fd2b/stripe-2.28.1-py2.py3-none-any.whl", hash = "sha256:1b495c81412752b6aedd3bd94dd21a4be817a4073c04d9e427ceaf62942eab19", size = 197084, upload-time = "2019-05-20T18:08:36.913Z" },
+]
+
+[[package]]
+name = "text-unidecode"
+version = "1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ab/e2/e9a00f0ccb71718418230718b3d900e71a5d16e701a3dae079a21e9cd8f8/text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93", size = 76885, upload-time = "2019-08-30T21:36:45.405Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/a5/c0b6468d3824fe3fde30dbb5e1f687b291608f9473681bbf7dabbf5a87d7/text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8", size = 78154, upload-time = "2019-08-30T21:37:03.543Z" },
 ]
 
 [[package]]

@@ -7,7 +7,6 @@ from django.core.management import call_command
 from django.http import Http404, HttpResponse
 from django.test.utils import override_settings
 from django.urls import reverse
-from django.utils.text import slugify
 from pytest_django.asserts import assertContains, assertNotContains
 
 from bookmarks.models import Bookmark, BookmarkCategory
@@ -16,6 +15,7 @@ from sounds.models import Download, PackDownload
 from utils.download_limit import get_daily_download_count, increment_daily_download_count
 from utils.ratelimit import request_limit_events_total
 from utils.test_helpers import counter_samples, create_user_and_sounds
+from utils.text import slugify
 
 pytestmark = pytest.mark.redis
 

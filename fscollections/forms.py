@@ -63,6 +63,7 @@ class SelectCollectionForm(forms.Form):
                 .exclude(sounds__id=self.sound_id)
                 .exclude(is_default_collection=True)
                 .exclude(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)
+                .order_by("name")
             )
 
         display_bookmark_collection = True

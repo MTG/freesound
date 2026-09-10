@@ -208,10 +208,11 @@ def add_sound_to_collection(request, sound_id):
     msg_to_return = ""
     user_collections = Collection.objects.filter(Q(user=request.user) | Q(maintainers=request.user))
     user_collections = user_collections.distinct()
-    last_collection = CollectionSound.objects.filter(user=request.user).last().collection
+    last_collectionsound_for_user = CollectionSound.objects.filter(user=request.user).last()
+    last_collection = last_collectionsound_for_user.collection if last_collectionsound_for_user else None
 
     if not request.GET.get("ajax"):
-        HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
+        return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
 
     if request.method == "POST":
         form = SelectCollectionForm(
@@ -234,7 +235,7 @@ def add_sound_to_collection(request, sound_id):
         form = SelectCollectionForm(
             initial={
                 "collection": last_collection.id
-                if last_collection
+                if last_collection is not None
                 else SelectCollectionForm.BOOKMARK_COLLECTION_CHOICE_VALUE
             },
             sound_id=sound.id,

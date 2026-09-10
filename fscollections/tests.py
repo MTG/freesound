@@ -274,7 +274,7 @@ class CollectionTest(TestCase):
 
         # Test adding sound to collection as a maintainer
         resp = self.client.post(
-            reverse("add-sound-to-collection", args=[self.sound.id]), {"collection": self.collection.id}
+            reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", {"collection": self.collection.id}
         )
         self.collection.refresh_from_db()
         self.assertEqual(resp.status_code, 200)
@@ -315,7 +315,7 @@ class CollectionTest(TestCase):
 
         # Test adding sound to collection as external user (not owner nor maintainer -> shouldn't be added)
         resp = self.client.post(
-            reverse("add-sound-to-collection", args=[self.sound.id]), {"collection": self.collection.id}
+            reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", {"collection": self.collection.id}
         )
         self.collection.refresh_from_db()
         self.assertEqual(resp.status_code, 200)

@@ -16,7 +16,7 @@ import { makePostRequest } from '../utils/postRequest';
 const addSoundToLastCollectionWithoutModal = (addSoundToCollectionUrl) => {
   makePostRequest(
     addSoundToCollectionUrl,
-    { collection: 1, use_last_collection: true }, // note collection number here is irrelevant since use_last_collection is true
+    { use_last_collection: true },
     (responseText) => {
       // Sound added to collection successfully. Show feedback
       try {

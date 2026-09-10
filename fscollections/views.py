@@ -39,7 +39,7 @@ from fscollections.forms import (
     MaintainerForm,
     SelectCollectionForm,
 )
-from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound
+from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from sounds.models import Sound
 from sounds.sound_grid_editor import (
     FEATURED_SORT,
@@ -207,8 +207,8 @@ def add_sound_to_collection(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ""
     user_collections = Collection.objects.filter(Q(user=request.user) | Q(maintainers=request.user))
-    user_collections = user_collections.distinct().order_by("modified")
-    last_collection = user_collections.last()
+    user_collections = user_collections.distinct()
+    last_collection = CollectionSound.objects.filter(user=request.user).last().collection
 
     if not request.GET.get("ajax"):
         HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))

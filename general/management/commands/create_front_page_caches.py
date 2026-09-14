@@ -29,6 +29,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from donations.models import Donation
+from fscollections.models import Collection
 from sounds.models import Download, Pack, Sound, SoundOfTheDay
 from sounds.views import get_n_weeks_back_datetime
 from utils.management_commands import LoggingBaseCommand
@@ -115,6 +116,16 @@ class Command(LoggingBaseCommand):
         trending_new_pack_ids = list(trending_new_pack_ids)
         random.shuffle(trending_new_pack_ids)  # Randomize the order of the packs
         cache_persistent.set("trending_new_pack_ids", trending_new_pack_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
+
+        # Get recently updated collections
+        recent_collection_ids = (
+            Collection.objects.filter(public=True, num_sounds__gte=10)
+            .order_by("-modified")[0 : NUM_ITEMS_PER_SECTION * 5]
+            .values_list("id", flat=True)
+        )
+        recent_collection_ids = list(recent_collection_ids)
+        random.shuffle(recent_collection_ids)  # Randomize the order of the collections
+        cache_persistent.set("recent_collection_ids", recent_collection_ids[0:NUM_ITEMS_PER_SECTION], cache_time)
 
         # Generate top rated new sounds cache (top rated sounds from those created last two weeks)
         # Note we use two weeks here instead of one to make sure we have enough sounds to choose from

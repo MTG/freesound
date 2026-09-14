@@ -76,7 +76,8 @@ class ClientBasedThrottlingBurst(SimpleRateThrottle):
 
     def get_cache_key(self, request, view):
         if self.client:
-            return self.cache_format % {"identity": self.client.client_id}
+            # Apply the retriction per user and not per client (so that a single user cannot bypass limits by using multiple clients)
+            return self.cache_format % {"identity": self.client.user_id}
         else:
             # If using session based auth, we use the user id as identity for throttling cache
             return self.cache_format % {"identity": request.user.id}
@@ -133,7 +134,8 @@ class ClientBasedThrottlingSustained(SimpleRateThrottle):
 
     def get_cache_key(self, request, view):
         if self.client:
-            return self.cache_format % {"identity": self.client.client_id}
+            # Apply the retriction per user and not per client (so that a single user cannot bypass limits by using multiple clients)
+            return self.cache_format % {"identity": self.client.user_id}
         else:
             # If using session based auth, we use the user id as identity for throttling cache
             return self.cache_format % {"identity": request.user.id}

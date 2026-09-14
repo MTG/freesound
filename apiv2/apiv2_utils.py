@@ -217,7 +217,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
 
 
 class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
-    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+    throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS  # Use stricter limits
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):

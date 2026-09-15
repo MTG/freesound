@@ -27,7 +27,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 from django.utils import timezone
 
-from donations.models import Donation, DonationsEmailSettings
+from donations.models import Donation, DonationRequest, DonationsEmailSettings
 from sounds.models import Download, PackDownload
 from utils.mail import send_mail_template
 from utils.management_commands import LoggingBaseCommand
@@ -98,6 +98,7 @@ class Command(LoggingBaseCommand):
                 commands_logger.info(
                     "Sent donation email (%s)" % json.dumps({"user_id": user.id, "donation_email_type": "reminder"})
                 )
+                DonationRequest.objects.create(user=user, request_type=DonationRequest.RequestType.EMAIL_REMINDER)
             else:
                 commands_logger.info(
                     "Didn't send donation email due to email address being invalid or donation"
@@ -177,6 +178,9 @@ class Command(LoggingBaseCommand):
                         commands_logger.info(
                             "Sent donation email (%s)"
                             % json.dumps({"user_id": user.id, "donation_email_type": "request"})
+                        )
+                        DonationRequest.objects.create(
+                            user=user, request_type=DonationRequest.RequestType.EMAIL_REQUEST
                         )
                     else:
                         commands_logger.info(

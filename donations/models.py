@@ -69,3 +69,21 @@ class DonationsEmailSettings(models.Model):
         default=30 * 3, help_text="Don't send a donation email if the last one was sent in less than X days"
     )
     downloads_in_period = models.PositiveIntegerField(default=100, help_text="After user has download Z sounds...")
+
+
+class DonationRequest(models.Model):
+    class RequestType(models.TextChoices):
+        EMAIL_REMINDER = "erm"
+        EMAIL_REQUEST = "erq"
+        AFTER_DOWNLOAD_POPUP = "dp"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    REQUEST_TYPES = RequestType.choices
+    request_type = models.CharField(max_length=3, choices=RequestType.choices)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return f"DonationRequest(user={self.user}, request_type={self.request_type}, created={self.created})"

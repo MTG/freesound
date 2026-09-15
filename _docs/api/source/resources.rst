@@ -1252,15 +1252,16 @@ Examples
 .. _current-usage:
 
 
-Current Usage
+Usage
 =========================================================
 
 ::
 
-  GET /apiv2/current_usage/
+  GET /apiv2/usage/
 
-This resource allows the retrieval of the current usage information for the API client. 
+This resource allows the retrieval of the usage information for the API client. 
 It shows how many requests have been made in the "burst" and "sustained" periods (that is to say, the last minute and the last 24 hours, respectively), and the limits for the current API client.
+In addition, this resource also shows the total number of requests made in the last ```num_days``` (defaults to 7, maximum 60 days back).
 This endpoint is in itself not throttled, so requests to this endpoint do not count for the throttling limits.
 Note that API throttling limits are applied at the "user" level, not at the "client" level, therefore if a user has 
 multiple API clients, the requests made with all of them will count towards the same throttling limits.
@@ -1275,13 +1276,19 @@ The structure of the response is as follows:
 ::
 
   {
-    "burst": {
-        "num_requests": <number of requests made in the current burst period (minute)>,
-        "limit": <burst limit for the current API client>
+    "current": {
+      "burst": {
+          "num_requests": <number of requests made in the current burst period (minute)>,
+          "limit": <burst limit for the current API client>
+      },
+      "sustained": {
+          "num_requests": <number of requests made in the current sustained period (day)>,
+          "limit": <sustained limit for the current API client>
+      },
     },
-    "sustained": {
-        "num_requests": <number of requests made in the current sustained period (day)>,
-        "limit": <sustained limit for the current API client>
-    }
+    "historic": [
+        ["YYYY-DD-MM", <number of requests made in YYYY-DD-MM>],
+        ...
+    ]
   }
 

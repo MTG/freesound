@@ -109,6 +109,7 @@ class FreesoundAPIViewMixin:
     auth_method_name = None
     developer = None
     user = None
+    client = None
     client_id = None
     client_name = None
     protocol = None
@@ -129,7 +130,10 @@ class FreesoundAPIViewMixin:
         set by this function expire in 72 hours so the management command has time to consolidate the results of the
         previous days.
         """
-        if self.client_id is not None and self.request.path != "/apiv2/current_usage/":
+        if self.client_id is not None and self.request.path != "/apiv2/usage/":
+            # Note that here we want to count the number of requests for the current API client, this is different than
+            # counting number of requests for throttling purpooses because in the latter case the key is based on the user ID
+            # and not the API client (a user might have multiple clients)
             monitoring_key = ApiV2Client.get_today_usage_cache_key(self.client_id)
             current_value = cache_api_monitoring.get(monitoring_key, 0)
             cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
@@ -142,6 +146,7 @@ class FreesoundAPIViewMixin:
             self.auth_method_name,
             self.developer,
             self.user,
+            self.client,
             self.client_id,
             self.client_name,
             self.protocol,
@@ -419,7 +424,7 @@ def build_info_dict(resource=None, request=None):
             "api_www": resource.contains_www,
         }
     if request is not None:
-        auth_method_name, developer, user, client_id, client_name, protocol, contains_www, _ = (
+        auth_method_name, developer, user, _, client_id, client_name, protocol, contains_www, _ = (
             get_authentication_details_form_request(request)
         )
         return {
@@ -459,6 +464,7 @@ def get_authentication_details_form_request(request):
     auth_method_name = None
     user = None
     developer = None
+    client = None
     client_id = None
     client_name = None
     protocol = "https" if request.is_secure() else "http"
@@ -470,23 +476,26 @@ def get_authentication_details_form_request(request):
         if auth_method_name == "OAuth2":
             user = request.user
             developer = request.auth.application.user
-            client_id = request.auth.application.apiv2_client.client_id
-            client_name = request.auth.application.apiv2_client.name
-            throttling_level = int(request.auth.application.apiv2_client.throttling_level)
+            client = request.auth.application.apiv2_client
+            client_id = client.client_id
+            client_name = client.name
+            throttling_level = int(client.throttling_level)
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user
-            client_id = request.auth.client_id
-            client_name = request.auth.name
-            throttling_level = int(request.auth.throttling_level)
+            client = request.auth
+            client_id = client.client_id
+            client_name = client.name
+            throttling_level = int(client.throttling_level)
         elif auth_method_name == "Session":
             user = request.user
             developer = None
+            client = None
             client_id = None
             client_name = None
             throttling_level = 1
 
-    return auth_method_name, developer, user, client_id, client_name, protocol, contains_www, throttling_level
+    return auth_method_name, developer, user, client, client_id, client_name, protocol, contains_www, throttling_level
 
 
 def request_parameters_info_for_log_message(get_parameters):

@@ -1490,7 +1490,7 @@ class CurrentUsage(GenericAPIView):
         )
 
     def get(self, request, *args, **kwargs):
-        api_logger.info(self.log_message("current_usage"))
+        api_logger.info(self.log_message("usage"))
 
         # Burst
         cache_key = ClientBasedThrottlingBurst.get_cache_key_for_request_and_client(request)
@@ -1504,10 +1504,29 @@ class CurrentUsage(GenericAPIView):
             self, self.throttling_level
         )
 
+        # Historic usage
+        if self.client is not None:
+            today_count_from_cache = (
+                self.client.get_current_today_usage_from_cache()
+            )  # This gets today's num requests for that specific client (not user) from cache
+            num_days = int(request.GET.get("num_days", 7))  # Default to last 7 days if not specified
+            num_days = min(num_days, 60)  # Limit to a maximum of 30 days
+            last_days_count_from_db = self.client.get_usage_history(
+                n_days_back=num_days
+            )  # This gets the num requests for that specific client from DB over last X days
+            historic_usage = [
+                (datetime.date.today().strftime("%Y-%m-%d"), today_count_from_cache)
+            ] + last_days_count_from_db[1:]
+        else:
+            historic_usage = []
+
         return Response(
             {
-                "burst": {"num": num_requests_burst, "limit": rate_burst},
-                "sustained": {"num": num_requests_sustained, "limit": rate_sustained},
+                "current": {
+                    "burst": {"num": num_requests_burst, "limit": rate_burst},
+                    "sustained": {"num": num_requests_sustained, "limit": rate_sustained},
+                },
+                "historic": historic_usage,
             }
         )
 

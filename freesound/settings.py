@@ -845,7 +845,6 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_CLASSES": (
         "apiv2.throttling.ClientBasedThrottlingBurst",
         "apiv2.throttling.ClientBasedThrottlingSustained",
-        "apiv2.throttling.IpBasedThrottling",
     ),
     "VIEW_DESCRIPTION_FUNCTION": "apiv2.apiv2_utils.get_view_description",
 }

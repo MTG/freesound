@@ -27,7 +27,6 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.cache import cache, caches
 from django.http import HttpResponseRedirect, JsonResponse
-from django.utils import timezone
 from django.utils.encoding import smart_str
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
@@ -52,6 +51,7 @@ from apiv2.exceptions import (
     UnauthorizedException,
 )
 from apiv2.forms import API_SORT_OPTIONS_MAP
+from apiv2.models import ApiV2Client
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
@@ -129,9 +129,8 @@ class FreesoundAPIViewMixin:
         set by this function expire in 72 hours so the management command has time to consolidate the results of the
         previous days.
         """
-        if self.client_id is not None:
-            now = timezone.now().date()
-            monitoring_key = f"{now.year}-{now.month}-{now.day}_{self.client_id}"
+        if self.client_id is not None and self.request.path != "/apiv2/current_usage/":
+            monitoring_key = ApiV2Client.get_today_usage_cache_key(self.client_id)
             current_value = cache_api_monitoring.get(monitoring_key, 0)
             cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
 
@@ -147,6 +146,7 @@ class FreesoundAPIViewMixin:
             self.client_name,
             self.protocol,
             self.contains_www,
+            self.throttling_level,
         ) = get_authentication_details_form_request(request)
 
     def redirect_if_needed(self, request, response):
@@ -419,7 +419,7 @@ def build_info_dict(resource=None, request=None):
             "api_www": resource.contains_www,
         }
     if request is not None:
-        auth_method_name, developer, user, client_id, client_name, protocol, contains_www = (
+        auth_method_name, developer, user, client_id, client_name, protocol, contains_www, _ = (
             get_authentication_details_form_request(request)
         )
         return {
@@ -463,6 +463,7 @@ def get_authentication_details_form_request(request):
     client_name = None
     protocol = "https" if request.is_secure() else "http"
     contains_www = "www" if "www" in request.get_host() else "none"
+    throttling_level = None
 
     if request.successful_authenticator:
         auth_method_name = request.successful_authenticator.authentication_method_name
@@ -471,18 +472,21 @@ def get_authentication_details_form_request(request):
             developer = request.auth.application.user
             client_id = request.auth.application.apiv2_client.client_id
             client_name = request.auth.application.apiv2_client.name
+            throttling_level = int(request.auth.application.apiv2_client.throttling_level)
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user
             client_id = request.auth.client_id
             client_name = request.auth.name
+            throttling_level = int(request.auth.throttling_level)
         elif auth_method_name == "Session":
             user = request.user
             developer = None
             client_id = None
             client_name = None
+            throttling_level = 1
 
-    return auth_method_name, developer, user, client_id, client_name, protocol, contains_www
+    return auth_method_name, developer, user, client_id, client_name, protocol, contains_www, throttling_level
 
 
 def request_parameters_info_for_log_message(get_parameters):

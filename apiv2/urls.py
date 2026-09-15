@@ -94,6 +94,7 @@ urlpatterns = [
         name="api-login",
     ),
     path("logout/", LogoutView.as_view(next_page="/apiv2/"), name="api-logout"),
+    path("current_usage/", views.CurrentUsage.as_view(), name="apiv2-current-usage"),
     #########
     # OTHER #
     #########

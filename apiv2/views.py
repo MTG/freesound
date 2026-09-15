@@ -30,6 +30,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.cache import caches
 from django.db import IntegrityError
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
@@ -75,6 +76,7 @@ from apiv2.serializers import (
     UploadAndDescribeAudioFileSerializer,
     UserSerializer,
 )
+from apiv2.throttling import ClientBasedThrottlingBurst, ClientBasedThrottlingSustained
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
 from fscollections.models import Collection, CollectionSound
@@ -100,6 +102,7 @@ from .apiv2_utils import (
 )
 
 api_logger = logging.getLogger("api")
+cache_api_monitoring = caches["api_monitoring"]
 resources_doc_filename = "resources_apiv2.html"
 
 
@@ -1474,6 +1477,39 @@ class FreesoundApiV2Resources(GenericAPIView):
             api_index = aux_api_index
 
         return Response(api_index)
+
+
+@throttle_classes([])  # This view is never throttled
+class CurrentUsage(GenericAPIView):
+    @classmethod
+    def get_description(cls):
+        return (
+            'Return current usage of the API from that client. That includes the number of requests made in the last "burst" period and in the last "sustained" period.'
+            '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.'
+            % (prepend_base("/docs/api"), "index.html")
+        )
+
+    def get(self, request, *args, **kwargs):
+        api_logger.info(self.log_message("current_usage"))
+
+        # Burst
+        cache_key = ClientBasedThrottlingBurst.get_cache_key_for_request_and_client(request)
+        num_requests_burst = len(cache_api_monitoring.get(cache_key, []))
+        rate_burst = ClientBasedThrottlingBurst.get_limit_rate_from_throttling_level(self, self.throttling_level)
+
+        # Sustained
+        cache_key = ClientBasedThrottlingSustained.get_cache_key_for_request_and_client(request)
+        num_requests_sustained = len(cache_api_monitoring.get(cache_key, []))
+        rate_sustained = ClientBasedThrottlingSustained.get_limit_rate_from_throttling_level(
+            self, self.throttling_level
+        )
+
+        return Response(
+            {
+                "burst": {"num": num_requests_burst, "limit": rate_burst},
+                "sustained": {"num": num_requests_sustained, "limit": rate_sustained},
+            }
+        )
 
 
 @api_view(["GET"])

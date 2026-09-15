@@ -37,6 +37,7 @@ Resources
 The Freesound APIv2 has plenty of resources allowing you to do a lot of stuff with Freesound data.
 Here we just give an overview of the available resources, you will find the full documentation in  :ref:`resources`.
 
+
 Searching
 =========
 
@@ -171,7 +172,9 @@ Resources including original quality sound downloading, uploading, describing, c
 If a request is throttled, the APIv2 will return a 429 Too many requests response error with a ``detail`` field indicating which rate limit has been exceeded.
 
 Although we have set the default usage limits so that they should be enough for most applications,
-if these usage limits are not enough for you, please contact Freesound administrators at mtg *at* upf.edu to request more permissive limits.
+if these usage limits are not enough for you, please contact Freesound administrators using the contact form (https://freesound.org/contact/) to request more permissive limits.
+
+For more information about throttling and how you can find about about your current usage, please refer to the :ref:`current-usage` resource documentation.
 
 
 More help

@@ -24,10 +24,13 @@ import random
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.cache import caches
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from oauth2_provider.models import Application
+
+cache_api_monitoring = caches["api_monitoring"]
 
 
 class ApiV2Client(models.Model):
@@ -130,6 +133,20 @@ class ApiV2Client(models.Model):
         daily requests when computing the total.
         """
         return sum([max(u - discard_per_day, 0) for _, u in self.get_usage_history(n_days_back=n_days_back, year=year)])
+
+    def get_current_today_usage_from_cache(self):
+        """Returns the current number of API requests made today for the current API client from the cache.
+        This count is maintained by the store_monitor_usage method of the FreesoundAPIViewMixin class of api views.
+        This is not the count used for implementing the throttling logic, which may rely on a different mechanism, which is
+        based on DRF implementation of throttling.
+        """
+        monitoring_key = self.get_today_usage_cache_key(self.client_id)
+        return cache_api_monitoring.get(monitoring_key, 0)
+
+    @staticmethod
+    def get_today_usage_cache_key(client_id):
+        now = timezone.now().date()
+        return f"{now.year}-{now.month}-{now.day}_{client_id}"
 
     def get_default_redirect_uri(self):
         return (

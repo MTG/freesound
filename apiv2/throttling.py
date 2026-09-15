@@ -46,7 +46,7 @@ class FreesoundSimpleRateThrottle(SimpleRateThrottle):
         rate = self.get_limit_rate_from_throttling_level(view, client_throttle_level)
 
         # Check if request should be allowed. Note hat no rate means unlimited usage
-        if rate:
+        if rate is not None:
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
             passes_throttle = super().allow_request(request, view)
@@ -60,6 +60,8 @@ class FreesoundSimpleRateThrottle(SimpleRateThrottle):
 
     @classmethod
     def get_limit_rate_from_throttling_level(cls, view, throttling_level):
+        if throttling_level == 99:
+            return None  # Level of 99 means no limit
         try:
             limit_rates = view.throttling_rates_per_level[throttling_level]
         except:
@@ -149,7 +151,7 @@ class IpBasedThrottling(FreesoundSimpleRateThrottle):
 
         # Get the limit rate for the client's throttling level from the view or settings
         rate = self.get_limit_rate_from_throttling_level(view, client_throttle_level)
-        if rate:
+        if rate is not None:
             self.rate = rate
             self.num_requests, self.duration = self.parse_rate(rate)
 

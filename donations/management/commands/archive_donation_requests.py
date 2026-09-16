@@ -91,7 +91,7 @@ class Command(LoggingBaseCommand):
             current_date = oldest_date
             while current_date <= newest_date:
                 next_date = current_date + datetime.timedelta(days=1)
-                daily_ddrr = ddrr.filter(created__gte=current_date, created__lt=next_date)
+                daily_ddrr = ddrr.filter(created__gte=current_date, created__lt=next_date).order_by("created")
                 if daily_ddrr.exists():
                     folder = os.path.join(options["folder"], str(current_date.year))
                     os.makedirs(folder, exist_ok=True)

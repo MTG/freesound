@@ -339,8 +339,10 @@ def create_data_pack_files(
         ),
         (
             "Commercial use + Generative AI (Open source model)",
-            lambda sound: condition_commercial_allowed(sound)
-            and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=True),
+            lambda sound: (
+                condition_commercial_allowed(sound)
+                and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=True)
+            ),
             {
                 "gen_ai_allowed": True,
                 "commercial_use_allowed": True,
@@ -350,8 +352,10 @@ def create_data_pack_files(
         ),
         (
             "Commercial use + Generative AI (No open source model)",
-            lambda sound: condition_commercial_allowed(sound)
-            and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False),
+            lambda sound: (
+                condition_commercial_allowed(sound)
+                and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False)
+            ),
             {
                 "gen_ai_allowed": True,
                 "commercial_use_allowed": True,
@@ -361,9 +365,11 @@ def create_data_pack_files(
         ),
         (
             "Commercial use + Generative AI (No open source model) + No attribution required",
-            lambda sound: condition_commercial_allowed(sound)
-            and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False)
-            and condition_attribution_not_required(sound),
+            lambda sound: (
+                condition_commercial_allowed(sound)
+                and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False)
+                and condition_attribution_not_required(sound)
+            ),
             {
                 "gen_ai_allowed": True,
                 "commercial_use_allowed": True,

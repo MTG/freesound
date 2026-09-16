@@ -108,11 +108,11 @@ class Command(LoggingBaseCommand):
                                         str(search_query.created),
                                         search_query.query_type,
                                         search_query.user_id,
-                                        search_query.data.get("ip", ""),
+                                        search_query.ip,
                                         search_query.query,
-                                        search_query.data.get("query_time", -1),
-                                        search_query.data.get("num_results", -1),
-                                        search_query.data.get("url", ""),
+                                        search_query.query_time,
+                                        search_query.num_results,
+                                        search_query.url,
                                     ]
                                 )
                     num_objects_archived += daily_sqs.count()

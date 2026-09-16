@@ -21,17 +21,6 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-class SearchQueryManager(models.Manager):
-    def create(self, num_results=None, query_time=None, ip=None, url=None, **kwargs):
-        data = {
-            "url": url,
-            "num_results": num_results,
-            "query_time": query_time,
-            "ip": ip,
-        }
-        return super().create(data=data, **kwargs)
-
-
 class SearchQuery(models.Model):
     class SearchQueryType(models.TextChoices):
         SEARCH_PAGE = "sp"
@@ -41,11 +30,12 @@ class SearchQuery(models.Model):
     query = models.CharField(max_length=255)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     QUERY_TYPES = SearchQueryType.choices
-    query_type = models.CharField(max_length=3, choices=SearchQueryType.choices, default=SearchQueryType.SEARCH_PAGE)
+    query_type = models.CharField(max_length=3, choices=SearchQueryType.choices)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
-    data = models.JSONField(null=True, blank=True)
-
-    objects = SearchQueryManager()
+    url = models.CharField(max_length=2048)
+    num_results = models.IntegerField()
+    query_time = models.FloatField()
+    ip = models.CharField(max_length=45)
 
     class Meta:
         ordering = ["-created"]

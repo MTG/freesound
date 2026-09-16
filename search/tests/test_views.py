@@ -128,26 +128,28 @@ class SearchPageTests(TestCase):
     def test_search_page_num_queries(self, perform_search_engine_query):
         perform_search_engine_query.return_value = self.perform_search_engine_query_response
 
+        n_queries_for_saving_search_query_object = 1
+
         # Check that we perform one single query to get all sounds' information and don't do one extra query per sound
         cache.clear()
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1 + n_queries_for_saving_search_query_object):
             self.client.get(reverse("sounds-search"))
 
         # Repeat the check when using the "grid display"
         cache.clear()
-        with self.assertNumQueries(1):
+        with self.assertNumQueries(1 + n_queries_for_saving_search_query_object):
             self.client.get(reverse("sounds-search") + "?cm=1")
 
         # When using search engine similarity, there'll be one extra query performed to get the similarity status of the sounds
 
         # Now check number of queries when displaying results as packs (i.e., searching for packs)
         cache.clear()
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(4 + n_queries_for_saving_search_query_object):
             self.client.get(reverse("sounds-search") + "?dp=1")
 
         # Also check packs when displaying in grid mode
         cache.clear()
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(4 + n_queries_for_saving_search_query_object):
             self.client.get(reverse("sounds-search") + "?dp=1&cm=1")
 
 

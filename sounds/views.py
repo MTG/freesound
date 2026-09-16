@@ -44,7 +44,7 @@ from django_ratelimit.decorators import ratelimit
 from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
-from donations.models import DonationsModalSettings
+from donations.models import DonationRequest, DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
@@ -335,6 +335,9 @@ def after_download_modal(request):
         modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
 
         if should_suggest_donation(request.user, len(modal_shown_timestamps)):
+            DonationRequest.objects.create(
+                user=request.user, request_type=DonationRequest.RequestType.AFTER_DOWNLOAD_POPUP
+            )
             web_logger.info(f"Showing after download donate modal ({json.dumps({'user_id': request.user.id})})")
             modal_shown_timestamps.append(time.time())
             cache.set(

@@ -73,14 +73,14 @@ class DonationsEmailSettings(models.Model):
 
 class DonationRequest(models.Model):
     class RequestType(models.TextChoices):
-        EMAIL_REMINDER = "erm"
-        EMAIL_REQUEST = "erq"
+        EMAIL_REMINDER_REPEAT_DONATION = "erm"
+        EMAIL_REQUEST_MANY_DOWNLOADS = "erq"
         AFTER_DOWNLOAD_POPUP = "dp"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     REQUEST_TYPES = RequestType.choices
     request_type = models.CharField(max_length=3, choices=RequestType.choices)
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
 
     class Meta:
         ordering = ["-created"]

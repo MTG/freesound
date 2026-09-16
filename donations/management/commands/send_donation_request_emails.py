@@ -98,7 +98,9 @@ class Command(LoggingBaseCommand):
                 commands_logger.info(
                     "Sent donation email (%s)" % json.dumps({"user_id": user.id, "donation_email_type": "reminder"})
                 )
-                DonationRequest.objects.create(user=user, request_type=DonationRequest.RequestType.EMAIL_REMINDER)
+                DonationRequest.objects.create(
+                    user=user, request_type=DonationRequest.RequestType.EMAIL_REMINDER_REPEAT_DONATION
+                )
             else:
                 commands_logger.info(
                     "Didn't send donation email due to email address being invalid or donation"
@@ -180,7 +182,7 @@ class Command(LoggingBaseCommand):
                             % json.dumps({"user_id": user.id, "donation_email_type": "request"})
                         )
                         DonationRequest.objects.create(
-                            user=user, request_type=DonationRequest.RequestType.EMAIL_REQUEST
+                            user=user, request_type=DonationRequest.RequestType.EMAIL_REMINDER_REPEAT_DONATION
                         )
                     else:
                         commands_logger.info(

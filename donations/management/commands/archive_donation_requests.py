@@ -61,13 +61,6 @@ class Command(LoggingBaseCommand):
             help="Perform a dry run without actually deleting any donation requests",
         )
 
-        parser.add_argument(
-            "--overwrite",
-            action="store_true",
-            dest="overwrite",
-            help="Overwrite existing archived files if they already exist",
-        )
-
     def handle(self, **options):
         self.log_start()
 
@@ -96,19 +89,40 @@ class Command(LoggingBaseCommand):
                     folder = os.path.join(options["folder"], str(current_date.year))
                     os.makedirs(folder, exist_ok=True)
                     file_path = os.path.join(folder, f"donation_requests_{current_date.strftime('%Y-%m-%d')}.csv")
-                    if not os.path.exists(file_path) or options["overwrite"]:
-                        with open(file_path, mode="w", newline="") as file:
-                            writer = csv.writer(file)
-                            writer.writerow(["timestamp", "user_id", "request_type"])
-                            for donation_request in daily_ddrr:
-                                writer.writerow(
-                                    [
-                                        str(donation_request.created),
-                                        donation_request.user_id,
-                                        donation_request.request_type,
-                                    ]
-                                )
-                    num_objects_archived += daily_ddrr.count()
+                    data_rows = []
+
+                    # If file already exists, load existing data first
+                    if os.path.exists(file_path):
+                        with open(file_path, mode="r", newline="") as file:
+                            reader = csv.reader(file)
+                            next(reader)  # Skip header row
+                            data_rows = [row for row in reader]
+
+                    # Now compute new rows to be added to the existing data
+                    data_rows_daily_ddr = [
+                        [
+                            str(donation_request.created),
+                            donation_request.user_id,
+                            donation_request.request_type,
+                        ]
+                        for donation_request in daily_ddrr
+                    ]
+
+                    # Add new rows to the existing data, but only if these rows are not already present
+                    n_added = 0
+                    for row in data_rows_daily_ddr:
+                        if row not in data_rows:
+                            data_rows.append(row)
+                            n_added += 1
+
+                    # Write the combined data back to the CSV file
+                    console_logger.info(f"Writing {n_added} new rows to {file_path}")
+                    with open(file_path, mode="w", newline="") as file:
+                        writer = csv.writer(file)
+                        writer.writerow(["timestamp", "user_id", "request_type"])
+                        writer.writerows(data_rows)
+
+                    num_objects_archived += n_added
                     if not options["no_delete"]:
                         daily_ddrr.delete()
                 current_date = next_date

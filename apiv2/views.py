@@ -273,6 +273,7 @@ class Search(GenericAPIView):
 
         SearchQuery.objects.create(
             query=search_form.cleaned_data["query"],
+            query_type=SearchQuery.SearchQueryType.API,
             user=None,
             num_results=paginator.count,
             query_time=q_time,

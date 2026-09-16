@@ -33,9 +33,16 @@ class SearchQueryManager(models.Manager):
 
 
 class SearchQuery(models.Model):
+    class SearchQueryType(models.TextChoices):
+        SEARCH_PAGE = "sp"
+        TAGS_PAGE = "tp"
+        API = "api"
+
     query = models.CharField(max_length=255)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-    created = models.DateTimeField(auto_now_add=True)
+    QUERY_TYPES = SearchQueryType.choices
+    query_type = models.CharField(max_length=3, choices=SearchQueryType.choices, default=SearchQueryType.SEARCH_PAGE)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
     data = models.JSONField(null=True, blank=True)
 
     objects = SearchQueryManager()
@@ -44,4 +51,4 @@ class SearchQuery(models.Model):
         ordering = ["-created"]
 
     def __str__(self):
-        return f"SearchQuery(query={self.query}, user={self.user}, created={self.created})"
+        return f"SearchQuery(query={self.query}, type={self.query_type}, user={self.user}, created={self.created})"

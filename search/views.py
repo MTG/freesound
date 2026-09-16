@@ -229,6 +229,9 @@ def search_view_helper(request):
 
         SearchQuery.objects.create(
             query=query_params["textual_query"],
+            query_type=SearchQuery.SearchQueryType.SEARCH_PAGE
+            if not sqp.tags_mode_active()
+            else SearchQuery.SearchQueryType.TAGS_PAGE,
             user=request.user if request.user.is_authenticated else None,
             num_results=results.non_grouped_number_of_results,
             query_time=results.q_time,

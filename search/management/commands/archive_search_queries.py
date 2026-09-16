@@ -91,7 +91,7 @@ class Command(LoggingBaseCommand):
             current_date = oldest_date
             while current_date <= newest_date:
                 next_date = current_date + datetime.timedelta(days=1)
-                daily_sqs = sqs.filter(created__gte=current_date, created__lt=next_date)
+                daily_sqs = sqs.filter(created__gte=current_date, created__lt=next_date).order_by("created")
                 if daily_sqs.exists():
                     folder = os.path.join(options["folder"], str(current_date.year))
                     os.makedirs(folder, exist_ok=True)
@@ -99,11 +99,14 @@ class Command(LoggingBaseCommand):
                     if not os.path.exists(file_path) or options["overwrite"]:
                         with open(file_path, mode="w", newline="") as file:
                             writer = csv.writer(file)
-                            writer.writerow(["timestamp", "user_id", "ip", "query", "query_time", "num_results", "url"])
+                            writer.writerow(
+                                ["timestamp", "type", "user_id", "ip", "query", "query_time", "num_results", "url"]
+                            )
                             for search_query in daily_sqs:
                                 writer.writerow(
                                     [
                                         str(search_query.created),
+                                        search_query.query_type,
                                         search_query.user_id,
                                         search_query.data.get("ip", ""),
                                         search_query.query,

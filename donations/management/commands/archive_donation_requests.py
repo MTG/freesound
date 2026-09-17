@@ -102,7 +102,7 @@ class Command(LoggingBaseCommand):
                     data_rows_daily_ddr = [
                         [
                             str(donation_request.created),
-                            donation_request.user_id,
+                            str(donation_request.user_id),
                             donation_request.request_type,
                         ]
                         for donation_request in daily_ddrr

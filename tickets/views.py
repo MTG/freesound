@@ -298,12 +298,16 @@ def _add_sound_objects_to_tickets(tickets):
 def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for moderators that haven't responded in the last day"""
     time_span = datetime.date.today() - datetime.timedelta(days=1)
-    tt = Ticket.objects.filter(
-        Q(assignee__isnull=False)
-        & ~Q(status=TICKET_STATUS_CLOSED)
-        & (Q(last_commenter=F("sender")) | Q(messages__sender=None))
-        & Q(comment_date__date__lt=time_span)
-    ).order_by("created")
+    tt = (
+        Ticket.objects.filter(
+            Q(assignee__isnull=False)
+            & ~Q(status=TICKET_STATUS_CLOSED)
+            & (Q(last_commenter=F("sender")) | Q(messages__sender=None))
+            & Q(comment_date__date__lt=time_span)
+        )
+        .exclude(sound=None)
+        .order_by("created")
+    )
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
@@ -311,12 +315,16 @@ def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
 def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for users that haven't responded in the last 2 days"""
     time_span = datetime.date.today() - datetime.timedelta(days=2)
-    tt = Ticket.objects.filter(
-        Q(assignee__isnull=False)
-        & ~Q(status=TICKET_STATUS_CLOSED)
-        & ~Q(last_commenter=F("sender"))
-        & Q(comment_date__date__lt=time_span)
-    ).order_by("created")
+    tt = (
+        Ticket.objects.filter(
+            Q(assignee__isnull=False)
+            & ~Q(status=TICKET_STATUS_CLOSED)
+            & ~Q(last_commenter=F("sender"))
+            & Q(comment_date__date__lt=time_span)
+        )
+        .exclude(sound=None)
+        .order_by("created")
+    )
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 

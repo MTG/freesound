@@ -70,14 +70,7 @@ class DonationRequestAdmin(DjangoObjectActions, admin.ModelAdmin):
 @admin.register(Donation)
 class DonationAdmin(DjangoObjectActions, admin.ModelAdmin):
     raw_id_fields = ("user",)
-    list_display = (
-        "id",
-        "email",
-        "user",
-        "amount",
-        "currency",
-        "created",
-    )
+    list_display = ("id", "created", "user", "email", "amount", "currency", "get_num_requests")
     search_fields = (
         "=user__username",
         "=email",
@@ -125,3 +118,7 @@ class DonationAdmin(DjangoObjectActions, admin.ModelAdmin):
             for pd in previous_donations
         )
         return mark_safe(f"<table>{rows}</table>")
+
+    @admin.display(description="Donation requests")
+    def get_num_requests(self, obj):
+        return obj.get_donation_requests_before_donation().count()

@@ -78,12 +78,16 @@ class Command(LoggingBaseCommand):
                 month=int(last_year_file_data[-1][0].split("/")[1]),
                 day=int(last_year_file_data[-1][0].split("/")[0]),
             )
-            start_date = (last_date_on_file + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+            start_date = (last_date_on_file - datetime.timedelta(days=3)).strftime(
+                "%Y-%m-%d"
+            )  # Get 3 days back to get a slight overlap
         else:
             start_date = datetime.datetime(2021, 4, 16).strftime("%Y-%m-%d")
 
         # Now get all plausible data since that date until today
         end_date = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        if start_date > end_date:
+            raise Exception("Start date is after end date")
         url = PLAUSIBLE_VISIST_PER_DAY_URL_TEMPLATE.format(start_date=start_date, end_date=end_date)
         r = requests.get(url, headers={"Authorization": "Bearer {}".format(plausible_api_id)}, timeout=REQUESTS_TIMEOUT)
 

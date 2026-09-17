@@ -328,7 +328,7 @@ def after_download_modal(request):
         num_popups_shown_last_24h = DonationRequest.objects.filter(
             user=request.user,
             request_type=DonationRequest.RequestType.AFTER_DOWNLOAD_POPUP,
-            created_at__gte=datetime.datetime.now() - datetime.timedelta(hours=24),
+            created__gte=timezone.now() - datetime.timedelta(hours=24),
         ).count()
 
         if should_suggest_donation(request.user, num_popups_shown_last_24h):

@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 
 from .models import (
@@ -82,6 +83,10 @@ class DonationAdmin(DjangoObjectActions, admin.ModelAdmin):
         "=email",
     )
     change_actions = ("view_donations_requests_for_user",)
+    readonly_fields = (
+        "get_donation_requests_before_donation",
+        "get_previous_donations",
+    )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -99,3 +104,21 @@ class DonationAdmin(DjangoObjectActions, admin.ModelAdmin):
         url = reverse("admin:donations_donationrequest_changelist")
         params = urlencode({"q": obj.user.username})
         return HttpResponseRedirect(f"{url}?{params}")
+
+    @admin.display(description="Donation Requests before donation")
+    def get_donation_requests_before_donation(self, obj):
+        donation_requests = obj.get_donation_requests_before_donation()
+        rows = "".join(
+            "<tr><td>{}</td><td>{}</td></tr>".format(dr.created.date(), dr.get_request_type_display())
+            for dr in donation_requests
+        )
+        return mark_safe(f"<table>{rows}</table>")
+
+    @admin.display(description="Previous donations by same user")
+    def get_previous_donations(self, obj):
+        previous_donations = obj.get_previous_donations(only_last=False)
+        rows = "".join(
+            "<tr><td>{}</td><td>{}</td></tr>".format(pd.created.date(), f"{pd.amount} {pd.currency}")
+            for pd in previous_donations
+        )
+        return mark_safe(f"<table>{rows}</table>")

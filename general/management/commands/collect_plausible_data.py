@@ -113,9 +113,9 @@ class Command(LoggingBaseCommand):
                         date_key,
                         int(element["visitors"]),
                         int(element["pageviews"]),
-                        float(element["views_per_visit"]),
+                        float(element["views_per_visit"] if element["views_per_visit"] is not None else 0),
                         float(element["visit_duration"] if element["visit_duration"] is not None else 0),
-                        float(element["bounce_rate"]),
+                        float(element["bounce_rate"] if element["bounce_rate"] is not None else 0),
                     )
                 )
 

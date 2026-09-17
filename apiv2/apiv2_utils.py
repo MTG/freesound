@@ -314,7 +314,7 @@ def api_search(search_form, target_file=None, resource=None):
         and not target_file
     ):
         # No input data for search, return empty results
-        return [], 0, None, None, None, None, None
+        return [], 0, None, None, None, None, None, None
 
     # Standard text-based search
     try:
@@ -349,7 +349,7 @@ def api_search(search_form, target_file=None, resource=None):
                 int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
             }
 
-        return ids_score, num_found, distance_to_target_data, more_from_pack_data, None, None, None
+        return ids_score, num_found, distance_to_target_data, more_from_pack_data, None, None, None, result.q_time
 
     except SearchEngineTimeoutException as e:
         search_logger.info(

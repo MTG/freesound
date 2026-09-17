@@ -215,7 +215,9 @@ class SoundTextSearchFormAPI(forms.Form):
             similar_to = None
         return similar_to
 
-    def construct_link(self, base_url, page=None, filt=None, group_by_pack=None, include_page=True):
+    def construct_link(
+        self, base_url, page=None, filt=None, group_by_pack=None, include_page=True, include_domain=True
+    ):
         link = "?"
         if self.cleaned_data["query"] is not None:
             link += f"&query={my_quote(self.cleaned_data['query'])}"
@@ -250,7 +252,10 @@ class SoundTextSearchFormAPI(forms.Form):
                 link += f"&group_by_pack={self.cleaned_data['group_by_pack']}"
         else:
             link += f"&group_by_pack={group_by_pack}"
-        return f"https://{Site.objects.get_current().domain}{base_url}{link}"
+        if include_domain:
+            return f"https://{Site.objects.get_current().domain}{base_url}{link}"
+        else:
+            return f"{base_url}{link}"
 
 
 class SimilarityFormAPI(SoundTextSearchFormAPI):

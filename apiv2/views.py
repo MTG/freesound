@@ -82,6 +82,7 @@ from comments.models import Comment
 from fscollections.models import Collection, CollectionSound
 from geotags.models import GeoTag
 from ratings.models import SoundRating
+from search.models import SearchQuery
 from sounds.models import License, Pack, Sound
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
@@ -163,7 +164,7 @@ def get_include_remix_subqueries(fields):
         return False
 
 
-class TextSearch(GenericAPIView):
+class Search(GenericAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -171,8 +172,8 @@ class TextSearch(GenericAPIView):
             '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s'
             % (
                 prepend_base("/docs/api"),
-                "%s#text-search" % resources_doc_filename,
-                get_formatted_examples_for_view("TextSearch", "apiv2-sound-search", max=5),
+                "%s#search" % resources_doc_filename,
+                get_formatted_examples_for_view("Search", "apiv2-sound-search", max=5),
             )
         )
 
@@ -194,9 +195,16 @@ class TextSearch(GenericAPIView):
 
         # Get search results
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
-                api_search(search_form, resource=self)
-            )
+            (
+                results,
+                count,
+                distance_to_target_data,
+                more_from_pack_data,
+                note,
+                params_for_next_page,
+                debug_note,
+                q_time,
+            ) = api_search(search_form, resource=self)
         except APIException as e:
             raise e
         except Exception:
@@ -262,6 +270,16 @@ class TextSearch(GenericAPIView):
                 # In that case sounds are set to null
                 sounds.append(None)
         response_data["results"] = sounds
+
+        SearchQuery.objects.create(
+            query=search_form.cleaned_data["query"],
+            query_type=SearchQuery.SearchQueryType.API,
+            user=None,
+            num_results=paginator.count,
+            query_time=q_time,
+            ip=self.end_user_ip,
+            url=search_form.construct_link(base_url="/apiv2/search/", include_domain=False),
+        )
 
         if note:
             response_data["note"] = note
@@ -377,7 +395,7 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data["similar_to"] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
+        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note, q_time = (
             api_search(similarity_sound_form, resource=self)
         )
 

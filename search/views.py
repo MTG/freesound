@@ -34,6 +34,7 @@ import forum
 import sounds
 from forum.models import Post
 from search.abuse import PaginationAbuseBlocked, is_over_hard_page_limit
+from search.models import SearchQuery
 from utils.clustering_utilities import (
     cluster_data_is_fully_available,
     get_clustering_data_for_graph_display,
@@ -224,6 +225,18 @@ def search_view_helper(request):
                     "query_time": results.q_time,
                 }
             )
+        )
+
+        SearchQuery.objects.create(
+            query=query_params["textual_query"],
+            query_type=SearchQuery.SearchQueryType.SEARCH_PAGE
+            if not sqp.tags_mode_active()
+            else SearchQuery.SearchQueryType.TAGS_PAGE,
+            user=request.user if request.user.is_authenticated else None,
+            num_results=results.non_grouped_number_of_results,
+            query_time=results.q_time,
+            ip=get_client_ip(request),
+            url=sqp.get_url(),
         )
 
         # If the requested page is beyond the last page of a non-empty result set, the search

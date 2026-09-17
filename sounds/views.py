@@ -22,7 +22,6 @@ import json
 import logging
 import math
 import os
-import time
 import uuid
 from operator import itemgetter
 from urllib.parse import urlparse
@@ -324,25 +323,19 @@ def after_download_modal(request):
     should_show_modal = False
     bw_response = None
 
-    def modal_shown_timestamps_cache_key(user):
-        return "modal_shown_timestamps_donations_shown_%i" % user.id
-
     if DonationsModalSettings.get_donation_modal_settings().enabled:
-        # Get timestamps of last times modal was shown from cache
-        modal_shown_timestamps = cache.get(modal_shown_timestamps_cache_key(request.user), [])
+        # Get timestamps of last times a download modal was shown this user during the last 24h
+        num_popups_shown_last_24h = DonationRequest.objects.filter(
+            user=request.user,
+            request_type=DonationRequest.RequestType.AFTER_DOWNLOAD_POPUP,
+            created_at__gte=datetime.datetime.now() - datetime.timedelta(hours=24),
+        ).count()
 
-        # Iterate over timestamps, keep only the ones in last 24 hours and do the counting
-        modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
-
-        if should_suggest_donation(request.user, len(modal_shown_timestamps)):
+        if should_suggest_donation(request.user, num_popups_shown_last_24h):
             DonationRequest.objects.create(
                 user=request.user, request_type=DonationRequest.RequestType.AFTER_DOWNLOAD_POPUP
             )
             web_logger.info(f"Showing after download donate modal ({json.dumps({'user_id': request.user.id})})")
-            modal_shown_timestamps.append(time.time())
-            cache.set(
-                modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps, 60 * 60 * 24
-            )  # 24 lifetime cache
             should_show_modal = True
 
     if should_show_modal:

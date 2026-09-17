@@ -1,6 +1,6 @@
 from urllib.parse import urlencode
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -101,6 +101,9 @@ class DonationAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     @admin.action(description="View donation requests for this user")
     def view_donations_requests_for_user(self, request, obj):
+        if obj.user is None:
+            self.message_user(request, "This donation has no associated user account.", level=messages.WARNING)
+            return None
         url = reverse("admin:donations_donationrequest_changelist")
         params = urlencode({"q": obj.user.username})
         return HttpResponseRedirect(f"{url}?{params}")

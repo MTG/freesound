@@ -2401,6 +2401,20 @@ class Download(models.Model):
         ]
 
 
+class DownloadAPI(models.Model):
+    api_client = models.ForeignKey(ApiV2Client, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    sound = models.ForeignKey(Sound, related_name="downloads_api", on_delete=models.CASCADE)
+    license = models.ForeignKey(License, on_delete=models.CASCADE)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created",)
+        indexes = [
+            models.Index(fields=["api_client", "sound"]),
+        ]
+
+
 @receiver(post_delete, sender=Download)
 def update_num_downloads_on_delete(**kwargs):
     download = kwargs["instance"]
@@ -2444,6 +2458,22 @@ class PackDownload(models.Model):
 class PackDownloadSound(models.Model):
     sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
     pack_download = models.ForeignKey(PackDownload, on_delete=models.CASCADE)
+    license = models.ForeignKey(License, on_delete=models.CASCADE)
+
+
+class PackDownloadAPI(models.Model):
+    api_client = models.ForeignKey(ApiV2Client, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    pack = models.ForeignKey(Pack, related_name="downloads_api", on_delete=models.CASCADE)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created",)
+
+
+class PackDownloadSoundAPI(models.Model):
+    sound = models.ForeignKey(Sound, on_delete=models.CASCADE)
+    pack_download_api = models.ForeignKey(PackDownloadAPI, on_delete=models.CASCADE)
     license = models.ForeignKey(License, on_delete=models.CASCADE)
 
 

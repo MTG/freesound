@@ -83,6 +83,7 @@ from fscollections.models import Collection, CollectionSound
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from sounds.models import DownloadAPI, License, Pack, PackDownloadAPI, PackDownloadSoundAPI, Sound
+from utils.download_limit import DownloadType, is_new_download, set_sentinel
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
@@ -473,7 +474,12 @@ class DownloadSound(DownloadAPIView):
 
         if self.client is not None:
             # Save download record in database
-            DownloadAPI.objects.create(api_client=self.client, user=self.user, sound=sound, license_id=sound.license_id)
+            # Because the view requires Oauth2, request.user is guaranteed to be set (this is used in the is_new_download check)
+            if is_new_download(request, DownloadType.SOUND_API, sound.id):
+                set_sentinel(request, DownloadType.SOUND_API, sound.id)
+                DownloadAPI.objects.create(
+                    api_client=self.client, user=self.user, sound=sound, license_id=sound.license_id
+                )
 
         return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
@@ -695,11 +701,13 @@ class DownloadPack(DownloadAPIView):
 
         if self.client is not None:
             # Save download record in database
-            pd = PackDownloadAPI.objects.create(api_client=self.client, user=self.user, pack=pack)
-            pds = []
-            for sound in pack.sounds.all():
-                pds.append(PackDownloadSoundAPI(sound=sound, license_id=sound.license_id, pack_download_api=pd))
-            PackDownloadSoundAPI.objects.bulk_create(pds)
+            if is_new_download(request, DownloadType.PACK_API, pack.id):
+                set_sentinel(request, DownloadType.PACK_API, pack.id)
+                pd = PackDownloadAPI.objects.create(api_client=self.client, user=self.user, pack=pack)
+                pds = []
+                for sound in pack.sounds.all():
+                    pds.append(PackDownloadSoundAPI(sound=sound, license_id=sound.license_id, pack_download_api=pd))
+                PackDownloadSoundAPI.objects.bulk_create(pds)
 
         return download_sounds(licenses_url, licenses_content, sounds_list, pack.friendly_filename())
 

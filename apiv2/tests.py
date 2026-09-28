@@ -24,7 +24,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 from rest_framework.exceptions import ValidationError
@@ -32,7 +32,7 @@ from rest_framework.exceptions import ValidationError
 from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
 from bookmarks.models import Bookmark, BookmarkCategory
-from sounds.models import Sound
+from sounds.models import DownloadAPI, PackDownloadAPI, PackDownloadSoundAPI, Sound
 from utils.ratelimit import request_limit_events_total
 from utils.test_helpers import counter_samples, create_user_and_sounds
 
@@ -156,6 +156,81 @@ class TestAPI(TestCase):
             "/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers
         )
         self.assertEqual(resp.status_code, 200)
+
+
+class TestDownloadViews(TestCase):
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.password = "endpass"  # noqa: S105
+        self.user, self.packs, self.sounds = create_user_and_sounds(num_sounds=3, num_packs=1, username="downloaduser")
+        self.user.set_password(self.password)
+        self.user.save()
+        for sound in self.sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+
+        self.api_client = ApiV2Client.objects.create(
+            name="DownloadClient",
+            user=self.user,
+            allow_oauth_password_grant=True,
+        )
+        resp = self.client.post(
+            reverse("oauth2_provider:access_token"),
+            {
+                "client_id": self.api_client.client_id,
+                "grant_type": "password",
+                "username": self.user.username,
+                "password": self.password,
+            },
+            secure=True,
+        )
+        self.auth_headers = {
+            "HTTP_AUTHORIZATION": f"Bearer {resp.json()['access_token']}",
+        }
+
+    @mock.patch("apiv2.views.sendfile", return_value=HttpResponse("Dummy response"))
+    @mock.patch("apiv2.views.os.path.exists", return_value=True)
+    def test_download_sound_creates_download_api_object(self, exists, sendfile):
+        sound = self.sounds[0]
+        self.assertEqual(DownloadAPI.objects.count(), 0)
+
+        resp = self.client.get(
+            reverse("apiv2-sound-download", kwargs={"pk": sound.id}), secure=True, **self.auth_headers
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(DownloadAPI.objects.count(), 1)
+        download_api = DownloadAPI.objects.get()
+        self.assertEqual(download_api.sound_id, sound.id)
+        self.assertEqual(download_api.user_id, self.user.id)
+        self.assertEqual(download_api.api_client_id, self.api_client.id)
+        self.assertEqual(download_api.license_id, sound.license_id)
+
+    def test_download_pack_creates_pack_download_api_objects(self):
+        pack = self.packs[0]
+        self.assertEqual(PackDownloadAPI.objects.count(), 0)
+        self.assertEqual(PackDownloadSoundAPI.objects.count(), 0)
+
+        resp = self.client.get(reverse("apiv2-pack-download", kwargs={"pk": pack.id}), secure=True, **self.auth_headers)
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(PackDownloadAPI.objects.count(), 1)
+        pack_download_api = PackDownloadAPI.objects.get()
+        self.assertEqual(pack_download_api.pack_id, pack.id)
+        self.assertEqual(pack_download_api.user_id, self.user.id)
+        self.assertEqual(pack_download_api.api_client_id, self.api_client.id)
+
+        pack_sounds = list(pack.sounds.all())
+        self.assertEqual(
+            PackDownloadSoundAPI.objects.filter(pack_download_api=pack_download_api).count(), len(pack_sounds)
+        )
+        for sound in pack_sounds:
+            self.assertTrue(
+                PackDownloadSoundAPI.objects.filter(
+                    pack_download_api=pack_download_api, sound=sound, license_id=sound.license_id
+                ).exists()
+            )
 
 
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):

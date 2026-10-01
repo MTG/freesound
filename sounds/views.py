@@ -600,14 +600,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
     files = request.session.get(f"{session_key_prefix}-describe_sounds", None)
     sound_ids = request.session.get(f"{session_key_prefix}-edit_sounds", None)
-    # Back-compat shim for sessions written before the switch to JSON-safe values
-    # (pickled File / Sound instances). Remove once SESSION_SERIALIZER is flipped to
-    # JSONSerializer in the follow-up PR.
-    if files and not isinstance(files[0], dict):
-        files = [{"name": f.name, "full_path": f.full_path} for f in files]
-    if sound_ids and not isinstance(sound_ids[0], int):
-        sound_ids = [s.id for s in sound_ids]
-    # Preserve today's `is None` vs `== []` distinction: empty list ≠ missing key.
+    # An empty list is distinct from a missing session key.
     sounds = list(Sound.objects.ordered_ids(sound_ids)) if sound_ids is not None else None
     if (describing and files is None) or (not describing and sounds is None):
         # Expecting either a list of sounds or audio files to describe, got none. Redirect to main manage sounds page.
@@ -629,11 +622,6 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
     preselected_license_id = request.session.get(f"{session_key_prefix}-describe_license", False)
     preselected_pack_id = request.session.get(f"{session_key_prefix}-describe_pack", False)
-    # Back-compat shim (bool is a subclass of int, so the int check covers False/True too).
-    if preselected_license_id and not isinstance(preselected_license_id, int):
-        preselected_license_id = preselected_license_id.id
-    if preselected_pack_id and not isinstance(preselected_pack_id, int):
-        preselected_pack_id = preselected_pack_id.id
     preselected_license = License.objects.filter(id=preselected_license_id).first() if preselected_license_id else False
     preselected_pack = Pack.objects.filter(id=preselected_pack_id).first() if preselected_pack_id else False
 

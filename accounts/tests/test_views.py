@@ -21,17 +21,41 @@
 import datetime
 from unittest import mock
 
+import pytest
 from django.contrib.auth.models import Permission, User
 from django.contrib.sites.models import Site
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.html import escape
 
 from accounts.models import OldUsername
 from geotags.models import GeoTag
-from sounds.models import Download, PackDownload, SoundOfTheDay
+from sounds.models import Download, Pack, PackDownload, SoundOfTheDay
 from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.test_helpers import create_fake_perform_search_engine_query_results_tags_mode, create_user_and_sounds
+
+
+@pytest.mark.django_db
+def test_delete_only_owned_packs(client):
+    call_command("loaddata", "users", verbosity=0)
+    owner = User.objects.get(username="User1")
+    other_user = User.objects.get(username="User2")
+    owned_pack = Pack.objects.create(user=owner, name="Owned pack")
+    other_pack = Pack.objects.create(user=other_user, name="Other pack")
+    client.force_login(owner)
+    url = reverse("accounts-manage-sounds", args=["packs"])
+    response = client.post(url, {"delete_confirm": "1", "object-ids": str(other_pack.id)})
+    assert response.status_code == 200
+    other_pack.refresh_from_db()
+    assert not other_pack.is_deleted
+    response = client.post(url, {"delete_confirm": "1", "object-ids": f"{other_pack.id},{owned_pack.id}"})
+    assert response.status_code == 302
+    assert response.url == url
+    owned_pack.refresh_from_db()
+    other_pack.refresh_from_db()
+    assert owned_pack.is_deleted
+    assert not other_pack.is_deleted
 
 
 class SimpleUserTest(TestCase):

@@ -32,10 +32,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import caches
 from django.db import IntegrityError
-from django.http import Http404, HttpResponseRedirect
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from oauth2_provider.models import AccessToken, Grant
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
@@ -307,7 +308,7 @@ class SoundInstance(RetrieveAPIView):
             include_audio_descriptors=needs_analyzers_output,
             include_similarity_vectors=needs_similarity_vectors,
             include_remix_subqueries=include_remix_subqueries,
-        )
+        ).filter(moderation_state="OK", processing_state="OK")
 
     def get(self, request, *args, **kwargs):
         api_logger.info(self.log_message("sound:%i instance" % (int(kwargs["pk"]))))
@@ -449,7 +450,11 @@ class SoundComments(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.filter(sound_id=self.kwargs["pk"]).select_related("user")
+        try:
+            sound = Sound.public.get(id=self.kwargs["pk"])
+        except Sound.DoesNotExist:
+            raise NotFoundException(resource=self)
+        return Comment.objects.filter(sound=sound).select_related("user")
 
 
 class DownloadSound(DownloadAPIView):
@@ -1595,14 +1600,7 @@ def create_apiv2_key(request):
 
 @login_required
 def edit_api_credential(request, key):
-    client = None
-    try:
-        client = ApiV2Client.objects.get(key=key)
-    except ApiV2Client.DoesNotExist:
-        pass
-
-    if not client:
-        raise Http404
+    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
 
     if request.method == "POST":
         form = ApiV2ClientForm(request.POST)
@@ -1640,42 +1638,36 @@ def edit_api_credential(request, key):
 
 @login_required
 def monitor_api_credential(request, key):
+    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+    level = int(client.throttling_level)
+    limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
     try:
-        client = ApiV2Client.objects.get(key=key)
-        level = int(client.throttling_level)
-        limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
-        try:
-            day_limit = limit_rates[1].split("/")[0]
-        except IndexError:
-            day_limit = 0
-        n_days = int(request.GET.get("n_days", 30))
-        usage_history = client.get_usage_history(n_days_back=n_days)
-        last_year = timezone.now().year - 1
-        tvars = {
-            "n_days": n_days,
-            "n_days_options": [(30, "1 month"), (93, "3 months"), (182, "6 months"), (365, "1 year")],
-            "client": client,
-            "data": json.dumps([(str(date), count) for date, count in usage_history]),
-            "total_in_range": sum([count for _, count in usage_history]),
-            "total_in_range_above_5000": sum([count - 5000 for _, count in usage_history if count > 5000]),
-            "total_previous_year_above_5000": client.get_usage_history_total(year=last_year, discard_per_day=5000),
-            "last_year": last_year,
-            "limit": day_limit,
-        }
-        return render(request, "api/monitor_api_credential.html", tvars)
-    except ApiV2Client.DoesNotExist:
-        raise Http404
+        day_limit = limit_rates[1].split("/")[0]
+    except IndexError:
+        day_limit = 0
+    n_days = int(request.GET.get("n_days", 30))
+    usage_history = client.get_usage_history(n_days_back=n_days)
+    last_year = timezone.now().year - 1
+    tvars = {
+        "n_days": n_days,
+        "n_days_options": [(30, "1 month"), (93, "3 months"), (182, "6 months"), (365, "1 year")],
+        "client": client,
+        "data": json.dumps([(str(date), count) for date, count in usage_history]),
+        "total_in_range": sum([count for _, count in usage_history]),
+        "total_in_range_above_5000": sum([count - 5000 for _, count in usage_history if count > 5000]),
+        "total_previous_year_above_5000": client.get_usage_history_total(year=last_year, discard_per_day=5000),
+        "last_year": last_year,
+        "limit": day_limit,
+    }
+    return render(request, "api/monitor_api_credential.html", tvars)
 
 
 @login_required
+@require_POST
 def delete_api_credential(request, key):
-    name = ""
-    try:
-        client = ApiV2Client.objects.get(key=key)
-        name = client.name
-        client.delete()
-    except ApiV2Client.DoesNotExist:
-        pass
+    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+    name = client.name
+    client.delete()
     messages.add_message(request, messages.INFO, f"Credentials with name {name} have been deleted.")
     return HttpResponseRedirect(reverse("apiv2-apply"))
 

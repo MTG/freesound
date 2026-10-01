@@ -50,6 +50,24 @@ from .renderers import XMLRenderer
 class TestAPiViews(TestCase):
     fixtures = ["licenses"]
 
+    def test_sound_detail_and_comments_require_public_sound(self):
+        user, _, sounds = create_user_and_sounds(processing_state="OK", moderation_state="OK")
+        sound = sounds[0]
+        self.client.force_login(user)
+        response = self.client.get(reverse("apiv2-sound-comments", args=[sound.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["results"], [])
+        for moderation, processing in [("PE", "OK"), ("OK", "PE")]:
+            sound.moderation_state, sound.processing_state = moderation, processing
+            sound.save()
+            for route in ["apiv2-sound-instance", "apiv2-sound-comments"]:
+                for sound_id in [sound.id, sound.id + 1]:
+                    with self.subTest(route=route, sound_id=sound_id, states=(moderation, processing)):
+                        response = self.client.get(reverse(route, args=[sound_id]))
+                        self.assertEqual(response.status_code, 404)
+                        if route == "apiv2-sound-comments":
+                            self.assertEqual(response.json(), {"detail": "Not found"})
+
     def test_pack_views_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
         for sound in sounds:
@@ -413,6 +431,29 @@ class TestSoundSerializer(TestCase):
 
 
 class TestApiV2Client(TestCase):
+    fixtures = ["users"]
+
+    def test_credentials_require_owner(self):
+        owner = User.objects.get(username="User1")
+        outsider = User.objects.get(username="User2")
+        credential = ApiV2Client.objects.create(user=owner, name="Owner app")
+        self.client.force_login(outsider)
+        for route in ["apiv2-edit-credential", "apiv2-monitor-credential", "apiv2-delete-credential"]:
+            with self.subTest(route=route):
+                request = self.client.post if route == "apiv2-delete-credential" else self.client.get
+                self.assertEqual(request(reverse(route, args=[credential.key])).status_code, 404)
+        credential.refresh_from_db()
+        credential.oauth_client.refresh_from_db()
+        self.client.force_login(owner)
+        self.assertEqual(self.client.get(reverse("apiv2-edit-credential", args=[credential.key])).status_code, 200)
+        delete_url = reverse("apiv2-delete-credential", args=[credential.key])
+        self.assertEqual(self.client.get(delete_url).status_code, 405)
+        credential.refresh_from_db()
+        oauth_client = credential.oauth_client
+        self.assertRedirects(self.client.post(delete_url), reverse("apiv2-apply"))
+        self.assertFalse(ApiV2Client.objects.filter(pk=credential.pk).exists())
+        self.assertFalse(type(oauth_client).objects.filter(pk=oauth_client.pk).exists())
+
     def test_urls_length_validation(self):
         """URLs are limited to a length of 200 characters at the DB level, test that passing a longer URL raised a
         for validation error instead of a DB error.

@@ -314,7 +314,7 @@ def api_search(search_form, target_file=None, resource=None):
         and not target_file
     ):
         # No input data for search, return empty results
-        return [], 0, None, None, None, None, None
+        return [], 0, 0, None, None, None, None, None, None
 
     # Standard text-based search
     try:
@@ -341,7 +341,6 @@ def api_search(search_form, target_file=None, resource=None):
             # accessed later when serializing sounds
             distance_to_target_data = {int(element["id"]): element["dist"] for element in result.docs}
 
-        num_found = result.num_found
         more_from_pack_data = None
         if search_form.cleaned_data["group_by_pack"]:
             # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
@@ -349,7 +348,17 @@ def api_search(search_form, target_file=None, resource=None):
                 int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
             }
 
-        return ids_score, num_found, distance_to_target_data, more_from_pack_data, None, None, None
+        return (
+            ids_score,
+            result.num_found,
+            result.non_grouped_number_of_results,
+            distance_to_target_data,
+            more_from_pack_data,
+            None,
+            None,
+            None,
+            result.q_time,
+        )
 
     except SearchEngineTimeoutException as e:
         search_logger.info(

@@ -20,13 +20,17 @@
 
 from __future__ import annotations
 
+import csv
 import logging
+import os
 
 from django.conf import settings
 from django.db.models.query import RawQuerySet
+from django.utils import timezone
 
 import sounds.models
 import utils.search
+from search.models import SearchQuery
 from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.search import SearchEngineException, SearchResults, get_search_engine
 
@@ -311,3 +315,40 @@ def get_empty_query_cache_key(request, use_beta_features=None):
         if not use_beta_features
         else settings.SEARCH_EMPTY_QUERY_CACHE_KEY + "_beta"
     )
+
+
+def save_record_of_search_query(query, query_type, num_results, query_time, ip, url, user=None):
+    # Save to DB
+    SearchQuery.objects.create(
+        query=query,
+        query_type=query_type,
+        num_results=num_results,
+        query_time=query_time,
+        ip=ip,
+        url=url,
+        user=user,
+    )
+
+    # Append a record of the given search query to a daily CSV file under
+    # settings.ARCHIVED_DATA_PATH/search_queries/<year>/search_queries_<date>.csv
+    created = timezone.now()
+    folder = os.path.join(settings.ARCHIVED_DATA_PATH, "search_queries", str(created.year))
+    os.makedirs(folder, exist_ok=True)
+    file_path = os.path.join(folder, f"search_queries_{created.strftime('%Y-%m-%d')}.csv")
+    file_exists = os.path.exists(file_path)
+    with open(file_path, mode="a", newline="") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(["time", "type", "user_id", "ip", "query", "query_time", "num_results", "url"])
+        writer.writerow(
+            [
+                created.strftime("%H:%M:%S"),
+                query_type,
+                user.id if user is not None else None,
+                ip,
+                query,
+                query_time,
+                num_results,
+                url,
+            ]
+        )

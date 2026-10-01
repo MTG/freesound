@@ -996,6 +996,9 @@ PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_d
 DATA_PACKS_PATH = os.path.join(DATA_PATH, "data_packs/")
 ARCHIVED_DATA_PATH = os.path.join(DATA_PATH, "archived_data/")
 
+# How long to keep the daily search queries archive files (in ARCHIVED_DATA_PATH/search_queries/) on disk
+SEARCH_QUERY_ARCHIVE_RETENTION_TIME = datetime.timedelta(days=365 * 2)
+
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"
 PREVIEWS_URL = DATA_URL + "previews/"

@@ -89,6 +89,7 @@ from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search.search_sounds import save_record_of_search_query
 from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import (
@@ -199,6 +200,7 @@ class Search(GenericAPIView):
             (
                 results,
                 count,
+                non_grouped_count,
                 distance_to_target_data,
                 more_from_pack_data,
                 note,
@@ -208,7 +210,7 @@ class Search(GenericAPIView):
             ) = api_search(search_form, resource=self)
         except APIException as e:
             raise e
-        except Exception:
+        except Exception as e:
             raise ServerErrorException(msg="Unexpected error", resource=self)
 
         # Paginate results
@@ -272,14 +274,14 @@ class Search(GenericAPIView):
                 sounds.append(None)
         response_data["results"] = sounds
 
-        SearchQuery.objects.create(
+        save_record_of_search_query(
             query=search_form.cleaned_data["query"],
             query_type=SearchQuery.SearchQueryType.API,
-            user=None,
-            num_results=paginator.count,
+            num_results=non_grouped_count or paginator.count,  # Return non grouped number of results if available
             query_time=q_time,
             ip=self.end_user_ip,
             url=search_form.construct_link(base_url="/apiv2/search/", include_domain=False),
+            user=None,
         )
 
         if note:
@@ -396,9 +398,17 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data["similar_to"] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note, q_time = (
-            api_search(similarity_sound_form, resource=self)
-        )
+        (
+            results,
+            count,
+            non_grouped_count,
+            distance_to_target_data,
+            more_from_pack_data,
+            note,
+            params_for_next_page,
+            debug_note,
+            q_time,
+        ) = api_search(similarity_sound_form, resource=self)
 
         id_score_map = {sound_id: sound_score for sound_id, sound_score in results}
         results = [sound_id for sound_id, _ in results]

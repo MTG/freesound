@@ -22,6 +22,7 @@ import csv
 import datetime
 import logging
 import os
+import re
 
 from django.conf import settings
 from django.utils import timezone
@@ -120,4 +121,33 @@ class Command(LoggingBaseCommand):
                         daily_sqs.delete()
                 current_date = next_date
 
-        self.log_end({"num_objects_archived": num_objects_archived})
+        num_files_deleted = self.delete_expired_archive_files(options["folder"], options["no_delete"])
+
+        self.log_end({"num_objects_archived": num_objects_archived, "num_files_deleted": num_files_deleted})
+
+    def delete_expired_archive_files(self, folder, no_delete):
+        """Delete daily search queries archive files older than settings.SEARCH_QUERY_ARCHIVE_RETENTION_TIME"""
+        num_files_deleted = 0
+        if not os.path.isdir(folder):
+            return num_files_deleted
+
+        retention_cutoff_date = (timezone.now() - settings.SEARCH_QUERY_ARCHIVE_RETENTION_TIME).date()
+        filename_re = re.compile(r"^search_queries_(\d{4}-\d{2}-\d{2})\.csv$")
+        for year_dir_name in sorted(os.listdir(folder)):
+            year_dir_path = os.path.join(folder, year_dir_name)
+            if not os.path.isdir(year_dir_path):
+                continue
+            for filename in sorted(os.listdir(year_dir_path)):
+                match = filename_re.match(filename)
+                if not match:
+                    continue
+                file_date = datetime.datetime.strptime(match.group(1), "%Y-%m-%d").date()
+                if file_date < retention_cutoff_date:
+                    file_path = os.path.join(year_dir_path, filename)
+                    console_logger.info(f"Deleting expired search queries archive file {file_path}")
+                    if not no_delete:
+                        os.remove(file_path)
+                    num_files_deleted += 1
+            if not no_delete and not os.listdir(year_dir_path):
+                os.rmdir(year_dir_path)
+        return num_files_deleted

@@ -88,6 +88,7 @@ from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search.search_sounds import save_record_of_search_query
 from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import (
@@ -164,7 +165,7 @@ def get_include_remix_subqueries(fields):
         return False
 
 
-class TextSearch(GenericAPIView):
+class Search(GenericAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -172,8 +173,8 @@ class TextSearch(GenericAPIView):
             '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s'
             % (
                 prepend_base("/docs/api"),
-                "%s#text-search" % resources_doc_filename,
-                get_formatted_examples_for_view("TextSearch", "apiv2-sound-search", max=5),
+                "%s#search" % resources_doc_filename,
+                get_formatted_examples_for_view("Search", "apiv2-sound-search", max=5),
             )
         )
 
@@ -195,12 +196,20 @@ class TextSearch(GenericAPIView):
 
         # Get search results
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
-                api_search(search_form, resource=self)
-            )
+            (
+                results,
+                count,
+                non_grouped_count,
+                distance_to_target_data,
+                more_from_pack_data,
+                note,
+                params_for_next_page,
+                debug_note,
+                q_time,
+            ) = api_search(search_form, resource=self)
         except APIException as e:
             raise e
-        except Exception:
+        except Exception as e:
             raise ServerErrorException(msg="Unexpected error", resource=self)
 
         # Paginate results
@@ -263,6 +272,15 @@ class TextSearch(GenericAPIView):
                 # In that case sounds are set to null
                 sounds.append(None)
         response_data["results"] = sounds
+
+        if settings.SEARCH_SAVE_QUERY_RECORDS:
+            save_record_of_search_query(
+                url=search_form.construct_link(base_url="/apiv2/search/", include_domain=False),
+                num_results=non_grouped_count or paginator.count,  # Return non grouped number of results if available
+                query_time=q_time,
+                ip=self.end_user_ip,
+                user=None,
+            )
 
         if note:
             response_data["note"] = note
@@ -378,9 +396,17 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data["similar_to"] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
-            api_search(similarity_sound_form, resource=self)
-        )
+        (
+            results,
+            count,
+            non_grouped_count,
+            distance_to_target_data,
+            more_from_pack_data,
+            note,
+            params_for_next_page,
+            debug_note,
+            q_time,
+        ) = api_search(similarity_sound_form, resource=self)
 
         id_score_map = {sound_id: sound_score for sound_id, sound_score in results}
         results = [sound_id for sound_id, _ in results]
@@ -1474,6 +1500,12 @@ class FreesoundApiV2Resources(GenericAPIView):
                 )
             },
         ]
+
+        # Yaml format can not represent ordered dicts, so turn ordered dict to dict if these formats are requested
+        if request.accepted_renderer.format in ["yaml"]:
+            for element in api_index:
+                for key, ordered_dict in element.items():
+                    element[key] = dict(ordered_dict)
 
         # Xml format seems to have problems with white spaces and numbers in dict keys...
         def key_to_valid_xml(key):

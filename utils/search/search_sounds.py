@@ -23,7 +23,9 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
+from django.core.cache import caches
 from django.db.models.query import RawQuerySet
+from django.utils import timezone
 
 import sounds.models
 import utils.search
@@ -32,6 +34,8 @@ from utils.search import SearchEngineException, SearchResults, get_search_engine
 
 search_logger = logging.getLogger("search")
 console_logger = logging.getLogger("console")
+
+cache_search_queries = caches["search_queries"]
 
 
 def parse_weights_parameter(weights_param):
@@ -310,4 +314,23 @@ def get_empty_query_cache_key(request, use_beta_features=None):
         settings.SEARCH_EMPTY_QUERY_CACHE_KEY
         if not use_beta_features
         else settings.SEARCH_EMPTY_QUERY_CACHE_KEY + "_beta"
+    )
+
+
+def save_record_of_search_query(url, num_results, query_time, ip, user=None):
+    """Save a record of the search query in the Redis cache. A management command will
+    be run asynchronously which will collect cache data and archive as files in disk.
+    As a cache key, use the date in YYYYMMDD-HHMMSS-microseconds"""
+    cache_key = timezone.now().strftime("%Y%m%d-%H%M%S-%f")
+    cache_search_queries.set(
+        cache_key,
+        {
+            "url": url,
+            "num_results": num_results,
+            "query_time": query_time,
+            "ip": ip,
+            "user": str(user) if user else None,
+            "timestamp": timezone.now().isoformat(),
+        },
+        settings.SEARCH_SAVE_QUERY_RECORDS_CACHE_EXPIRATION,
     )

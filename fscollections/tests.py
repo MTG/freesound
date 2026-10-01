@@ -265,6 +265,25 @@ class CollectionTest(TestCase):
         resp = self.client.get(reverse("download-collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 200)
 
+    def test_add_maintainer_modal_search_is_case_insensitive(self):
+        # https://github.com/MTG/freesound/issues/2180
+        self.collection.maintainers.add(self.maintainer)
+        url = reverse("add-maintainers-modal", args=[self.collection.id, slugify(self.collection.name)])
+
+        # Searching with different casings returns the user
+        for query in ("MaintainerUser", "MAINTAINERUSER"):
+            resp = self.client.get(url, {"q": query})
+            self.assertEqual(resp.status_code, 200)
+            new_maintainers = resp.context["new_maintainers"]
+            self.assertEqual([self.maintainer], list(new_maintainers))
+            self.assertFalse(resp.context["not_found_msg"])
+
+        # A user that does not exist is still reported as not found
+        resp = self.client.get(url, {"q": "nonexistentuser"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual([], list(resp.context["new_maintainers"]))
+        self.assertIn("nonexistentuser", resp.context["not_found_msg"])
+
     def test_add_remove_sounds_as_maintainer(self):
         # test edit collection's parameters as maintainer of the collection
         self.collection.maintainers.add(self.maintainer)

@@ -18,8 +18,8 @@
 #     See AUTHORS file.
 #
 
-from functools import wraps
-from operator import itemgetter
+from functools import reduce, wraps
+from operator import itemgetter, or_
 
 from django.conf import settings
 from django.contrib import messages
@@ -453,11 +453,17 @@ def add_maintainer_modal(request, collection):
     # TODO: the below statements exclude users with whitespaces in their usernames (and they still exist)
     usernames = request.GET.get("q", "").split(",")
     usernames = [u.strip() for u in usernames]
-    new_maintainers = User.objects.filter(is_active=True, username__in=usernames)
+    usernames_query = reduce(
+        or_,
+        [Q(username__iexact=username) for username in usernames if username != ""],
+        Q(),
+    )
+    new_maintainers = User.objects.filter(usernames_query, is_active=True)
+    found_usernames = {user.username.lower() for user in new_maintainers}
     not_found_users = []
     not_found_message = False
     for usr in usernames:
-        if usr != "" and usr not in list(new_maintainers.values_list("username", flat=True)):
+        if usr != "" and usr.lower() not in found_usernames:
             not_found_users.append(usr)
 
     if len(not_found_users) > 0:

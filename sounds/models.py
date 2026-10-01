@@ -1243,7 +1243,7 @@ class Sound(models.Model):
         old_pack = None
         if self.pack:
             old_pack = self.pack
-            (new_pack, created) = Pack.objects.get_or_create(user=new_owner, name=self.pack.name)
+            (new_pack, created) = Pack.objects.get_or_create(user=new_owner, name=self.pack.name, is_deleted=False)
             self.pack = new_pack
 
         # Change tags ownership too (otherwise they might get deleted if original user is deleted)
@@ -2204,7 +2204,11 @@ class Pack(LicenseSummaryMixin, models.Model):
         return f"{reverse('sounds-search')}?f=pack_grouping:{self.pack_filter_value()}&s=Date+added+(newest+first)&g=1"
 
     class Meta:
-        unique_together = ("user", "name", "is_deleted")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name"], condition=Q(is_deleted=False), name="unique_active_pack_name_per_user"
+            )
+        ]
         ordering = ("-created",)
 
     def friendly_filename(self):

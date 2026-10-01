@@ -981,7 +981,7 @@ def describe_pack(request):
         if form.is_valid():
             data = form.cleaned_data
             if data["new_pack"]:
-                pack, created = Pack.objects.get_or_create(user=request.user, name=data["new_pack"])
+                pack, created = Pack.objects.get_or_create(user=request.user, name=data["new_pack"], is_deleted=False)
                 request.session[f"{session_key_prefix}-describe_pack"] = pack.id
             elif data["pack"]:
                 request.session[f"{session_key_prefix}-describe_pack"] = data["pack"].id

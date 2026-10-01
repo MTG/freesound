@@ -1006,14 +1006,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         geotag = GeoTag.objects.create(sound=sound, lat=float(lat), lon=float(lon), zoom=int(zoom))
                 if "pack" in serializer.data:
                     if serializer.data["pack"]:
-                        if (
-                            Pack.objects.filter(name=serializer.data["pack"], user=self.user)
-                            .exclude(is_deleted=True)
-                            .exists()
-                        ):
-                            p = Pack.objects.get(name=serializer.data["pack"], user=self.user)
-                        else:
-                            p, created = Pack.objects.get_or_create(user=self.user, name=serializer.data["pack"])
+                        p, created = Pack.objects.get_or_create(
+                            user=self.user, name=serializer.data["pack"], is_deleted=False
+                        )
                         sound.pack = p
                 sound.is_index_dirty = True
                 sound.save()

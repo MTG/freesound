@@ -547,7 +547,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
         packs_to_process = []
         if data["new_pack"]:
-            pack, _ = Pack.objects.get_or_create(user=sound.user, name=data["new_pack"])
+            pack, _ = Pack.objects.get_or_create(user=sound.user, name=data["new_pack"], is_deleted=False)
             if sound.pack:
                 packs_to_process.append(sound.pack)  # Append previous sound pack if exists
             sound.pack = pack

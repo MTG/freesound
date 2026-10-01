@@ -145,8 +145,9 @@ def download_bookmark_category(request, category_id):
     return download_sounds(licenses_url, licenses_content, sounds_list, category.download_filename)
 
 
+@login_required
 def bookmark_category_licenses(request, category_id):
-    category = get_object_or_404(BookmarkCategory, id=category_id)
+    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
     attribution = category.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
 

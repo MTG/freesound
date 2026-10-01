@@ -31,6 +31,17 @@ from sounds.models import Sound
 class BookmarksTest(TestCase):
     fixtures = ["licenses", "sounds"]
 
+    def test_category_licenses_require_owner(self):
+        owner = User.objects.get(username="Anton")
+        category = bookmarks.models.BookmarkCategory.objects.create(name="Private bookmarks", user=owner)
+        bookmarks.models.Bookmark.objects.create(user=owner, sound_id=10, category=category)
+        url = reverse("category-licenses", args=[category.id])
+        self.assertEqual(self.client.get(url).status_code, 302)
+        self.client.force_login(User.objects.create_user("outsider", email="outsider@example.com"))
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.client.force_login(owner)
+        self.assertContains(self.client.get(url), category.name)
+
     @override_settings(ENABLE_COLLECTIONS=False)
     def test_old_bookmarks_for_user_redirect(self):
         user = User.objects.get(username="Anton")

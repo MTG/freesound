@@ -1838,7 +1838,7 @@ def flag_user(request, username):
         if object_id:
             try:
                 if request.POST["flag_type"] == "PM":
-                    flagged_object = Message.objects.get(id=object_id, user_from=flagged_user)
+                    flagged_object = Message.objects.get(id=object_id, user_from=flagged_user, user_to=request.user)
                 elif request.POST["flag_type"] == "FP":
                     flagged_object = Post.objects.get(id=object_id, author=flagged_user)
                 elif request.POST["flag_type"] == "SC":

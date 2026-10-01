@@ -18,6 +18,8 @@
 #     See AUTHORS file.
 #
 
+import json
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
@@ -151,7 +153,16 @@ class ReportSpamOffensive(TestCase):
             is_archived=False,
             is_read=False,
         )
-        self.__test_report_object("PM", object)
+        url = reverse("flag-user", args=[self.spammer.username])
+        data = {"object_id": object.id, "flag_type": "PM"}
+        self.get_reporter_as_logged_in_user(1)
+        response = self.client.post(url, data)
+        self.assertTrue(json.loads(response.content)["errors"])
+        self.assertFalse(UserFlag.objects.exists())
+        self.assertEqual(len(mail.outbox), 0)
+        self.get_reporter_as_logged_in_user(0)
+        self.assertIsNone(json.loads(self.client.post(url, data).content)["errors"])
+        self.assertEqual(UserFlag.objects.get().reporting_user, self.reporters[0])
 
     def test_report_object_same_user(self):
         # Test that when a user is reported many times but not by distinct users, no email is sent
@@ -206,6 +217,11 @@ class ReportSpamOffensive(TestCase):
         for i in range(settings.USERFLAG_THRESHOLD_FOR_AUTOMATIC_BLOCKING + 1):
             reporter = self.get_reporter_as_logged_in_user(i)
             object, flag_type = objects_flag_types[i % len(objects_flag_types)]
+            if flag_type == "PM":
+                # Each reporter received their own message from the spammer.
+                object.pk = None
+                object.user_to = reporter
+                object.save()
             resp = self.client.post(
                 reverse("flag-user", kwargs={"username": self.spammer.username}),
                 data={

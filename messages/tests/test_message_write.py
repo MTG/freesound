@@ -19,12 +19,45 @@
 #
 import json
 
+import pytest
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 
 from messages.models import Message, MessageBody
 from messages.views import get_previously_contacted_usernames, quote_message_for_reply
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("is_sent", [False, True])
+def test_message_copy_ownership(client, is_sent):
+    call_command("loaddata", "users", verbosity=0)
+    sender = User.objects.get(username="User1")
+    recipient = User.objects.get(username="User2")
+    message = Message.objects.create(
+        user_from=sender,
+        user_to=recipient,
+        subject="Private message",
+        body=MessageBody.objects.create(body="Hello"),
+        is_sent=is_sent,
+        is_read=False,
+    )
+    owner, other = (sender, recipient) if is_sent else (recipient, sender)
+    url = reverse("message", args=[message.id])
+    reply_url = reverse("message-reply", args=[message.id])
+    client.force_login(other)
+    assert client.get(url).status_code == 404
+    assert client.get(reply_url).status_code == 404
+    message.refresh_from_db()
+    assert not message.is_read
+    client.force_login(owner)
+    response = client.get(reply_url)
+    assert response.status_code == 200
+    assert response.context["form"].initial["to"] == other.username
+    assert client.get(url).status_code == 200
+    message.refresh_from_db()
+    assert message.is_read
 
 
 class RecaptchaPresenceInMessageForms(TestCase):
@@ -64,12 +97,12 @@ class RecaptchaPresenceInMessageForms(TestCase):
             user_to=self.no_spammer,
             subject="Message subject",
             body=MessageBody.objects.create(body="Message body"),
-            is_sent=True,
+            is_sent=False,
             is_archived=False,
             is_read=False,
         )
         self.client.force_login(user=self.no_spammer)
-        resp = self.client.get(reverse("messages-new", args=[message.id]))
+        resp = self.client.get(reverse("message-reply", args=[message.id]))
         self.assertNotContains(resp, "recaptcha")
 
         # Potential spammer (has no uploaded sounds), recaptcha field should be shown
@@ -78,12 +111,12 @@ class RecaptchaPresenceInMessageForms(TestCase):
             user_to=self.potential_spammer,
             subject="Message subject",
             body=MessageBody.objects.create(body="Message body"),
-            is_sent=True,
+            is_sent=False,
             is_archived=False,
             is_read=False,
         )
         self.client.force_login(user=self.potential_spammer)
-        resp = self.client.get(reverse("messages-new", args=[message.id]))
+        resp = self.client.get(reverse("message-reply", args=[message.id]))
         self.assertContains(resp, "recaptcha")
 
 

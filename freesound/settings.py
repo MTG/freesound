@@ -92,10 +92,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ("accounts.modelbackend.CustomModelBackend",)
 
-# This was the default serializer in django 1.6. Now we keep using it because
-# we saw some errors when running tests, in the future we should change to the
-# new one.
-SESSION_SERIALIZER = "django.contrib.sessions.serializers.PickleSerializer"
+# Read JSON or legacy pickle; write JSON.
+SESSION_SERIALIZER = "utils.session_serializers.TransitionalPickleSerializer"
 
 TIME_ZONE = "Europe/Brussels"
 

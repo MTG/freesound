@@ -23,7 +23,7 @@ import datetime
 import logging
 import os
 import re
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlparse
 
 from django.conf import settings
 from django.core.cache import caches
@@ -111,21 +111,31 @@ class Command(LoggingBaseCommand):
             for element in elements_to_archive:
                 url_parts = urlparse(element["url"])
                 element["path"] = url_parts.path
-                element["params"] = url_parts.query
+                element["params"] = dict(parse_qsl(url_parts.query))
 
             # Save the elements to archive into a CSV file(s)
             # Files should be named like "folder/YYYY/search_queries_YYYY-MM-DD.csv"
             # If there are elements for a file that already exists, they should be appended unless the --overwrite option is specified
 
             # Group elements by date
+            # Also keep a list of all the keys in the "params" property by date as this will be used to later define CSV coluns
             elements_by_date = {}
+            params_keys_by_date = {}
             for element in elements_to_archive:
                 date = element["timestamp"][:10]  # Get the date part (YYYY-MM-DD)
                 if date not in elements_by_date:
                     elements_by_date[date] = []
+                    params_keys_by_date[date] = set()
+
+                # Now modify the timestamp because we already grouped by date, and we only want the time hh:mm:ss.microseconds part
+                # We can also skip the last timezone offset part (+00:00)
+                element["timestamp"] = element["timestamp"][11:-6]
+
                 elements_by_date[date].append(element)
+                params_keys_by_date[date].update(element["params"].keys())  # Collect all param keys for the date
 
             # Save the grouped elements into CSV files
+            basic_fieldnames = ["timestamp", "path", "user_id", "query_time", "num_results"]
             for date, elements in elements_by_date.items():
                 year = date[:4]
                 year_dir = os.path.join(options["folder"], year)
@@ -133,18 +143,32 @@ class Command(LoggingBaseCommand):
                 file_path = os.path.join(year_dir, f"search_queries_{date}.csv")
                 file_exists = os.path.isfile(file_path)
                 if file_exists and not options["overwrite"]:
-                    mode = "a"
+                    # If file exists, load data from the file, combine with new data and re-write the file
+                    # This is important because new entries for that file might have new parameter keys that need to be included in the CSV columns
+                    # We also need therefore to list the parameter keys for the existing file and combine them with the new ones
+                    with open(file_path, "r", newline="") as csvfile:
+                        reader = csv.DictReader(csvfile)
+                        existing_fieldnames = reader.fieldnames if reader.fieldnames else []
+                        existing_param_keys = set(existing_fieldnames) - set(basic_fieldnames)
+                        params_keys_by_date[date].update(existing_param_keys)
+                        existing_rows = list(reader)
+                    # Remove entries from "elements" which are also present in existing_rows to avoid duplicates
+                    existing_keys = {row["timestamp"] for row in existing_rows if "timestamp" in row}
+                    elements = [element for element in elements if element["timestamp"] not in existing_keys]
                 else:
-                    mode = "w"
-                with open(file_path, mode, newline="") as csvfile:
-                    # TODO: improve this code so params are all saved as columns in the csv (even if some are empty)
-                    # Also revise which fieldnames to include
-                    fieldnames = ["timestamp", "url", "path", "params"]
+                    existing_rows = []
+
+                with open(file_path, "w", newline="") as csvfile:
+                    fieldnames = basic_fieldnames + sorted(params_keys_by_date[date])
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if mode == "w":
-                        writer.writeheader()
+                    writer.writeheader()
+                    for row in existing_rows:
+                        writer.writerow(row)
                     for element in elements:
-                        writer.writerow({field: str(element.get(field, "")) for field in fieldnames})
+                        row = {field: str(element.get(field, "")) for field in basic_fieldnames}
+                        for param_key in params_keys_by_date[date]:
+                            row[param_key] = str(element["params"].get(param_key, ""))
+                        writer.writerow(row)
                 num_objects_archived += len(elements)
 
             # Now delete these keys from cache

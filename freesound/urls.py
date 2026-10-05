@@ -168,12 +168,12 @@ urlpatterns = [
     path("donate/", donations.views.donate_redirect, name="donate-redirect"),
     path("s/<int:sound_id>/", sounds.views.sound_short_link, name="short-sound-link"),
     path("p/<int:pack_id>/", sounds.views.pack_short_link, name="short-pack-link"),
-    # old url format redirects
-    path("usersViewSingle", accounts.views.old_user_link_redirect, name="old-account-page"),
-    path("samplesViewSingle", sounds.views.old_sound_link_redirect, name="old-sound-page"),
-    path("packsViewSingle", sounds.views.old_pack_link_redirect, name="old-pack-page"),
-    path("tagsViewSingle", tags.views.old_tag_link_redirect, name="old-tag-page"),
-    path("forum/viewtopic", forum.views.old_topic_link_redirect, name="old-topic-page"),
+    # Legacy PHP URLs use prefix matching, including their .php suffix.
+    path("usersViewSingle.php", accounts.views.old_user_link_redirect, name="old-account-page"),
+    path("samplesViewSingle.php", sounds.views.old_sound_link_redirect, name="old-sound-page"),
+    path("packsViewSingle.php", sounds.views.old_pack_link_redirect, name="old-pack-page"),
+    path("tagsViewSingle.php", tags.views.old_tag_link_redirect, name="old-tag-page"),
+    path("forum/viewtopic.php", forum.views.old_topic_link_redirect, name="old-topic-page"),
     # sitemaps
     path(
         "sitemap.xml",

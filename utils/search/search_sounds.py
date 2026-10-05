@@ -317,7 +317,7 @@ def get_empty_query_cache_key(request, use_beta_features=None):
     )
 
 
-def save_record_of_search_query(url, num_results, query_time, ip, user=None):
+def save_record_of_search_query(url, num_results, query_time, ip, user_id=None):
     """Save a record of the search query in the Redis cache. A management command will
     be run asynchronously which will collect cache data and archive as files in disk.
     As a cache key, use the date in YYYYMMDD-HHMMSS-microseconds"""
@@ -329,7 +329,7 @@ def save_record_of_search_query(url, num_results, query_time, ip, user=None):
             "num_results": num_results,
             "query_time": query_time,
             "ip": ip,
-            "user": str(user) if user else None,
+            "user_id": user_id if user_id is not None else "",
             "timestamp": timezone.now().isoformat(),
         },
         settings.SEARCH_SAVE_QUERY_RECORDS_CACHE_EXPIRATION,

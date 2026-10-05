@@ -279,7 +279,7 @@ class Search(GenericAPIView):
                 num_results=non_grouped_count or paginator.count,  # Return non grouped number of results if available
                 query_time=q_time,
                 ip=self.end_user_ip,
-                user=None,
+                user_id=self.user.id if self.user is not None else None,
             )
 
         if note:

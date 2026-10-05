@@ -84,7 +84,7 @@
                         </section>
                         {% if pack.num_sounds_unpublished %}
                             <div class="v-spacing-top-6 text-red">
-                                {% bw_icon "notification" %}This pack has {{ pack.num_sounds_unpublished}} unpublished sounds
+                                {% bw_icon "notification" %}This pack has {{ pack.num_sounds_unpublished }} unpublished sound{{ pack.num_sounds_unpublished|pluralize }}
                             </div>
                         {% endif %}
                         {% if pack.num_sounds %}

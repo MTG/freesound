@@ -58,6 +58,8 @@ const bindFeedbackBox = box => {
   if (sendButton) {
     sendButton.addEventListener('click', () => {
       if (!chosenAnswer) return;
+      // Disabled until the reply arrives (double-click cannot save twice).
+      sendButton.disabled = true;
       makePostRequest(
         `${box.dataset.submitUrl}?ajax=1`,
         {
@@ -68,11 +70,13 @@ const bindFeedbackBox = box => {
         () => {
           box.innerHTML = `<b>${box.dataset.thanks || 'Thanks for your feedback!'}</b>`;
         },
-        responseText =>
+        responseText => {
+          sendButton.disabled = false;
           showToast(
             firstFormError(responseText) ||
               'Something went wrong, please try again.'
-          )
+          );
+        }
       );
     });
   }

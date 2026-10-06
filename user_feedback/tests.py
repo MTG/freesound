@@ -309,3 +309,71 @@ class RenderInlineHtmlTest(TestCase):
     @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 0.0}})
     def test_empty_string_when_not_shown(self):
         self.assertEqual(self.experiment.render_inline_html(self._request(), sound=self.sound), "")
+
+
+class CategoryFilterFeedbackTest(TestCase):
+    """Tests for the category filter experiment of the search page."""
+
+    fixtures = ["licenses"]
+    # Info about the search that is sent with every answer
+    SEARCH = {
+        "category": "Music",
+        "query": "piano",
+        "search_filter": 'category:"Music"',
+        "sort": "Automatic by relevance",
+        "page": 1,
+        "search_id": "miao123",
+    }
+
+    def setUp(self):
+        self.user, _, self.sounds = create_user_and_sounds(num_sounds=3)
+        self.client.force_login(self.user)
+
+    def _submit(self, **data):
+        data = {
+            "experiment_id": "category_filter_feedback",
+            "result_ids": ",".join(str(sound.id) for sound in self.sounds),
+            **self.SEARCH,
+            **data,
+        }
+        return self.client.post(reverse("user-feedback-submit") + "?ajax=1", data)
+
+    def _rows(self):
+        return UserFeedback.objects.filter(experiment_id="category_filter_feedback")
+
+    def test_overall_answer_saves(self):
+        # Check rating, comment and search info are saved
+        response = self._submit(kind="overall", rating="4", text="handy")
+        self.assertEqual(response.status_code, 200)
+        data = self._rows().get().data
+        self.assertEqual(data["kind"], "overall")
+        self.assertEqual(data["rating"], 4)
+        self.assertEqual(data["text"], "handy")
+        self.assertEqual(data["category"], "Music")
+        self.assertEqual(data["result_ids"], [sound.id for sound in self.sounds])
+        # Check "result" fields are not saved
+        self.assertNotIn("answer", data)
+
+    def test_result_answer_saves(self):
+        # Check yes/no, sound and position are saved
+        sound = self.sounds[2]
+        response = self._submit(kind="result", answer="no", sound_id=sound.id, position=3)
+        self.assertEqual(response.status_code, 200)
+        data = self._rows().get().data
+        self.assertEqual(data["kind"], "result")
+        self.assertEqual(data["answer"], "no")
+        self.assertEqual(data["sound_id"], sound.id)
+        self.assertEqual(data["position"], 3)
+        # Check "overall" fields are not saved
+        self.assertNotIn("rating", data)
+
+    def test_incomplete_answers_are_rejected(self):
+        # Try overall answer without rating
+        self.assertIn("rating", self._submit(kind="overall").json()["errors"])
+        # Try result answer without yes/no
+        self.assertIn("answer", self._submit(kind="result", sound_id=self.sounds[0].id, position=1).json()["errors"])
+        # Try result answer for unknown sound
+        errors = self._submit(kind="result", answer="yes", sound_id=999999999, position=1).json()["errors"]
+        self.assertIn("sound_id", errors)
+        # Check nothing was saved
+        self.assertEqual(self._rows().count(), 0)

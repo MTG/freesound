@@ -64,6 +64,10 @@ class CategoryValidationForm(forms.Form):
         cleaned_data = super().clean()
         if cleaned_data.get("answer") == "no" and not cleaned_data.get("selected_category"):
             self.add_error("selected_category", self.CATEGORY_REQUIRED_MESSAGE)
+        # "yes" never stores a category; drops any left over from an earlier "no".
+        if cleaned_data.get("answer") == "yes":
+            cleaned_data["selected_category"] = ""
+            self.errors.pop("selected_category", None)
         return cleaned_data
 
 

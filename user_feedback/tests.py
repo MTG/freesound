@@ -108,6 +108,17 @@ class SubmitAndModalViewTest(TestCase):
         self.assertIn("application/json", response["content-type"])
         self.assertEqual(self._rows().count(), 1)
 
+    def test_yes_drops_a_leftover_category(self):
+        # Picking a category under "no" and then switching to "yes" still posts it.
+        self._submit(ajax=True, answer="yes", selected_category="ss-n")
+        self.assertEqual(self._rows().get().data["selected_category"], "")
+
+    def test_yes_drops_a_leftover_top_level_category(self):
+        # Top level only ("ss") is not a valid choice, but a "yes" must still save.
+        response = self._submit(ajax=True, answer="yes", selected_category="ss")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._rows().get().data["selected_category"], "")
+
     def test_no_with_category_saves(self):
         response = self._submit(ajax=True, answer="no", selected_category="ss-n", text="wrong one")
         self.assertIn("application/json", response["content-type"])

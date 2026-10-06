@@ -281,7 +281,7 @@ class RenderInlineHtmlTest(TestCase):
     @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 1.0}})
     def test_renders_box_when_shown(self):
         html = self.experiment.render_inline_html(self._request(), sound=self.sound)
-        self.assertIn("categoryValidationBox", html)
+        self.assertIn("data-experiment-box", html)
         self.assertIn('name="selected_category"', html)  # the correction form is built in
 
     @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 0.0}})

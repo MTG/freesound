@@ -1,24 +1,26 @@
 {% load bw_templatetags bst_category %}
 {# Inline "category validation" box; shown by sounds.views.sound only when the category_validation experiment is on. #}
 {# Neither answer saves on click: it expands the box and only Send confirms it, so a misclick costs nothing. #}
-{# Bound in pages/sound.js because the category picker needs prepareCategoryFormFields to wire it up. #}
-<div id="categoryValidationBox" data-experiment-id="category_validation" data-sound-id="{{ sound.id }}" data-submit-url="{% url 'user-feedback-submit' %}"
+{# Bound by the generic components/experiments.js via the data-experiment-* attributes below; no per-experiment JS. #}
+<div data-experiment-box data-experiment-id="category_validation" data-submit-url="{% url 'user-feedback-submit' %}"
      class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-right: 34px;">
-    {# Circled "i" pinned top-right; opens the info + opt-out modal below (sound.js -> activateModal). #}
+    {# sound_id travels as a named input so the generic binder posts it without knowing this experiment's fields. #}
+    <input type="hidden" name="sound_id" value="{{ sound.id }}">
+    {# Circled "i" pinned top-right; opens the info + opt-out modal below (binder -> activateModal). #}
     <button type="button" data-info-modal="categoryValidationInfoModal" title="About this study" aria-label="About this study"
             class="cursor-pointer text-light-grey"
             style="position: absolute; top: 8px; right: 10px; margin: 0; padding: 0; background: none; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
     {# Question on its own line; Yes/No on the row below. #}
     <div><b>Does this sound belong to the <span style="color: #c99700;">{{ sound.category_names.0 }} > {{ sound.category_names.1 }}</span> category?</b></div>
     {# Both answers reveal the follow-up below; buttons stay visible. #}
-    <div data-feedback-answers class="v-spacing-top-2">
-        <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block" data-feedback-answer="yes">Yes</a>
-        <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block" data-feedback-answer="no">No</a>
+    <div class="v-spacing-top-2">
+        <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block" data-experiment-answer="yes">Yes</a>
+        <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block" data-experiment-answer="no">No</a>
     </div>
-    {# Follow-up, hidden until an answer. "No" also shows the category picker. #}
-    <div data-feedback-expand style="display: none;" class="v-spacing-top-3">
-        {# Category picker: mirrors molecules/bst_category_form_field.html for prepareCategoryFormFields. #}
-        <div data-feedback-category class="bst-category-field" style="display: none;">
+    {# Follow-up, hidden until an answer. The category picker (data-experiment-answer-extra="no") shows only for "No". #}
+    <div data-experiment-expand style="display: none;" class="v-spacing-top-3">
+        {# Category picker: mirrors molecules/bst_category_form_field.html; the binder wires it via .bst-category-field. #}
+        <div data-experiment-answer-extra="no" class="bst-category-field" style="display: none;">
             <div class="v-spacing-2"><b>Which category fits better?</b></div>
             {{ category_validation_form.selected_category.as_hidden }}
             <div><label>Category</label></div>
@@ -43,10 +45,10 @@
             </div>
         </div>
         <div class="v-spacing-top-2"><label>Comment (optional)</label></div>
-        <textarea data-feedback-text rows="3" placeholder="Anything else?"
+        <textarea name="text" rows="3" placeholder="Anything else?"
                   class="text-14" style="width: 100%; background: transparent; color: inherit; border: 1px solid #999; border-radius: 5px; padding: 8px;"></textarea>
         <div class="v-spacing-top-2">
-            <button type="button" data-feedback-send class="btn-secondary text-14">Send</button>
+            <button type="button" data-experiment-send class="btn-secondary text-14">Send</button>
         </div>
     </div>
 </div>
@@ -75,8 +77,8 @@
 
                     <p><b>Contact:</b> If you would like further information about this research, please contact us through the <a href="{% url 'contact' %}">contact page</a>.</p>
 
-                    {# "Don't ask again": plain POST -> reload -> box throttled. #}
-                    <form method="post" action="{% url 'user-feedback-opt-out' %}" data-category-optout class="v-spacing-3">
+                    {# "Don't ask again": AJAX opt-out (binder) closes this modal and drops the box; falls back to a plain POST + reload. #}
+                    <form method="post" action="{% url 'user-feedback-opt-out' %}" data-experiment-optout data-dismiss-modal="categoryValidationInfoModal" class="v-spacing-3">
                         {% csrf_token %}
                         <input type="hidden" name="experiment_id" value="category_validation">
                         <button type="submit" class="btn-inverse" style="align-self: center;">Don't ask again</button>

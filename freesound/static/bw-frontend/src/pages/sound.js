@@ -1,15 +1,10 @@
 import './page-polyfills';
 import { showToast } from '../components/toast';
-import { makePostRequest } from '../utils/postRequest';
 import { playAtTime } from '../components/player/utils';
-import {
-  handleGenericModalWithForm,
-  dismissModal,
-  activateModal,
-} from '../components/modal';
+import { handleGenericModalWithForm, dismissModal } from '../components/modal';
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload';
 import { prepareAfterDownloadSoundModals } from '../components/afterDownloadModal.js';
-import { prepareCategoryFormFields } from '../components/bstCategoryFormField';
+import { prepareFeedbackExperiments } from '../components/experiments';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -23,96 +18,8 @@ const urlParams = new URLSearchParams(window.location.search);
 
 prepareAfterDownloadSoundModals();
 
-// Category validation, inline: It reveals an optional comment, "No" answer also the category picker.
-// Send saves via AJAX. Buttons stay visible so the choice can change.
-const categoryValidationBox = document.getElementById('categoryValidationBox');
-if (categoryValidationBox) {
-  prepareCategoryFormFields(categoryValidationBox); // wire the two-level category picker
-  const expand = categoryValidationBox.querySelector('[data-feedback-expand]');
-  const categoryPicker = categoryValidationBox.querySelector('[data-feedback-category]');
-  const sendButton = categoryValidationBox.querySelector('[data-feedback-send]');
-  let chosenAnswer = null;
-  const answerButtons = [...categoryValidationBox.querySelectorAll('[data-feedback-answer]')];
-  answerButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      chosenAnswer = button.dataset.feedbackAnswer;
-      // Highlight the chosen answer so it is clear which one is selected.
-      answerButtons.forEach(other => {
-        other.classList.toggle('btn-primary', other === button);
-        other.classList.toggle('btn-inverse', other !== button);
-      });
-      expand.style.display = '';
-      categoryPicker.style.display = chosenAnswer === 'no' ? '' : 'none';
-    });
-  });
-  // First field error message from the JSON 400 body.
-  const firstFormError = responseText => {
-    try {
-      const errors = JSON.parse(responseText).errors || {};
-      const firstField = Object.keys(errors)[0];
-      return firstField ? errors[firstField][0].message : null;
-    } catch {
-      return null;
-    }
-  };
-  if (sendButton) {
-    sendButton.addEventListener('click', () => {
-      const selectedCategory = categoryValidationBox.querySelector('[name="selected_category"]').value;
-      // For "no", require a category and subcategory.
-      if (chosenAnswer === 'no' && !selectedCategory.includes('-')) {
-        showToast('Please choose a category and subcategory.');
-        return;
-      }
-      const text = categoryValidationBox.querySelector('[data-feedback-text]').value;
-      // Catch the form's max_length here so we can show a "shorten it" error.
-      if (text.length > 2000) {
-        showToast('Please keep your comment under 2000 characters.');
-        return;
-      }
-      makePostRequest(
-        `${categoryValidationBox.dataset.submitUrl}?ajax=1`,
-        {
-          experiment_id: categoryValidationBox.dataset.experimentId,
-          sound_id: categoryValidationBox.dataset.soundId,
-          answer: chosenAnswer,
-          selected_category: selectedCategory,
-          text,
-        },
-        () => {
-          categoryValidationBox.innerHTML = '<b>Thanks for your feedback!</b>';
-        },
-        responseText => showToast(firstFormError(responseText) || 'Something went wrong, please try again.')
-      );
-    });
-  }
-}
-
-// "Don't ask again" opt-out (inside the info modal): AJAX so we can acknowledge with a toast and
-// drop the box without a full reload. Falls back to a plain POST + redirect if this JS never runs.
-[...document.querySelectorAll('form[data-category-optout]')].forEach(form => {
-  form.addEventListener('submit', event => {
-    event.preventDefault();
-    const experimentId = form.querySelector('[name="experiment_id"]').value;
-    makePostRequest(
-      `${form.action}?ajax=1`,
-      { experiment_id: experimentId },
-      () => {
-        dismissModal('categoryValidationInfoModal');
-        const box = document.getElementById('categoryValidationBox');
-        if (box) box.remove();
-        showToast("Got it, we won't ask you this again.");
-      },
-      () => showToast('Something went wrong, please try again.')
-    );
-  });
-});
-
-// Study info sheet: the button shows the self-contained modal already in the DOM.
-[...document.querySelectorAll('[data-info-modal]')].forEach(button => {
-  button.addEventListener('click', () =>
-    activateModal(button.dataset.infoModal)
-  );
-});
+// Inline feedback-experiment boxes (e.g. category validation) are wired generically.
+prepareFeedbackExperiments();
 
 const copyFromInputElement = inputElement => {
   inputElement.select();

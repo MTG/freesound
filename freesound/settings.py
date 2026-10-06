@@ -119,6 +119,7 @@ CLUSTERING_CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
 CELERY_BROKER_REDIS_STORE_ID = 3
 ABUSE_REDIS_STORE_ID = 4
+SEARCH_QUERIES_REDIS_STORE_ID = 5
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -140,6 +141,10 @@ CACHES = {
     "abuse": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{ABUSE_REDIS_STORE_ID}",
+    },
+    "search_queries": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{SEARCH_QUERIES_REDIS_STORE_ID}",
     },
 }
 
@@ -677,6 +682,10 @@ SEARCH_EMPTY_QUERY_CACHE_TIME = (
 
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
+SEARCH_SAVE_QUERY_RECORDS = True
+SEARCH_SAVE_QUERY_RECORDS_CACHE_EXPIRATION = (
+    3600 * 5
+)  # Save queries for that period of time. An async process should run before expiration time to collect data and save to disk
 
 # -------------------------------------------------------------------------------
 # AI preferences panel

@@ -125,8 +125,9 @@ def get_needed_audio_descriptors(fields):
         return True
 
     descriptor_names = []
-    if "category" in requested_fields or "category_code" in requested_fields:
-        # This is a special case, estimated bst category should be included to provide the category field
+    if any(field in requested_fields for field in ("category", "category_code", "gen_ai_preference")):
+        # Category fields need the estimated BST category.
+        # gen_ai_preference needs category because you can opt out specifically for speech
         descriptor_names += ["category", "subcategory"]
 
     # Add the rest of descriptors requested

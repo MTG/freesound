@@ -105,8 +105,8 @@ class Experiment:
 
 
 class CategoryValidation(Experiment):
-    """A small inline box on the sound page asking whether the sound's
-    auto-assigned category is correct. The answer is just yes/no for now."""
+    """A small inline box on the sound page asking whether the sound's assigned category is correct.
+    A "no" also asks which category fits better, and both answers have an optional comment."""
 
     experiment_id = "category_validation"
     form_class = CategoryValidationForm

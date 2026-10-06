@@ -30,7 +30,7 @@ from django.urls import reverse
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apiv2.models import ApiV2Client
-from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
+from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer, validate_tags
 from bookmarks.models import Bookmark, BookmarkCategory
 from sounds.models import DownloadAPI, PackDownloadAPI, PackDownloadSoundAPI, Sound
 from utils.ratelimit import request_limit_events_total
@@ -1029,3 +1029,18 @@ class TestVendoredXMLRenderer(SimpleTestCase):
 
     def test_renders_empty_string_for_no_data(self):
         assert XMLRenderer().render(None) == ""
+
+
+class TagLengthValidationTests(SimpleTestCase):
+    def test_rejects_tag_longer_than_100_characters(self):
+        with self.assertRaises(ValidationError) as cm:
+            validate_tags(f"{'x' * 101} two three")
+        self.assertEqual(
+            cm.exception.detail,
+            ["One of the tags is too long. Each tag can have at most 100 characters."],
+        )
+
+    def test_length_is_checked_after_cleaning_and_raw_value_is_returned(self):
+        for value in (f"{'x' * 100},two,three", f"--{'x' * 98}---y-- two three"):
+            with self.subTest(value=value):
+                self.assertEqual(validate_tags(value), value)

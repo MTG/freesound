@@ -24,7 +24,7 @@ from django.conf import settings
 from django.core import validators
 from django.core.exceptions import ValidationError
 
-from utils.tags import clean_and_split_tags
+from utils.tags import clean_and_split_tags, validate_normalized_tags
 from utils.text import clean_html, is_shouting
 
 
@@ -84,6 +84,10 @@ class TagField(forms.CharField):
         self.validators.append(
             validators.MaxLengthValidator(30, "There can be maximum 30 tags, please select the most relevant ones!")
         )
+
+    def validate(self, value):
+        super().validate(value)
+        validate_normalized_tags(value)
 
     def to_python(self, value):
         value = super().to_python(value)

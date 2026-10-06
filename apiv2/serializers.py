@@ -21,6 +21,7 @@
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.urls import reverse
 from rest_framework import serializers
 
@@ -29,7 +30,7 @@ from comments.models import Comment
 from fscollections.models import Collection
 from sounds.models import Pack, Sound
 from utils.forms import filename_has_valid_extension
-from utils.tags import clean_and_split_tags
+from utils.tags import clean_and_split_tags, validate_normalized_tags
 
 from .apiv2_utils import prepend_base
 
@@ -725,6 +726,10 @@ def validate_tags(value):
         raise serializers.ValidationError("You should add at least 3 tags...")
     elif len(tags) > 30:
         raise serializers.ValidationError("There can be maximum 30 tags, please select the most relevant ones!")
+    try:
+        validate_normalized_tags(tags)
+    except DjangoValidationError as exc:
+        raise serializers.ValidationError(exc.messages) from exc
     return value
 
 

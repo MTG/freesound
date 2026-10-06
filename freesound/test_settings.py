@@ -33,7 +33,7 @@ CACHES = {
     },
     "search_queries": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/16",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/14",
     },
 }
 

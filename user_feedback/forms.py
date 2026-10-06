@@ -22,6 +22,8 @@ class CategoryValidationForm(forms.Form):
     """
 
     ANSWER_CHOICES = [("yes", "Yes"), ("no", "No")]
+    # Error message if no category and/or subcategory is picked.
+    CATEGORY_REQUIRED_MESSAGE = "Please choose a category and subcategory."
 
     answer = forms.ChoiceField(
         choices=ANSWER_CHOICES,
@@ -40,6 +42,7 @@ class CategoryValidationForm(forms.Form):
         choices=settings.BST_SUBCATEGORY_CHOICES,
         required=False,
         label="Which category fits better?",
+        error_messages={"invalid_choice": CATEGORY_REQUIRED_MESSAGE},
     )
     # Optionally, an answer can be sent without writing anything.
     text = forms.CharField(
@@ -60,7 +63,7 @@ class CategoryValidationForm(forms.Form):
         # "No" means the category is wrong, so a corrected one is required; "yes" is not.
         cleaned_data = super().clean()
         if cleaned_data.get("answer") == "no" and not cleaned_data.get("selected_category"):
-            self.add_error("selected_category", "Please choose the category that fits better.")
+            self.add_error("selected_category", self.CATEGORY_REQUIRED_MESSAGE)
         return cleaned_data
 
 

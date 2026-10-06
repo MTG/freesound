@@ -142,7 +142,18 @@ class SubmitAndModalViewTest(TestCase):
         # Rejected ajax submit returns a 400, so the caller can't mistake it for a save.
         self.assertEqual(response.status_code, 400)
         self.assertIn("application/json", response["content-type"])
-        self.assertIn("selected_category", response.json()["errors"])
+        self.assertEqual(
+            response.json()["errors"]["selected_category"][0]["message"], "Please choose a category and subcategory."
+        )
+        self.assertEqual(self._rows().count(), 0)
+
+    def test_no_with_only_top_level_category_is_rejected(self):
+        # Top-level only ("ss") is not a subcategory choice; it gets the same readable message.
+        response = self._submit(ajax=True, answer="no", selected_category="ss")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.json()["errors"]["selected_category"][0]["message"], "Please choose a category and subcategory."
+        )
         self.assertEqual(self._rows().count(), 0)
 
     def test_tampered_sound_id_is_rejected(self):

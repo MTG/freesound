@@ -170,7 +170,7 @@
                                 </div>
                                     <div class="col-2 text-center text-17">
                                         <p class="text-grey no-margins">Sample rate</p>
-                                        <p class="no-margins">{{sound.samplerate}} Hz</p>
+                                        <p class="no-margins">{{sound.samplerate|samplerate_with_units}}</p>
                                     </div>
                                 {% if sound.bitdepth %}
                                     <div class="col-2 text-center text-17">

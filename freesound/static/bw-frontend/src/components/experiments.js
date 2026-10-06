@@ -26,7 +26,8 @@ const collectNamedInputs = root =>
   }, {});
 
 // One box: pick an answer (which may reveal extra fields), then Send posts it over
-// AJAX. Validation is left to the server, which replies with a JSON 400 we surface.
+// AJAX. A box without a Send button is saved when an answer is clicked.
+// Validation is left to the server, which replies with a JSON 400 we surface.
 const bindFeedbackBox = box => {
   // Wire the two-level category picker if this experiment's box uses one.
   if (box.querySelector('.bst-category-field')) {
@@ -35,7 +36,35 @@ const bindFeedbackBox = box => {
   const expand = box.querySelector('[data-experiment-expand]');
   const answerButtons = [...box.querySelectorAll('[data-experiment-answer]')];
   const extras = [...box.querySelectorAll('[data-experiment-answer-extra]')];
+  const sendButton = box.querySelector('[data-experiment-send]');
   let chosenAnswer = null;
+  let sending = false;
+
+  const send = () => {
+    if (!chosenAnswer || sending) return;
+    // Disabled until the reply arrives (double-click cannot save twice).
+    sending = true;
+    if (sendButton) sendButton.disabled = true;
+    makePostRequest(
+      `${box.dataset.submitUrl}?ajax=1`,
+      {
+        ...collectNamedInputs(box),
+        experiment_id: box.dataset.experimentId,
+        answer: chosenAnswer,
+      },
+      () => {
+        box.innerHTML = `<b>${box.dataset.thanks || 'Thanks for your feedback!'}</b>`;
+      },
+      responseText => {
+        sending = false;
+        if (sendButton) sendButton.disabled = false;
+        showToast(
+          firstFormError(responseText) ||
+            'Something went wrong, please try again.'
+        );
+      }
+    );
+  };
 
   answerButtons.forEach(button => {
     button.addEventListener('click', () => {
@@ -51,35 +80,12 @@ const bindFeedbackBox = box => {
         extra.style.display =
           extra.dataset.experimentAnswerExtra === chosenAnswer ? '' : 'none';
       });
+      // No Send button, save now.
+      if (!sendButton) send();
     });
   });
 
-  const sendButton = box.querySelector('[data-experiment-send]');
-  if (sendButton) {
-    sendButton.addEventListener('click', () => {
-      if (!chosenAnswer) return;
-      // Disabled until the reply arrives (double-click cannot save twice).
-      sendButton.disabled = true;
-      makePostRequest(
-        `${box.dataset.submitUrl}?ajax=1`,
-        {
-          ...collectNamedInputs(box),
-          experiment_id: box.dataset.experimentId,
-          answer: chosenAnswer,
-        },
-        () => {
-          box.innerHTML = `<b>${box.dataset.thanks || 'Thanks for your feedback!'}</b>`;
-        },
-        responseText => {
-          sendButton.disabled = false;
-          showToast(
-            firstFormError(responseText) ||
-              'Something went wrong, please try again.'
-          );
-        }
-      );
-    });
-  }
+  if (sendButton) sendButton.addEventListener('click', send);
 };
 
 // "Don't ask again": AJAX opt-out so we can acknowledge and drop the box without a

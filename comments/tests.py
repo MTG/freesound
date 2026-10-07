@@ -17,52 +17,49 @@
 # Authors:
 #     See AUTHORS file.
 #
-from django.test import TestCase
+import pytest
 
 from comments.models import Comment
 from utils.test_helpers import create_user_and_sounds
 
 
-class CommentsWithHyperlinksTestCase(TestCase):
-    """Tests for the pre/post save signals on Forum, Thread, and Post objects"""
+@pytest.fixture
+def comment_author_and_sound(load_fixtures):
+    load_fixtures(["licenses"])
+    user, _, sounds = create_user_and_sounds(num_sounds=1)
+    return user, sounds[0]
 
-    fixtures = ["licenses"]
 
-    def setUp(self):
-        self.user, _, sounds = create_user_and_sounds(num_sounds=1)
-        self.sound = sounds[0]
+def test_save_comment_with_hyperlinks(comment_author_and_sound):
+    """Test that 'contains_hyperlink' boolean field is properly set when saving comments"""
+    user, sound = comment_author_and_sound
 
-    def test_save_comment_with_hyperlinks(self):
-        """Test that 'contains_hyperlink' boolean field is properly set when saving comments"""
+    comment = Comment.objects.create(user=user, sound=sound, comment="This is a comment with no hyperlinks")
+    comment.refresh_from_db()
+    assert not comment.contains_hyperlink
 
-        comment = Comment.objects.create(
-            user=self.user, sound=self.sound, comment="This is a comment with no hyperlinks"
-        )
-        comment.refresh_from_db()
-        self.assertFalse(comment.contains_hyperlink)
+    comment = Comment.objects.create(
+        user=user, sound=sound, comment="This is a comment with a link to http://www.freesound.org"
+    )
+    comment.refresh_from_db()
+    assert comment.contains_hyperlink
 
-        comment = Comment.objects.create(
-            user=self.user, sound=self.sound, comment="This is a comment with a link to http://www.freesound.org"
-        )
-        comment.refresh_from_db()
-        self.assertTrue(comment.contains_hyperlink)
+    comment = Comment.objects.create(
+        user=user, sound=sound, comment="This is a comment with a https link to https://www.freesound.org"
+    )
+    comment.refresh_from_db()
+    assert comment.contains_hyperlink
 
-        comment = Comment.objects.create(
-            user=self.user, sound=self.sound, comment="This is a comment with a https link to https://www.freesound.org"
-        )
-        comment.refresh_from_db()
-        self.assertTrue(comment.contains_hyperlink)
 
-    def test_update_comment_with_hyperlinks(self):
-        """Test that 'contains_hyperlink' boolean field is properly set when updating comments"""
+def test_update_comment_with_hyperlinks(comment_author_and_sound):
+    """Test that 'contains_hyperlink' boolean field is properly set when updating comments"""
+    user, sound = comment_author_and_sound
 
-        comment = Comment.objects.create(
-            user=self.user, sound=self.sound, comment="This is a comment with no hyperlinks"
-        )
-        comment.refresh_from_db()
-        self.assertFalse(comment.contains_hyperlink)
+    comment = Comment.objects.create(user=user, sound=sound, comment="This is a comment with no hyperlinks")
+    comment.refresh_from_db()
+    assert not comment.contains_hyperlink
 
-        comment.comment = "Now this comment has a link to http://www.freesound.org"
-        comment.save()
-        comment.refresh_from_db()
-        self.assertTrue(comment.contains_hyperlink)
+    comment.comment = "Now this comment has a link to http://www.freesound.org"
+    comment.save()
+    comment.refresh_from_db()
+    assert comment.contains_hyperlink

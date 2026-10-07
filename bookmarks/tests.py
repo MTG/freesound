@@ -18,32 +18,36 @@
 #     See AUTHORS file.
 #
 
+import pytest
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
-from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
+from pytest_django.asserts import assertContains, assertRedirects
 
 import bookmarks.models
 from sounds.models import Sound
 
 
-class BookmarksTest(TestCase):
-    fixtures = ["licenses", "sounds"]
+@pytest.fixture
+def bookmark_data(load_fixtures):
+    load_fixtures(["licenses", "sounds"])
 
-    def test_category_licenses_require_owner(self):
+
+class TestBookmarks:
+    def test_category_licenses_require_owner(self, bookmark_data, client):
         owner = User.objects.get(username="Anton")
         category = bookmarks.models.BookmarkCategory.objects.create(name="Private bookmarks", user=owner)
         bookmarks.models.Bookmark.objects.create(user=owner, sound_id=10, category=category)
         url = reverse("category-licenses", args=[category.id])
-        self.assertEqual(self.client.get(url).status_code, 302)
-        self.client.force_login(User.objects.create_user("outsider", email="outsider@example.com"))
-        self.assertEqual(self.client.get(url).status_code, 404)
-        self.client.force_login(owner)
-        self.assertContains(self.client.get(url), category.name)
+        assert client.get(url).status_code == 302
+        client.force_login(User.objects.create_user("outsider", email="outsider@example.com"))
+        assert client.get(url).status_code == 404
+        client.force_login(owner)
+        assertContains(client.get(url), category.name)
 
     @override_settings(ENABLE_COLLECTIONS=False)
-    def test_old_bookmarks_for_user_redirect(self):
+    def test_old_bookmarks_for_user_redirect(self, bookmark_data, client):
         user = User.objects.get(username="Anton")
         category = bookmarks.models.BookmarkCategory.objects.create(name="Category1", user=user)
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=10)
@@ -51,29 +55,29 @@ class BookmarksTest(TestCase):
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
 
         # User not logged in, redirect raises 404
-        resp = self.client.get(reverse("bookmarks-for-user", kwargs={"username": "Anton"}))
-        self.assertEqual(404, resp.status_code)
+        resp = client.get(reverse("bookmarks-for-user", kwargs={"username": "Anton"}))
+        assert resp.status_code == 404
 
         # User logged in, redirect to home/bookmarks page
-        self.client.force_login(user)
-        resp = self.client.get(reverse("bookmarks-for-user", kwargs={"username": "Anton"}))
-        self.assertRedirects(resp, reverse("bookmarks"))
+        client.force_login(user)
+        resp = client.get(reverse("bookmarks-for-user", kwargs={"username": "Anton"}))
+        assertRedirects(resp, reverse("bookmarks"))
 
         # User logged in, redirect to home/bookmarks/category page
-        resp = self.client.get(
+        resp = client.get(
             reverse("bookmarks-for-user-for-category", kwargs={"username": "Anton", "category_id": category.id})
         )
-        self.assertRedirects(resp, reverse("bookmarks-category", kwargs={"category_id": category.id}))
+        assertRedirects(resp, reverse("bookmarks-category", kwargs={"category_id": category.id}))
 
     @override_settings(ENABLE_COLLECTIONS=False)
-    def test_bookmarks(self):
+    def test_bookmarks(self, bookmark_data, client):
         user = User.objects.get(username="Anton")
-        self.client.force_login(user)
+        client.force_login(user)
 
         # Test user has no bookmarks
-        response = self.client.get(reverse("bookmarks"))
-        self.assertEqual(200, response.status_code)
-        self.assertContains(response, "There are no uncategorized bookmarks")
+        response = client.get(reverse("bookmarks"))
+        assert response.status_code == 200
+        assertContains(response, "There are no uncategorized bookmarks")
 
         # Create bookmarks
         category = bookmarks.models.BookmarkCategory.objects.create(name="Category1", user=user)
@@ -82,31 +86,31 @@ class BookmarksTest(TestCase):
         bookmarks.models.Bookmark.objects.create(user=user, sound_id=12, category=category)
 
         # Test main bookmarks page
-        response = self.client.get(reverse("bookmarks"))
-        self.assertEqual(200, response.status_code)
-        self.assertEqual(1, len(response.context["page"].object_list))  # 1 bookmark uncategorized
-        self.assertEqual(1, len(response.context["bookmark_categories"]))  # 1 bookmark category
+        response = client.get(reverse("bookmarks"))
+        assert response.status_code == 200
+        assert len(response.context["page"].object_list) == 1  # 1 bookmark uncategorized
+        assert len(response.context["bookmark_categories"]) == 1  # 1 bookmark category
 
         # Test bookmark category page
-        response = self.client.get(reverse("bookmarks-category", kwargs={"category_id": category.id}))
-        self.assertEqual(200, response.status_code)
-        self.assertEqual(2, len(response.context["page"].object_list))  # 2 sounds in category
-        self.assertContains(response, category.name)
+        response = client.get(reverse("bookmarks-category", kwargs={"category_id": category.id}))
+        assert response.status_code == 200
+        assert len(response.context["page"].object_list) == 2  # 2 sounds in category
+        assertContains(response, category.name)
 
         # Test category does not exist
-        response = self.client.get(reverse("bookmarks-category", kwargs={"category_id": 1234}))
-        self.assertEqual(404, response.status_code)
+        response = client.get(reverse("bookmarks-category", kwargs={"category_id": 1234}))
+        assert response.status_code == 404
 
-    def test_cannot_create_duplicate_uncategorized_bookmark(self):
+    def test_cannot_create_duplicate_uncategorized_bookmark(self, bookmark_data):
         user = User.objects.get(username="Anton")
         sound = Sound.objects.first()
         bookmarks.models.Bookmark.objects.create(user=user, sound=sound)
 
-        with self.assertRaises(IntegrityError):
+        with pytest.raises(IntegrityError):
             with transaction.atomic():
                 bookmarks.models.Bookmark.objects.create(user=user, sound=sound)
 
-    def test_delete_category_with_existing_uncategorized_bookmark(self):
+    def test_delete_category_with_existing_uncategorized_bookmark(self, bookmark_data, client):
         user = User.objects.get(username="Anton")
         sound = Sound.objects.first()
         category = bookmarks.models.BookmarkCategory.objects.create(name="Category1", user=user)
@@ -114,16 +118,16 @@ class BookmarksTest(TestCase):
         uncategorized = bookmarks.models.Bookmark.objects.create(user=user, sound=sound)
         categorized = bookmarks.models.Bookmark.objects.create(user=user, sound=sound, category=category)
 
-        self.client.force_login(user)
-        response = self.client.post(reverse("delete-bookmark-category", kwargs={"category_id": category.id}))
-        self.assertEqual(302, response.status_code)
+        client.force_login(user)
+        response = client.post(reverse("delete-bookmark-category", kwargs={"category_id": category.id}))
+        assert response.status_code == 302
 
-        self.assertFalse(bookmarks.models.BookmarkCategory.objects.filter(id=category.id).exists())
+        assert not bookmarks.models.BookmarkCategory.objects.filter(id=category.id).exists()
         # the once-categorized bookmark should be deleted but the uncategorized one should remain.
-        self.assertFalse(bookmarks.models.Bookmark.objects.filter(id=categorized.id).exists())
-        self.assertTrue(bookmarks.models.Bookmark.objects.filter(id=uncategorized.id).exists())
+        assert not bookmarks.models.Bookmark.objects.filter(id=categorized.id).exists()
+        assert bookmarks.models.Bookmark.objects.filter(id=uncategorized.id).exists()
 
-    def test_delete_category_only_removes_conflicting_bookmarks(self):
+    def test_delete_category_only_removes_conflicting_bookmarks(self, bookmark_data, client):
         user = User.objects.get(username="Anton")
         sounds = list(Sound.objects.order_by("id")[:2])
         category = bookmarks.models.BookmarkCategory.objects.create(name="Category1", user=user)
@@ -137,14 +141,13 @@ class BookmarksTest(TestCase):
             user=user, sound=sounds[1], category=category
         )
 
-        self.client.force_login(user)
-        self.assertEqual(
-            302, self.client.post(reverse("delete-bookmark-category", kwargs={"category_id": category.id})).status_code
-        )
+        client.force_login(user)
+        response = client.post(reverse("delete-bookmark-category", kwargs={"category_id": category.id}))
+        assert response.status_code == 302
 
-        self.assertFalse(bookmarks.models.BookmarkCategory.objects.filter(id=category.id).exists())
+        assert not bookmarks.models.BookmarkCategory.objects.filter(id=category.id).exists()
         # Only the conflicting bookmark is deleted.
-        self.assertFalse(bookmarks.models.Bookmark.objects.filter(id=conflicting_categorized.id).exists())
-        self.assertTrue(bookmarks.models.Bookmark.objects.filter(id=conflict_sound_bookmark.id).exists())
+        assert not bookmarks.models.Bookmark.objects.filter(id=conflicting_categorized.id).exists()
+        assert bookmarks.models.Bookmark.objects.filter(id=conflict_sound_bookmark.id).exists()
         non_conflict = bookmarks.models.Bookmark.objects.get(id=non_conflicting_categorized.id)
-        self.assertIsNone(non_conflict.category)
+        assert non_conflict.category is None

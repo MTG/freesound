@@ -63,3 +63,70 @@ def test_update_comment_with_hyperlinks(comment_author_and_sound):
     comment.save()
     comment.refresh_from_db()
     assert comment.contains_hyperlink
+
+
+def test_remove_hyperlink_from_comment(comment_author_and_sound):
+    user, sound = comment_author_and_sound
+    comment = Comment.objects.create(user=user, sound=sound, comment="A link to https://www.freesound.org")
+    comment.refresh_from_db()
+    assert comment.contains_hyperlink
+
+    comment.comment = "The link has been removed"
+    comment.save()
+
+    comment.refresh_from_db()
+    assert comment.comment == "The link has been removed"
+    assert not comment.contains_hyperlink
+
+
+def test_set_has_hyperlink_does_not_save(comment_author_and_sound):
+    user, sound = comment_author_and_sound
+    original_text = "A link to https://www.freesound.org"
+    comment = Comment.objects.create(user=user, sound=sound, comment=original_text)
+
+    comment.comment = "The link has been removed"
+    comment.set_has_hyperlink()
+    assert not comment.contains_hyperlink
+
+    stored_comment = Comment.objects.get(pk=comment.pk)
+    assert stored_comment.comment == original_text
+    assert stored_comment.contains_hyperlink
+
+    comment.comment = "A different link to http://www.freesound.org"
+    comment.set_has_hyperlink()
+    assert comment.contains_hyperlink
+    assert Comment.objects.get(pk=comment.pk).comment == original_text
+
+
+def test_partial_save_updates_hyperlink_flag(comment_author_and_sound):
+    user, sound = comment_author_and_sound
+    comment = Comment.objects.create(user=user, sound=sound, comment="No link")
+
+    comment.comment = "A link to https://www.freesound.org"
+    comment.save(update_fields=["comment"])
+    comment.refresh_from_db()
+    assert comment.comment == "A link to https://www.freesound.org"
+    assert comment.contains_hyperlink
+
+    comment.comment = "The link has been removed"
+    comment.save(update_fields=["comment"])
+    comment.refresh_from_db()
+    assert comment.comment == "The link has been removed"
+    assert not comment.contains_hyperlink
+
+
+def test_partial_save_preserves_unsaved_comment_and_flag(comment_author_and_sound):
+    user, sound = comment_author_and_sound
+    original_text = "A link to https://www.freesound.org"
+    comment = Comment.objects.create(user=user, sound=sound, comment=original_text)
+
+    comment.comment = "Unsaved text with no link"
+    comment.save(update_fields=["user"])
+    stored_comment = Comment.objects.get(pk=comment.pk)
+    assert stored_comment.comment == original_text
+    assert stored_comment.contains_hyperlink
+
+    comment.save(update_fields=[])
+    comment.refresh_from_db()
+    assert comment.comment == original_text
+    assert comment.contains_hyperlink

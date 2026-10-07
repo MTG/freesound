@@ -25,6 +25,15 @@ const collectNamedInputs = root =>
     return data;
   }, {});
 
+// Inputs shared by all the boxes of an experiment (e.g. info about the search).
+// They are written once in the page in a [data-experiment-shared] element.
+const collectSharedInputs = experimentId => {
+  const shared = document.querySelector(
+    `[data-experiment-shared="${experimentId}"]`
+  );
+  return shared ? collectNamedInputs(shared) : {};
+};
+
 // One box: pick an answer (which may reveal extra fields), then Send posts it over
 // AJAX. A box without a Send button is saved when an answer is clicked.
 // Validation is left to the server, which replies with a JSON 400 we surface.
@@ -48,6 +57,7 @@ const bindFeedbackBox = box => {
     makePostRequest(
       `${box.dataset.submitUrl}?ajax=1`,
       {
+        ...collectSharedInputs(box.dataset.experimentId),
         ...collectNamedInputs(box),
         experiment_id: box.dataset.experimentId,
         answer: chosenAnswer,

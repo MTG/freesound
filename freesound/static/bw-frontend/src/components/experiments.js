@@ -51,6 +51,8 @@ const bindFeedbackBox = box => {
   const answerButtons = [...box.querySelectorAll('[data-experiment-answer]')];
   const extras = [...box.querySelectorAll('[data-experiment-answer-extra]')];
   const sendButton = box.querySelector('[data-experiment-send]');
+  // Name of the field where the answer is sent.
+  const answerName = box.dataset.experimentAnswerName || 'answer';
   let chosenAnswer = null;
   let sending = false;
 
@@ -65,7 +67,7 @@ const bindFeedbackBox = box => {
         ...collectSharedInputs(box.dataset.experimentId),
         ...collectNamedInputs(box),
         experiment_id: box.dataset.experimentId,
-        answer: chosenAnswer,
+        [answerName]: chosenAnswer,
       },
       () => {
         box.innerHTML = `<b>${box.dataset.thanks || 'Thanks for your feedback!'}</b>`;

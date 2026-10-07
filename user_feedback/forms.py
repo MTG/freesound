@@ -81,7 +81,7 @@ class CategoryFilterFeedbackForm(forms.Form):
         answer: the user's yes/no response. Required when kind is "result".
         sound_id: hidden field identifying the sound of the result.
         position: hidden field with the position of the sound in the results.
-        category, subcategory, query, search_filter, sort, page, result_ids, search_id:
+        category, subcategory, query, search_filter, sort, page, result_ids, search_url, search_id:
             hidden fields describing the search.
     """
 
@@ -109,6 +109,7 @@ class CategoryFilterFeedbackForm(forms.Form):
     sort = forms.CharField(required=False, max_length=100)
     page = forms.IntegerField(min_value=1)
     result_ids = forms.CharField(max_length=2000)
+    search_url = forms.CharField(required=False, max_length=4000)
     search_id = forms.CharField(max_length=32)
 
     def clean_result_ids(self):

@@ -1,0 +1,11 @@
+{# Yes/no question under one search result (category filter experiment); rendered by CategoryFilterFeedback.render_inline_html. #}
+{# It has no Send button, so experiments.js saves it when an answer is clicked. #}
+<div data-experiment-box data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}" data-thanks="Thanks!"
+     class="text-grey text-14 text-right v-spacing-2">
+    <input type="hidden" name="kind" value="result">
+    <input type="hidden" name="sound_id" value="{{ sound_id }}">
+    <input type="hidden" name="position" value="{{ position }}">
+    <span class="h-spacing-2">Is this what you were looking for?</span>
+    <a href="javascript:void(0)" class="btn-inverse text-14 display-inline-block" style="padding: 5px 14px;" data-experiment-answer="yes">Yes</a>
+    <a href="javascript:void(0)" class="btn-inverse text-14 display-inline-block" style="padding: 5px 14px;" data-experiment-answer="no">No</a>
+</div>

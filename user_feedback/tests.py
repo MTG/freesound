@@ -2,8 +2,10 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from user_feedback.experiments import CategoryValidation, Experiment
+from user_feedback.experiments import CategoryFilterFeedback, CategoryValidation, Experiment
 from user_feedback.models import FeedbackOptOut, UserFeedback
+from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search.search_query_processor import SearchQueryProcessor
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -311,6 +313,7 @@ class RenderInlineHtmlTest(TestCase):
         self.assertEqual(self.experiment.render_inline_html(self._request(), sound=self.sound), "")
 
 
+@override_settings(FEEDBACK_EXPERIMENTS={"category_filter_feedback": {"sample_rate": 1.0}})
 class CategoryFilterFeedbackTest(TestCase):
     """Tests for the category filter experiment of the search page."""
 
@@ -322,12 +325,25 @@ class CategoryFilterFeedbackTest(TestCase):
         "search_filter": 'category:"Music"',
         "sort": "Automatic by relevance",
         "page": 1,
+        "search_url": "/search/?q=piano&f=category%3A%22Music%22",
         "search_id": "miao123",
     }
 
     def setUp(self):
-        self.user, _, self.sounds = create_user_and_sounds(num_sounds=3)
+        self.user, _, self.sounds = create_user_and_sounds(num_sounds=12)
         self.client.force_login(self.user)
+        self.experiment = CategoryFilterFeedback()
+
+    def _render(self, params=None, user=None, page_number=1):
+        # Render the experiment for a search of "piano" filtered by the Music category
+        if params is None:
+            params = {"q": "piano", "f": 'category:"Music"'}
+        request = RequestFactory().get(reverse("sounds-search"), params)
+        request.user = user or self.user
+        docs = [{"id": sound.id} for sound in self.sounds]
+        page = PreSlicedCountProvidedPaginator(docs, 15, 100).page(page_number)
+        html = self.experiment.render_inline_html(request, sqp=SearchQueryProcessor(request), docs=docs, page=page)
+        return html, docs
 
     def _submit(self, **data):
         data = {
@@ -350,6 +366,7 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(data["rating"], 4)
         self.assertEqual(data["text"], "handy")
         self.assertEqual(data["category"], "Music")
+        self.assertEqual(data["search_url"], self.SEARCH["search_url"])
         self.assertEqual(data["result_ids"], [sound.id for sound in self.sounds])
         # Check "result" fields are not saved
         self.assertNotIn("answer", data)
@@ -377,3 +394,41 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertIn("sound_id", errors)
         # Check nothing was saved
         self.assertEqual(self._rows().count(), 0)
+
+    def test_first_results_get_the_question(self):
+        html, docs = self._render()
+        # Check the search info is in the page
+        self.assertIn('name="category" value="Music"', html)
+        self.assertIn('name="query" value="piano"', html)
+        # Check only the first 10 of the 12 results get the question
+        asked = [doc for doc in docs if "feedback_html" in doc]
+        self.assertEqual(len(asked), 10)
+        # Check the question has the sound and its position
+        self.assertIn(f'name="sound_id" value="{self.sounds[0].id}"', asked[0]["feedback_html"])
+        self.assertIn('name="position" value="1"', asked[0]["feedback_html"])
+
+    def test_no_question_when_it_should_not_show(self):
+        # Search without category filter
+        html, docs = self._render(params={"q": "piano"})
+        self.assertEqual(html, "")
+        self.assertNotIn("feedback_html", docs[0])
+        # Anonymous user
+        html, docs = self._render(user=AnonymousUser())
+        self.assertEqual(html, "")
+        # Page 2, results start at position 16
+        html, docs = self._render(page_number=2)
+        self.assertEqual(html, "")
+        # User opted out
+        self.experiment.opt_out(self.user)
+        html, docs = self._render()
+        self.assertEqual(html, "")
+
+    def test_answered_result_is_not_asked_again(self):
+        self._submit(kind="result", answer="yes", sound_id=self.sounds[2].id, position=3)
+        # Check the answered result has no question, but the others do
+        html, docs = self._render()
+        self.assertNotIn("feedback_html", docs[2])
+        self.assertIn("feedback_html", docs[1])
+        # Check it is asked again for a different query
+        html, docs = self._render(params={"q": "guitar", "f": 'category:"Music"'})
+        self.assertIn("feedback_html", docs[2])

@@ -1,0 +1,8 @@
+{# Category filter experiment in the search page; rendered by CategoryFilterFeedback.render_inline_html. #}
+
+{# Info about the search. experiments.js sends it with every answer of this experiment. #}
+<div data-experiment-shared="{{ experiment_id }}" style="display: none;">
+    {% for name, value in search.items %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+</div>

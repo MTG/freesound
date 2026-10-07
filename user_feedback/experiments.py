@@ -1,4 +1,5 @@
 import hashlib
+import uuid
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -145,34 +146,87 @@ class CategoryValidation(Experiment):
 
 
 class CategoryFilterFeedback(Experiment):
-    """Search-page popup asking how useful it was to filter results by a category facet.
-
-    Measures the overall usefulness of the category filter. Shown only when the user is browsing
-    results that are filtered by a category, and once they have seen a filtered result set (handled in the search view).
-    """
+    """Experiment in the search page, shown when the results are filtered by category.
+    It asks how useful the category filter was (1-5 rating with an optional comment),
+    and whether each of the first results is what the user was looking for (yes/no)."""
 
     experiment_id = "category_filter_feedback"
     form_class = CategoryFilterFeedbackForm
-    modal_template = "user_feedback/modal_category_filter_feedback.html"
+    inline_template = "user_feedback/inline_category_filter_feedback.html"
+    result_template = "user_feedback/inline_category_filter_result.html"
+    num_results_asked = 10  # Only the first results get the question
 
-    def is_context_eligible(self, request, sqp=None, **kwargs):
-        # Only when a category facet is actually applied to the current search.
-        return bool(sqp is not None and sqp.has_category_filter())
+    @staticmethod
+    def _filter_value(sqp, field_name):
+        """Returns the value of a filter of the search (e.g. "Music" for category), or "" if not set."""
+        for field, value in sqp.non_option_filters:
+            if field == field_name:
+                return value.strip('"')
+        return ""
 
-    def sampling_key(self, request, category=None, **kwargs):
-        # Per (user, category): every user stays "in play" (the rate gates each category a user
-        # filters by, rather than fixing a permanent cohort of users).
-        return f"{request.user.id}:{category}" if category else ""
+    def is_context_eligible(self, request, sqp=None, docs=None, **kwargs):
+        # Only for a list of sounds filtered by category (not the map, not packs).
+        if sqp is None or not docs or not sqp.has_category_filter():
+            return False
+        return not sqp.map_mode_active() and not sqp.display_as_packs_active()
 
-    def is_throttled(self, request, category=None, **kwargs):
-        # Opt-out hides it everywhere; otherwise ask at most once per category per user.
-        if self.has_opted_out(request.user):
-            return True
-        if not category:
-            return True
-        return UserFeedback.objects.filter(
-            user=request.user, experiment_id=self.experiment_id, data__category=category
-        ).exists()
+    def sampling_key(self, request, sqp=None, **kwargs):
+        # Per (user, category), so every user can be asked for some categories.
+        return f"{request.user.id}:{self._filter_value(sqp, 'category')}" if sqp else ""
+
+    def is_throttled(self, request, **kwargs):
+        # Only the opt-out hides everything. Results already answered are skipped in render_inline_html.
+        return self.has_opted_out(request.user)
+
+    def _search_info(self, sqp, docs, page):
+        """Returns the info about the search that is sent with every answer."""
+        return {
+            "category": self._filter_value(sqp, "category"),
+            "subcategory": self._filter_value(sqp, "subcategory"),
+            "query": sqp.get_option_value_to_apply("query") or "",
+            "search_filter": sqp.get_filter_string_for_url(),
+            "sort": sqp.get_option_value_to_apply("sort_by") or "",
+            "page": page.number,
+            "result_ids": ",".join(str(doc["id"]) for doc in docs),
+            "search_url": sqp.get_url(),
+            "search_id": uuid.uuid4().hex,
+        }
+
+    def _answered_sound_ids(self, user, search):
+        """Returns the sounds that the user already answered for this category and query."""
+        answers = UserFeedback.objects.filter(
+            user=user,
+            experiment_id=self.experiment_id,
+            data__kind="result",
+            data__category=search["category"],
+            data__query=search["query"],
+        )
+        return set(answers.values_list("data__sound_id", flat=True))
+
+    def render_inline_html(self, request, sqp=None, docs=None, page=None, **kwargs):
+        """Returns the HTML of the experiment for the search page, or "" if it should not show.
+        It also adds `feedback_html` (yes/no question) to the results in `docs` that get asked."""
+        if not self.should_show(request, sqp=sqp, docs=docs):
+            return ""
+        search = self._search_info(sqp, docs, page)
+        context = {"experiment_id": self.experiment_id, "search": search}
+
+        # The first results that are not answered yet get the question.
+        answered_sound_ids = self._answered_sound_ids(request.user, search)
+        results_to_ask = [
+            (position, doc)
+            for position, doc in enumerate(docs, start=page.start_index())
+            if position <= self.num_results_asked and doc["id"] not in answered_sound_ids
+        ]
+        if not results_to_ask:
+            return ""
+        for position, doc in results_to_ask:
+            doc["feedback_html"] = mark_safe(
+                render_to_string(
+                    self.result_template, {**context, "sound_id": doc["id"], "position": position}, request=request
+                )
+            )
+        return mark_safe(render_to_string(self.inline_template, context, request=request))
 
 
 # The registry is built from settings.FEEDBACK_EXPERIMENTS, the place experiments are.

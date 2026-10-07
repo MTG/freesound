@@ -27,28 +27,26 @@ from wiki.models import Content, Page
 
 
 @pytest.fixture
-def wiki_pages(load_fixtures):
+def wiki_admin(load_fixtures):
     load_fixtures(["users"])
-    blank = Page.objects.create(name="blank")
-    user = User.objects.get(username="User1")
-    Content.objects.create(page=blank, author=user, title="Blank page", body="This is a blank page")
-
-    page = Page.objects.create(name="help")
-    help2 = Content.objects.create(page=page, author=user, title="FS Help", body="Help version 2")
-    help3 = Content.objects.create(page=page, author=user, title="FS Help", body="Help version 3")
-    Page.objects.create(name="nocontent")
-    return user, [help2.id, help3.id]
+    return User.objects.get(username="User1")
 
 
 @pytest.fixture
-def editable_wiki_page(load_fixtures):
-    load_fixtures(["users"])
-    admin = User.objects.get(username="User1")
+def editable_wiki_page(wiki_admin):
     blank = Page.objects.create(name="blank")
-    Content.objects.create(page=blank, author=admin, title="Blank page", body="This is a blank page")
+    Content.objects.create(page=blank, author=wiki_admin, title="Blank page", body="This is a blank page")
     page = Page.objects.create(name="help")
-    Content.objects.create(page=page, author=admin, title="FS Help", body="Help version 2")
+    Content.objects.create(page=page, author=wiki_admin, title="FS Help", body="Help version 2")
     return page
+
+
+@pytest.fixture
+def wiki_pages(editable_wiki_page, wiki_admin):
+    help2 = editable_wiki_page.content()
+    help3 = Content.objects.create(page=editable_wiki_page, author=wiki_admin, title="FS Help", body="Help version 3")
+    Page.objects.create(name="nocontent")
+    return [help2.pk, help3.pk]
 
 
 class TestWiki:
@@ -56,22 +54,24 @@ class TestWiki:
         resp = client.get(reverse("wiki-page", kwargs={"name": "help"}))
         assertContains(resp, "Help version 3")
 
-    def test_admin_page(self, wiki_pages, client):
+    def test_admin_page(self, wiki_pages, wiki_admin, client):
         # An admin user has a link to edit the page
-        user, _ = wiki_pages
-        client.force_login(user)
+        client.force_login(wiki_admin)
         resp = client.get(reverse("wiki-page", kwargs={"name": "help"}))
         assertContains(resp, "Edit this page")
 
     def test_page_version(self, wiki_pages, client):
-        _, help_ids = wiki_pages
+        help_ids = wiki_pages
         helpurl = reverse("wiki-page", kwargs={"name": "help"})
         # Old version of the page
         resp = client.get("%s?version=%d" % (helpurl, help_ids[0]))
         assertContains(resp, "Help version 2")
 
         # Version that doesn't exist (uses latest)
-        resp = client.get(f"{helpurl}?version=100")
+        latest_version = Content.objects.order_by("-id").values_list("id", flat=True).first()
+        assert latest_version is not None
+        missing_version = latest_version + 1
+        resp = client.get(f"{helpurl}?version={missing_version}")
         assertContains(resp, "Help version 3")
 
         # Not a number in version param (uses latest)
@@ -88,8 +88,7 @@ class TestWiki:
 
 
 class TestEditWikiPage:
-    def test_permissions(self, editable_wiki_page, client):
-        admin = User.objects.get(username="User1")
+    def test_permissions(self, editable_wiki_page, wiki_admin, client):
         user3 = User.objects.get(username="User3")
         user4 = User.objects.get(username="User4")
         # User with no permissions get 404
@@ -107,12 +106,12 @@ class TestEditWikiPage:
         assert resp.status_code == 200
 
         # Admin can edit
-        client.force_login(admin)
+        client.force_login(wiki_admin)
         resp = client.get(reverse("wiki-page-edit", kwargs={"name": "help"}))
         assert resp.status_code == 200
 
-    def test_edit_page_latest(self, editable_wiki_page, client):
-        client.force_login(User.objects.get(username="User1"))
+    def test_edit_page_latest(self, editable_wiki_page, wiki_admin, client):
+        client.force_login(wiki_admin)
         resp = client.get(reverse("wiki-page-edit", kwargs={"name": "help"}))
 
         assertContains(resp, "FS Help")
@@ -120,17 +119,17 @@ class TestEditWikiPage:
         # A page that exists has a link to a history page
         assertContains(resp, "history and comparison")
 
-    def test_edit_page_no_page(self, editable_wiki_page, client):
+    def test_edit_page_no_page(self, editable_wiki_page, wiki_admin, client):
         # If you edit a page that's not in the database it's not populated in the HTML
-        client.force_login(User.objects.get(username="User1"))
+        client.force_login(wiki_admin)
         resp = client.get(reverse("wiki-page-edit", kwargs={"name": "notapage"}))
 
         assertContains(resp, 'placeholder="Contents of the page. You can use Markdown formatting and HTML."')
         assertContains(resp, 'placeholder="Title of the page"')
 
-    def test_edit_page_save(self, editable_wiki_page, client):
+    def test_edit_page_save(self, editable_wiki_page, wiki_admin, client):
         # POST to the form and a new Content for this page is created
-        client.force_login(User.objects.get(username="User1"))
+        client.force_login(wiki_admin)
         resp = client.post(
             reverse("wiki-page-edit", kwargs={"name": "help"}),
             data={"title": "Page title", "body": "This is some body"},

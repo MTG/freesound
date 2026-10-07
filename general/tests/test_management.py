@@ -56,6 +56,9 @@ class TestReportCountStatusesManagementCommand:
 
         # Run command and assert counts are still ok
         call_command("report_count_statuses")
+        user.profile.refresh_from_db()
+        sound.refresh_from_db()
+        pack.refresh_from_db()
         assert user.profile.num_sounds == 1
         assert user.profile.num_posts == 1
         assert pack.num_sounds == 1
@@ -78,19 +81,19 @@ class TestReportCountStatusesManagementCommand:
         sound.num_downloads = 21
         sound.save()
 
-        # Re-run command with -n and assert counts are still wrong
+        # Re-run command with -n and assert counts are unchanged
         call_command("report_count_statuses", "--no-changes")
         user.profile.refresh_from_db()
         sound.refresh_from_db()
         pack.refresh_from_db()
-        assert user.profile.num_sounds != 1
-        assert user.profile.num_posts != 1
-        assert pack.num_sounds != 1
-        assert pack.num_downloads != 0
-        assert sound.num_ratings != 1
-        assert sound.avg_rating != 4
-        assert sound.num_comments != 1
-        assert sound.num_downloads != 0
+        assert user.profile.num_sounds == 21
+        assert user.profile.num_posts == 21
+        assert pack.num_sounds == 21
+        assert pack.num_downloads == 21
+        assert sound.num_ratings == 21
+        assert sound.avg_rating == 21
+        assert sound.num_comments == 21
+        assert sound.num_downloads == 21
 
         # Re-run command with -d and assert that all counts are ok except for download counts
         call_command("report_count_statuses", "--skip-downloads")
@@ -100,11 +103,11 @@ class TestReportCountStatusesManagementCommand:
         assert user.profile.num_sounds == 1
         assert user.profile.num_posts == 1  # Note this is still 1 as unmoderated posts do not count
         assert pack.num_sounds == 1
-        assert pack.num_downloads != 0
+        assert pack.num_downloads == 21
         assert sound.num_ratings == 1
         assert sound.avg_rating == 4
         assert sound.num_comments == 1
-        assert sound.num_downloads != 0
+        assert sound.num_downloads == 21
 
         # Re-run command with no options set and check that all counts are ok now
         call_command("report_count_statuses")

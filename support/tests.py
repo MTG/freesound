@@ -18,9 +18,15 @@
 #     See AUTHORS file.
 #
 
+import datetime
+
 import pytest
+from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
+from django.urls import reverse
 from zenpy.lib.api import serialize
 
+from comments.models import Comment
 from support.views import create_zendesk_ticket, send_email_to_support
 
 
@@ -59,6 +65,14 @@ def test_create_zendesk_ticket(moderation_test_users):
 
     # Try with existing email address
     request_email = "test.user+1@gmail.com"
+    user = User.objects.get(email=request_email)
+    user.last_login = datetime.datetime(2024, 2, 3, tzinfo=datetime.timezone.utc)
+    user.save()
+    user.profile.num_sounds = 3
+    user.profile.num_posts = 7
+    user.profile.save()
+    Comment.objects.create(user=user, comment="First comment")
+    Comment.objects.create(user=user, comment="Second comment")
     ticket = create_zendesk_ticket(request_email, subject, message)
     sticket = serialize(ticket)
 
@@ -67,10 +81,20 @@ def test_create_zendesk_ticket(moderation_test_users):
     assert sticket["requester"]["name"] == "test_user"
 
     # Check that ticket added custom fields
-    assert "custom_fields" in sticket
+    assert len(sticket["custom_fields"]) == 6
+    assert {field["id"]: field["value"] for field in sticket["custom_fields"]} == {
+        30294425: True,
+        30294725: user.date_joined.date().isoformat(),
+        30153569: "2024-02-03",
+        30295025: 3,
+        30295045: 7,
+        30153729: 2,
+    }
 
     # Check that ticket extended description with user info as expected
-    assert len(sticket["description"]) > len(message)
+    user_url = f"https://{Site.objects.get_current().domain}{reverse('account', args=[user.username])}"
+    assert sticket["description"] == f"{message}\n\n-- \n{user_url}"
+    assert sticket["subject"] == subject
 
     # Try with non-existing email address
     request_email = "test.user+1234678235@gmail.com"
@@ -79,4 +103,5 @@ def test_create_zendesk_ticket(moderation_test_users):
     assert sticket["requester"]["email"] == request_email
     assert sticket["requester"]["name"] == "Unknown username"  # Set unknown username
     assert "custom_fields" not in sticket  # no custom fields
-    assert len(sticket["description"]) == len(message)  # No extra description
+    assert sticket["description"] == message  # No extra description
+    assert sticket["subject"] == subject

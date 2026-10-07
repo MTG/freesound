@@ -30,25 +30,32 @@ from utils.test_helpers import create_user_and_sounds
 
 
 @pytest.fixture
-def rating_sound(load_fixtures):
-    load_fixtures(["licenses", "sounds"])
+def rating_licenses(load_fixtures):
+    load_fixtures(["licenses"])
+
+
+@pytest.fixture
+def rating_sound(rating_licenses, load_fixtures):
+    load_fixtures(["sounds"])
     return sounds.models.Sound.objects.get(pk=16)
 
 
 @pytest.fixture
-def rating_users(rating_sound):
-    user1 = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
-    user2 = User.objects.create_user("testuser2", email="testuser2@freesound.org", password="testpass")
-    user3 = User.objects.create_user("testuser3", email="testuser3@freesound.org", password="testpass")
-    return user1, user2, user3
+def rating_user(db):
+    return User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
 
 
 @pytest.fixture
-def rating_page_data(load_fixtures):
-    load_fixtures(["licenses", "sounds", "user_groups"])
-    sound = sounds.models.Sound.objects.get(pk=16)
-    user = User.objects.create_user("testuser1", email="testuser1@freesound.org", password="testpass")
-    return sound, user
+def rating_users(rating_user):
+    user2 = User.objects.create_user("testuser2", email="testuser2@freesound.org", password="testpass")
+    user3 = User.objects.create_user("testuser3", email="testuser3@freesound.org", password="testpass")
+    return rating_user, user2, user3
+
+
+@pytest.fixture
+def rating_page_data(rating_sound, rating_user, load_fixtures):
+    load_fixtures(["user_groups"])
+    return rating_sound, rating_user
 
 
 class TestRatings:
@@ -69,7 +76,8 @@ class TestRatings:
 
         RATING_VALUE = 3
         resp = client.get(f"/people/Anton/sounds/{sound.id}/rate/{RATING_VALUE}/")
-        assertContains(resp, "2")
+        assert resp.status_code == 200
+        assert resp.json()["num_ratings"] == 2
 
         assert ratings.models.SoundRating.objects.count() == 2
         r = ratings.models.SoundRating.objects.get(sound_id=sound.id, user_id=user1.id)
@@ -96,6 +104,9 @@ class TestRatings:
         r = ratings.models.SoundRating.objects.create(sound_id=sound.id, user_id=user1.id, rating=4)
 
         resp = client.get(f"/people/Anton/sounds/{sound.id}/rate/{5}/")
+        assert resp.status_code == 200
+        assert resp.json()["num_ratings"] == 1
+        assert resp.json()["avg_rating"] == 10.0
         newr = ratings.models.SoundRating.objects.first()
         assert ratings.models.SoundRating.objects.count() == 1
         # Ratings in the database are 2x the value from the web call
@@ -112,12 +123,16 @@ class TestRatings:
         user1, _, _ = rating_users
         client.force_login(user1)
 
-        resp = client.get(f"/people/Anton/sounds/{sound.id}/rate/{0}/")
-        # After doing an invalid rating, there are still none for this sound
-        assertContains(resp, "0")
-
-        resp = client.get(f"/people/Anton/sounds/{sound.id}/rate/{6}/")
-        assertContains(resp, "0")
+        # Check both boundaries; neither request should store a rating.
+        for rating in (0, 6):
+            resp = client.get(f"/people/Anton/sounds/{sound.id}/rate/{rating}/")
+            assert resp.status_code == 200
+            assert resp.json()["num_ratings"] == 0
+            assert resp.json()["avg_rating"] == 0
+            assert not ratings.models.SoundRating.objects.filter(sound=sound).exists()
+            sound.refresh_from_db()
+            assert sound.num_ratings == 0
+            assert sound.avg_rating == 0
 
     def test_delete_all_ratings(self, rating_sound, rating_users):
         sound = rating_sound
@@ -147,7 +162,7 @@ class TestRatings:
         assert resp.status_code == 404
 
     @override_settings(MIN_NUMBER_RATINGS=3)
-    def test_avg_rating_pack_model(self, rating_users):
+    def test_avg_rating_pack_model(self, rating_licenses, rating_users):
         user1, user2, user3 = rating_users
         _, packs, sound = create_user_and_sounds(num_sounds=3, num_packs=1)
         pack = packs[0]
@@ -172,7 +187,7 @@ class TestRatings:
         # Finally pack avg rating should be the avg of the avg_rating of each individual sound
         assert pack.avg_rating == 5
 
-    def test_avg_rating_profile_model(self, rating_users):
+    def test_avg_rating_profile_model(self, rating_licenses, rating_users):
         user1, user2, _ = rating_users
         user, _, sound = create_user_and_sounds(num_sounds=3)
 

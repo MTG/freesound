@@ -103,7 +103,7 @@ const bindFeedbackBox = box => {
   if (sendButton) sendButton.addEventListener('click', send);
 };
 
-// "Don't ask again": AJAX opt-out so we can acknowledge and drop the box without a
+// "Don't ask again": AJAX opt-out so we can acknowledge and drop the box(es) without a
 // reload. Falls back to a plain POST + redirect if this JS never runs.
 const bindOptOut = form => {
   form.addEventListener('submit', event => {
@@ -114,10 +114,10 @@ const bindOptOut = form => {
       { experiment_id: experimentId },
       () => {
         if (form.dataset.dismissModal) dismissModal(form.dataset.dismissModal);
-        const box = document.querySelector(
-          `[data-experiment-box][data-experiment-id="${experimentId}"]`
-        );
-        if (box) box.remove();
+        // Remove all the boxes of the experiment from the page.
+        document
+          .querySelectorAll(`[data-experiment-id="${experimentId}"]`)
+          .forEach(element => element.remove());
         showToast("Got it, we won't ask you this again.");
       },
       () => showToast('Something went wrong, please try again.')

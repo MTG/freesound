@@ -39,6 +39,34 @@ const collectSharedInputs = experimentId => {
   return shared ? collectNamedInputs(shared) : {};
 };
 
+// Boxes with [data-experiment-bar] are shown as a bar at the bottom of the page, with
+// the styles of the toast. The bar is shown after [data-experiment-bar-delay] seconds.
+const BAR_ANIMATION_DURATION_MS = 260;
+const BAR_HIDE_AFTER_THANKS_MS = 3000;
+
+const showBar = bar => {
+  bar.style.display = 'block';
+  // Force reflow so the show animation runs.
+  void bar.offsetWidth;
+  bar.classList.add('toast--visible');
+};
+
+const hideBar = bar => {
+  bar.classList.remove('toast--visible');
+  bar.classList.add('toast--hiding');
+  setTimeout(() => {
+    bar.classList.remove('toast--hiding');
+    bar.style.display = 'none';
+  }, BAR_ANIMATION_DURATION_MS);
+};
+
+const bindBar = bar => {
+  const delay = Number(bar.dataset.experimentBarDelay || 0) * 1000;
+  setTimeout(() => showBar(bar), delay);
+  const closeButton = bar.querySelector('[data-experiment-bar-close]');
+  if (closeButton) closeButton.addEventListener('click', () => hideBar(bar));
+};
+
 // One box: pick an answer (which may reveal extra fields), then Send posts it over
 // AJAX. A box without a Send button is saved when an answer is clicked.
 // Validation is left to the server, which replies with a JSON 400 we surface.
@@ -47,6 +75,8 @@ const bindFeedbackBox = box => {
   if (box.querySelector('.bst-category-field')) {
     prepareCategoryFormFields(box);
   }
+  const isBar = box.hasAttribute('data-experiment-bar');
+  if (isBar) bindBar(box);
   const expand = box.querySelector('[data-experiment-expand]');
   const answerButtons = [...box.querySelectorAll('[data-experiment-answer]')];
   const extras = [...box.querySelectorAll('[data-experiment-answer-extra]')];
@@ -71,6 +101,8 @@ const bindFeedbackBox = box => {
       },
       () => {
         box.innerHTML = `<b>${box.dataset.thanks || 'Thanks for your feedback!'}</b>`;
+        // Hide the bar a bit after the thanks.
+        if (isBar) setTimeout(() => hideBar(box), BAR_HIDE_AFTER_THANKS_MS);
       },
       responseText => {
         sending = false;

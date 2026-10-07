@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -328,12 +329,13 @@ class CategoryFilterFeedbackTest(TestCase):
     }
 
     def setUp(self):
-        self.user, _, self.sounds = create_user_and_sounds(num_sounds=12)
+        # One page of search results
+        self.user, _, self.sounds = create_user_and_sounds(num_sounds=settings.SOUNDS_PER_PAGE)
         self.client.force_login(self.user)
         self.experiment = CategoryFilterFeedback()
 
     def _items(self, client=None, **params):
-        # Get the HTML pieces of the experiment for a search page that shows the 12 sounds.
+        # Get the HTML pieces of the experiment for a search page that shows the sounds.
         # By default the search is "piano" filtered by the Music category
         params = {
             "q": "piano",
@@ -395,11 +397,11 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check nothing was saved
         self.assertEqual(self._rows().count(), 0)
 
-    def test_first_results_get_the_question(self):
+    def test_results_get_the_question(self):
         items = self._items()
-        # Check only the first 10 of the 12 results get the question
+        # Check all the results of the page get the question
         questions = [item for item in items if "target" in item]
-        self.assertEqual(len(questions), 10)
+        self.assertEqual(len(questions), len(self.sounds))
         # Check the question has the sound and its position
         self.assertEqual(questions[0]["target"], f'[data-sound-id="{self.sounds[0].id}"]')
         self.assertIn(f'name="sound_id" value="{self.sounds[0].id}"', questions[0]["html"])
@@ -407,14 +409,16 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check the last piece has the search info
         self.assertIn('name="category" value="Music"', items[-1]["html"])
         self.assertIn('name="query" value="piano"', items[-1]["html"])
+        # Check the results of another page get the question too
+        items = self._items(page=2)
+        self.assertEqual(len(items), len(self.sounds) + 1)
+        self.assertIn('name="page" value="2"', items[-1]["html"])
 
     def test_no_question_when_it_should_not_show(self):
         # Search without category filter
         self.assertEqual(self._items(f=""), [])
         # Anonymous user
         self.assertEqual(self._items(client=Client()), [])
-        # Page 2, only the first page is asked for now
-        self.assertEqual(self._items(page=2), [])
         # Page that has no experiment
         self.assertEqual(self._items(experiment_path=reverse("front-page")), [])
         # User opted out
@@ -427,7 +431,7 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check the answered result has no question, but the others do
         targets = [item.get("target") for item in self._items()]
         self.assertNotIn(answered, targets)
-        self.assertEqual(len(targets), 10)
+        self.assertEqual(len(targets), len(self.sounds))
         # Check it is asked again for a different query
         targets = [item.get("target") for item in self._items(q="guitar")]
         self.assertIn(answered, targets)

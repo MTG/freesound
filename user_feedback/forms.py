@@ -80,7 +80,7 @@ class CategoryFilterFeedbackForm(forms.Form):
         text: optional free-text comment.
         answer: the user's yes/no response. Required when kind is "result".
         sound_id: hidden field identifying the sound of the result.
-        position: hidden field with the position of the sound in the results.
+        position: hidden field with the position of the sound in the page of results.
         category, subcategory, query, search_filter, sort, page, result_ids, search_url, search_id:
             hidden fields describing the search.
     """

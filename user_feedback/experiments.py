@@ -155,7 +155,7 @@ class CategoryValidation(Experiment):
 class CategoryFilterFeedback(Experiment):
     """Experiment in the search page, shown when the results are filtered by category.
     It asks how useful the category filter was (1-5 rating with an optional comment),
-    and whether each of the first results is what the user was looking for (yes/no)."""
+    and whether each result of the page is what the user was looking for (yes/no)."""
 
     experiment_id = "category_filter_feedback"
     form_class = CategoryFilterFeedbackForm
@@ -163,7 +163,6 @@ class CategoryFilterFeedback(Experiment):
     result_template = "user_feedback/inline_category_filter_result.html"
     page_url_name = "sounds-search"
     result_container = "[data-score]"  # Element of the search page that wraps one result
-    num_results_asked = 10  # Only the first results get the question
 
     @staticmethod
     def _filter_value(sqp, field_name):
@@ -177,10 +176,7 @@ class CategoryFilterFeedback(Experiment):
         # Only for a list of sounds filtered by category (not the map, not packs).
         if sqp is None or sqp.errors or not sound_ids or not sqp.has_category_filter():
             return False
-        if sqp.map_mode_active() or sqp.display_as_packs_active():
-            return False
-        # Only in the first page of results, for now.
-        return sqp.get_option_value_to_apply("page") == 1
+        return not sqp.map_mode_active() and not sqp.display_as_packs_active()
 
     def sampling_key(self, request, sqp=None, **kwargs):
         # Per (user, category), so every user can be asked for some categories.
@@ -233,11 +229,11 @@ class CategoryFilterFeedback(Experiment):
         search = self._search_info(sqp, sound_ids)
         context = {"experiment_id": self.experiment_id, "search": search}
 
-        # The first results that are not answered yet get the yes/no question.
+        # The results of the page that are not answered yet get the yes/no question.
         answered_sound_ids = self._answered_sound_ids(request.user, search)
         items = [
             self._question_item(request, context, sound_id, position)
-            for position, sound_id in enumerate(sound_ids[: self.num_results_asked], start=1)
+            for position, sound_id in enumerate(sound_ids, start=1)
             if sound_id not in answered_sound_ids
         ]
         if not items:

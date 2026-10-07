@@ -1,9 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
+from django.urls import Resolver404, resolve
 from django.views.decorators.http import require_POST
 
-from user_feedback.experiments import get_experiment
+from user_feedback.experiments import EXPERIMENTS, get_experiment
 from utils.logging_filters import get_client_ip
 
 
@@ -49,6 +50,29 @@ def opt_out(request):
     if request.GET.get("ajax"):
         return JsonResponse({"success": True})
     return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+
+def page_items(request):
+    """Returns the HTML of the experiments of a page, as pieces that experiments.js places in the page.
+    It is requested after the page loads, so the template of the page does not need to change.
+
+    The request has the same GET parameters as the page, plus the path of the page
+    (``experiment_path``) and the sounds shown in it (``experiment_sound_ids``).
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"items": []})
+    try:
+        url_name = resolve(request.GET.get("experiment_path", "")).url_name
+    except Resolver404:
+        return JsonResponse({"items": []})
+    sound_ids = [
+        int(sound_id) for sound_id in request.GET.get("experiment_sound_ids", "").split(",") if sound_id.isdigit()
+    ]
+    items = []
+    for experiment in EXPERIMENTS.values():
+        if experiment.page_url_name == url_name:
+            items += experiment.render_page_items(request, sound_ids)
+    return JsonResponse({"items": items})
 
 
 @login_required

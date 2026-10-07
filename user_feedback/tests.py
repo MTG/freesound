@@ -1,11 +1,9 @@
 from django.contrib.auth.models import AnonymousUser, User
-from django.test import RequestFactory, TestCase, override_settings
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from user_feedback.experiments import CategoryFilterFeedback, CategoryValidation, Experiment
 from user_feedback.models import FeedbackOptOut, UserFeedback
-from utils.pagination import PreSlicedCountProvidedPaginator
-from utils.search.search_query_processor import SearchQueryProcessor
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -334,16 +332,18 @@ class CategoryFilterFeedbackTest(TestCase):
         self.client.force_login(self.user)
         self.experiment = CategoryFilterFeedback()
 
-    def _render(self, params=None, user=None, page_number=1):
-        # Render the experiment for a search of "piano" filtered by the Music category
-        if params is None:
-            params = {"q": "piano", "f": 'category:"Music"'}
-        request = RequestFactory().get(reverse("sounds-search"), params)
-        request.user = user or self.user
-        docs = [{"id": sound.id} for sound in self.sounds]
-        page = PreSlicedCountProvidedPaginator(docs, 15, 100).page(page_number)
-        html = self.experiment.render_inline_html(request, sqp=SearchQueryProcessor(request), docs=docs, page=page)
-        return html, docs
+    def _items(self, client=None, **params):
+        # Get the HTML pieces of the experiment for a search page that shows the 12 sounds.
+        # By default the search is "piano" filtered by the Music category
+        params = {
+            "q": "piano",
+            "f": 'category:"Music"',
+            "experiment_path": reverse("sounds-search"),
+            "experiment_sound_ids": ",".join(str(sound.id) for sound in self.sounds),
+            **params,
+        }
+        response = (client or self.client).get(reverse("user-feedback-page-items"), params)
+        return response.json()["items"]
 
     def _submit(self, **data):
         data = {
@@ -396,39 +396,38 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(self._rows().count(), 0)
 
     def test_first_results_get_the_question(self):
-        html, docs = self._render()
-        # Check the search info is in the page
-        self.assertIn('name="category" value="Music"', html)
-        self.assertIn('name="query" value="piano"', html)
+        items = self._items()
         # Check only the first 10 of the 12 results get the question
-        asked = [doc for doc in docs if "feedback_html" in doc]
-        self.assertEqual(len(asked), 10)
+        questions = [item for item in items if "target" in item]
+        self.assertEqual(len(questions), 10)
         # Check the question has the sound and its position
-        self.assertIn(f'name="sound_id" value="{self.sounds[0].id}"', asked[0]["feedback_html"])
-        self.assertIn('name="position" value="1"', asked[0]["feedback_html"])
+        self.assertEqual(questions[0]["target"], f'[data-sound-id="{self.sounds[0].id}"]')
+        self.assertIn(f'name="sound_id" value="{self.sounds[0].id}"', questions[0]["html"])
+        self.assertIn('name="position" value="1"', questions[0]["html"])
+        # Check the last piece has the search info
+        self.assertIn('name="category" value="Music"', items[-1]["html"])
+        self.assertIn('name="query" value="piano"', items[-1]["html"])
 
     def test_no_question_when_it_should_not_show(self):
         # Search without category filter
-        html, docs = self._render(params={"q": "piano"})
-        self.assertEqual(html, "")
-        self.assertNotIn("feedback_html", docs[0])
+        self.assertEqual(self._items(f=""), [])
         # Anonymous user
-        html, docs = self._render(user=AnonymousUser())
-        self.assertEqual(html, "")
-        # Page 2, results start at position 16
-        html, docs = self._render(page_number=2)
-        self.assertEqual(html, "")
+        self.assertEqual(self._items(client=Client()), [])
+        # Page 2, only the first page is asked for now
+        self.assertEqual(self._items(page=2), [])
+        # Page that has no experiment
+        self.assertEqual(self._items(experiment_path=reverse("front-page")), [])
         # User opted out
         self.experiment.opt_out(self.user)
-        html, docs = self._render()
-        self.assertEqual(html, "")
+        self.assertEqual(self._items(), [])
 
     def test_answered_result_is_not_asked_again(self):
+        answered = f'[data-sound-id="{self.sounds[2].id}"]'
         self._submit(kind="result", answer="yes", sound_id=self.sounds[2].id, position=3)
         # Check the answered result has no question, but the others do
-        html, docs = self._render()
-        self.assertNotIn("feedback_html", docs[2])
-        self.assertIn("feedback_html", docs[1])
+        targets = [item.get("target") for item in self._items()]
+        self.assertNotIn(answered, targets)
+        self.assertEqual(len(targets), 10)
         # Check it is asked again for a different query
-        html, docs = self._render(params={"q": "guitar", "f": 'category:"Music"'})
-        self.assertIn("feedback_html", docs[2])
+        targets = [item.get("target") for item in self._items(q="guitar")]
+        self.assertIn(answered, targets)

@@ -7,6 +7,11 @@ import { prepareCategoryFormFields } from './bstCategoryFormField';
 // experiment-specific lives here: every box declares its own behaviour with data-
 // attributes in its template, so a new experiment needs no changes to this file.
 
+/* global userIsAuthenticated */
+
+// View that returns the experiments of a page that loads them after the page loads.
+const PAGE_ITEMS_URL = '/user-feedback/page-items/';
+
 // First field-error message out of the submit view's JSON 400 body.
 const firstFormError = responseText => {
   try {
@@ -126,14 +131,54 @@ const bindInfoButton = button =>
     activateModal(button.dataset.infoModal)
   );
 
+// Binds the elements only once, so it can be called again after more boxes are added to the page.
+const bindOnce = (selector, bind) =>
+  [...document.querySelectorAll(selector)].forEach(element => {
+    if (element.dataset.experimentBound) return;
+    element.dataset.experimentBound = '1';
+    bind(element);
+  });
+
 const prepareFeedbackExperiments = () => {
-  [...document.querySelectorAll('[data-experiment-box]')].forEach(
-    bindFeedbackBox
-  );
-  [...document.querySelectorAll('form[data-experiment-optout]')].forEach(
-    bindOptOut
-  );
-  [...document.querySelectorAll('[data-info-modal]')].forEach(bindInfoButton);
+  bindOnce('[data-experiment-box]', bindFeedbackBox);
+  bindOnce('form[data-experiment-optout]', bindOptOut);
+  bindOnce('[data-info-modal]', bindInfoButton);
 };
 
-export { prepareFeedbackExperiments };
+// Places a piece of HTML in the page. With a target, it goes right after the block that
+// has the target element inside its container. Without a target, at the end of the page.
+const placePageItem = item => {
+  if (!item.target) {
+    document.body.insertAdjacentHTML('beforeend', item.html);
+    return;
+  }
+  const target = document.querySelector(item.target);
+  const container = target && target.closest(item.container);
+  if (!container) return;
+  let block = target;
+  while (block.parentElement !== container) block = block.parentElement;
+  block.insertAdjacentHTML('afterend', item.html);
+};
+
+// Loads the experiments of a page that does not have them in its template. The server gets
+// the parameters of the page and the sounds shown in it, and returns the HTML to place.
+const loadFeedbackExperiments = () => {
+  if (!userIsAuthenticated) return;
+  const soundIds = [...document.querySelectorAll('[data-sound-id]')].map(
+    element => element.dataset.soundId
+  );
+  const params = new URLSearchParams(window.location.search);
+  params.set('experiment_path', window.location.pathname);
+  params.set('experiment_sound_ids', [...new Set(soundIds)].join(','));
+  fetch(`${PAGE_ITEMS_URL}?${params}`)
+    .then(response => response.json())
+    .then(data => {
+      data.items.forEach(placePageItem);
+      prepareFeedbackExperiments();
+    })
+    .catch(() => {
+      // The page works the same without the experiments.
+    });
+};
+
+export { prepareFeedbackExperiments, loadFeedbackExperiments };

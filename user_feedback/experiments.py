@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 
 from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
 from user_feedback.models import FeedbackOptOut, UserFeedback
+from utils.search.search_query_processor import SearchQueryProcessor
 
 
 class Experiment:
@@ -23,6 +24,7 @@ class Experiment:
     form_class = None  # form the generic submit view validates for this experiment
     modal_template = None  # optional follow-up modal, rendered by the modal view
     inline_template = None  # optional inline box rendered on a host page
+    page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
 
     @property
     def sample_rate(self):
@@ -72,6 +74,11 @@ class Experiment:
         return mark_safe(
             render_to_string(self.inline_template, self.inline_context(request, **kwargs), request=request)
         )
+
+    def render_page_items(self, request, sound_ids):
+        """Returns the pieces of HTML to add to a page that shows `sound_ids` (see page_url_name).
+        Each piece is a dict with "html" and, optionally, the "target" and "container" to place it."""
+        return []
 
     def is_throttled(self, request, **kwargs):
         """True if we should NOT show it because of 'do not nag' rules.
@@ -154,6 +161,8 @@ class CategoryFilterFeedback(Experiment):
     form_class = CategoryFilterFeedbackForm
     inline_template = "user_feedback/inline_category_filter_feedback.html"
     result_template = "user_feedback/inline_category_filter_result.html"
+    page_url_name = "sounds-search"
+    result_container = "[data-score]"  # Element of the search page that wraps one result
     num_results_asked = 10  # Only the first results get the question
 
     @staticmethod
@@ -164,21 +173,24 @@ class CategoryFilterFeedback(Experiment):
                 return value.strip('"')
         return ""
 
-    def is_context_eligible(self, request, sqp=None, docs=None, **kwargs):
+    def is_context_eligible(self, request, sqp=None, sound_ids=None, **kwargs):
         # Only for a list of sounds filtered by category (not the map, not packs).
-        if sqp is None or not docs or not sqp.has_category_filter():
+        if sqp is None or sqp.errors or not sound_ids or not sqp.has_category_filter():
             return False
-        return not sqp.map_mode_active() and not sqp.display_as_packs_active()
+        if sqp.map_mode_active() or sqp.display_as_packs_active():
+            return False
+        # Only in the first page of results, for now.
+        return sqp.get_option_value_to_apply("page") == 1
 
     def sampling_key(self, request, sqp=None, **kwargs):
         # Per (user, category), so every user can be asked for some categories.
         return f"{request.user.id}:{self._filter_value(sqp, 'category')}" if sqp else ""
 
     def is_throttled(self, request, **kwargs):
-        # Only the opt-out hides everything. Results already answered are skipped in render_inline_html.
+        # Only the opt-out hides everything. Results already answered are skipped in render_page_items.
         return self.has_opted_out(request.user)
 
-    def _search_info(self, sqp, docs, page):
+    def _search_info(self, sqp, sound_ids):
         """Returns the info about the search that is sent with every answer."""
         return {
             "category": self._filter_value(sqp, "category"),
@@ -186,8 +198,8 @@ class CategoryFilterFeedback(Experiment):
             "query": sqp.get_option_value_to_apply("query") or "",
             "search_filter": sqp.get_filter_string_for_url(),
             "sort": sqp.get_option_value_to_apply("sort_by") or "",
-            "page": page.number,
-            "result_ids": ",".join(str(doc["id"]) for doc in docs),
+            "page": sqp.get_option_value_to_apply("page"),
+            "result_ids": ",".join(str(sound_id) for sound_id in sound_ids),
             "search_url": sqp.get_url(),
             "search_id": uuid.uuid4().hex,
         }
@@ -203,30 +215,35 @@ class CategoryFilterFeedback(Experiment):
         )
         return set(answers.values_list("data__sound_id", flat=True))
 
-    def render_inline_html(self, request, sqp=None, docs=None, page=None, **kwargs):
-        """Returns the HTML of the experiment for the search page, or "" if it should not show.
-        It also adds `feedback_html` (yes/no question) to the results in `docs` that get asked."""
-        if not self.should_show(request, sqp=sqp, docs=docs):
-            return ""
-        search = self._search_info(sqp, docs, page)
+    def _question_item(self, request, context, sound_id, position):
+        """Returns the yes/no question of one result, to be placed right after the sound."""
+        context = {**context, "sound_id": sound_id, "position": position}
+        return {
+            "target": f'[data-sound-id="{sound_id}"]',
+            "container": self.result_container,
+            "html": render_to_string(self.result_template, context, request=request),
+        }
+
+    def render_page_items(self, request, sound_ids):
+        """Returns the pieces of HTML of the experiment for a search page that shows `sound_ids`.
+        The request has the same GET parameters as the search page."""
+        sqp = SearchQueryProcessor(request)
+        if not self.should_show(request, sqp=sqp, sound_ids=sound_ids):
+            return []
+        search = self._search_info(sqp, sound_ids)
         context = {"experiment_id": self.experiment_id, "search": search}
 
-        # The first results that are not answered yet get the question.
+        # The first results that are not answered yet get the yes/no question.
         answered_sound_ids = self._answered_sound_ids(request.user, search)
-        results_to_ask = [
-            (position, doc)
-            for position, doc in enumerate(docs, start=page.start_index())
-            if position <= self.num_results_asked and doc["id"] not in answered_sound_ids
+        items = [
+            self._question_item(request, context, sound_id, position)
+            for position, sound_id in enumerate(sound_ids[: self.num_results_asked], start=1)
+            if sound_id not in answered_sound_ids
         ]
-        if not results_to_ask:
-            return ""
-        for position, doc in results_to_ask:
-            doc["feedback_html"] = mark_safe(
-                render_to_string(
-                    self.result_template, {**context, "sound_id": doc["id"], "position": position}, request=request
-                )
-            )
-        return mark_safe(render_to_string(self.inline_template, context, request=request))
+        if not items:
+            return []
+        # The info about the search goes at the end of the page.
+        return items + [{"html": render_to_string(self.inline_template, context, request=request)}]
 
 
 # The registry is built from settings.FEEDBACK_EXPERIMENTS, the place experiments are.

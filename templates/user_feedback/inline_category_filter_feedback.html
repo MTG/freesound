@@ -15,9 +15,7 @@
          data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}">
         <input type="hidden" name="kind" value="overall">
         {# Circled "i" that opens the info modal below. #}
-        <button type="button" data-info-modal="{{ config.experiment_id }}_info_modal" title="About this study" aria-label="About this study"
-                class="cursor-pointer"
-                style="position: absolute; top: 10px; left: 12px; margin: 0; padding: 0; background: none; color: inherit; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
+        {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 10px; left: 12px; color: inherit;" %}
         <span data-experiment-bar-close class="cursor-pointer" title="Close" aria-label="Close" style="position: absolute; top: 8px; right: 12px;">{% bw_icon 'close' %}</span>
         <div class="h-padding-4"><b>How useful was filtering by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer" style="color: #c99700;">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</b></div>
         <div class="v-spacing-top-2">

@@ -7,9 +7,7 @@
     {# sound_id travels as a named input so the generic binder posts it without knowing this experiment's fields. #}
     <input type="hidden" name="sound_id" value="{{ sound.id }}">
     {# Circled "i" pinned top-right; opens the info + opt-out modal below (binder -> activateModal). #}
-    <button type="button" data-info-modal="{{ config.experiment_id }}_info_modal" title="About this study" aria-label="About this study"
-            class="cursor-pointer text-light-grey"
-            style="position: absolute; top: 8px; right: 10px; margin: 0; padding: 0; background: none; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
+    {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 8px; right: 10px;" extra_class="text-light-grey" %}
     {# Question on its own line; Yes/No on the row below. #}
     <div><b>Does this sound belong to the <a href="{% url 'bst-info-page' %}#{{ sound.category_code }}" target="_blank" rel="noopener noreferrer" style="color: #c99700;">{{ sound.category_names.0 }} > {{ sound.category_names.1 }}</a> category?</b></div>
     {# Both answers reveal the follow-up below; buttons stay visible. #}

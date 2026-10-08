@@ -17,6 +17,9 @@ EMAIL_FILE_PATH = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__fi
 WORKER_MIN_FREE_DISK_SPACE_PERCENTAGE = 0.0
 BULK_UPLOAD_MIN_SOUNDS = 0
 
+# RabbitMQ management UI on the host (set by docker-compose from LOCAL_PORT_PREFIX)
+RABBITMQ_MANAGEMENT_URL = os.environ.get("RABBITMQ_MANAGEMENT_URL", "")
+
 # Sentry DSN configuration
 SENTRY_DSN = None
 

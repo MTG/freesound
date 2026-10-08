@@ -927,7 +927,9 @@ RABBITMQ_USER = "guest"
 RABBITMQ_PASS = "guest"  # noqa: S105
 RABBITMQ_HOST = "rabbitmq"
 RABBITMQ_PORT = "5672"
-RABBITMQ_API_PORT = "5673"
+RABBITMQ_API_PORT = "15672"
+# Browser-facing URL for the RabbitMQ management UI (used by monitor dashboard links). No trailing slash.
+RABBITMQ_MANAGEMENT_URL = ""
 
 # -------------------------------------------------------------------------------
 # Collections

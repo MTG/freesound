@@ -28,9 +28,14 @@ class Experiment:
     page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
 
     @property
+    def config(self):
+        """Configuration of the experiment that is edited in the admin (sample rate and texts)."""
+        return FeedbackExperiment.objects.filter(experiment_id=self.experiment_id).first()
+
+    @property
     def sample_rate(self):
-        """Fraction of eligible people to show it to (0.0 = off). It is edited in the admin."""
-        config = FeedbackExperiment.objects.filter(experiment_id=self.experiment_id).first()
+        """Fraction of eligible people to show it to (0.0 = off)."""
+        config = self.config
         return config.sample_rate if config else 0.0
 
     def sampling_key(self, request, **kwargs):
@@ -130,6 +135,7 @@ class CategoryValidation(Experiment):
         # The box shows which category is being judged and offers a correction form.
         # bst_top_level_categories drives the category field, same as the describe form.
         return {
+            "config": self.config,
             "sound": sound,
             "category_validation_form": self.form_class(initial={"sound_id": sound.id}),
             "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
@@ -246,7 +252,7 @@ class CategoryFilterFeedback(Experiment):
         if not self.should_show(request, sqp=sqp, sound_ids=sound_ids):
             return []
         search = self._search_info(sqp, sound_ids)
-        context = {"experiment_id": self.experiment_id, "search": search}
+        context = {"experiment_id": self.experiment_id, "config": self.config, "search": search}
 
         # The results of the page that are not answered yet get the yes/no question.
         answered_sound_ids = self._answered_sound_ids(request.user, search)

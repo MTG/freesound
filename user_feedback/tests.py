@@ -314,6 +314,8 @@ class RenderInlineHtmlTest(TestCase):
         self.assertIn('name="selected_category"', html)  # the correction form is built in
         # Check the category links to its description in the taxonomy page
         self.assertIn(reverse("bst-info-page") + "#fx-o", html)
+        # Check the info modal has the name of the study, which is in the model
+        self.assertIn("Validating Sound Categorization in Freesound", html)
 
     def test_empty_string_when_not_shown(self):
         set_sample_rate("category_validation", 0.0)
@@ -451,6 +453,7 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertIn("How useful was filtering by the", html)
         self.assertIn("Music</a> category?", html)
         self.assertIn("data-experiment-optout", html)
+        self.assertIn("Evaluating Category Filters in Freesound Search", html)
         # Check the bar is not shown again after rating this search, but the questions are
         self._submit(kind="overall", rating="4")
         items = self._items()

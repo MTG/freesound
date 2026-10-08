@@ -15,7 +15,7 @@
          data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}">
         <input type="hidden" name="kind" value="overall">
         {# Circled "i" that opens the info modal below. #}
-        <button type="button" data-info-modal="categoryFilterInfoModal" title="About this study" aria-label="About this study"
+        <button type="button" data-info-modal="{{ config.experiment_id }}_info_modal" title="About this study" aria-label="About this study"
                 class="cursor-pointer"
                 style="position: absolute; top: 10px; left: 12px; margin: 0; padding: 0; background: none; color: inherit; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
         <span data-experiment-bar-close class="cursor-pointer" title="Close" aria-label="Close" style="position: absolute; top: 8px; right: 12px;">{% bw_icon 'close' %}</span>
@@ -37,37 +37,5 @@
     </div>
 
     {# Study information sheet + opt-out in "i" of the bar. #}
-    <div class="modal" id="categoryFilterInfoModal" tabindex="-1" role="dialog" aria-label="About this study" aria-hidden="true">
-        <div class="modal-wrapper">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <span class="close" data-dismiss="modal" aria-label="Close">{% bw_icon 'close' %}</span>
-                    </div>
-                    <div class="modal-body">
-                        <h4 class="v-spacing-5">About this study</h4>
-
-                        <p><b>Study:</b> Evaluating Category Filters in Freesound Search</p>
-
-                        <p>
-                            When you filter search results by a category of the <a href="https://freesound.org/help/faq/#the-broad-sound-taxonomy" target="_blank" rel="noopener noreferrer">Broad Sound Taxonomy</a>,
-                            you are occasionally asked whether the results are what you were looking for, and how useful the filter was.
-                            Your answers will help us evaluate how well the categories work for finding sounds.
-                        </p>
-
-                        <p><b>Participation:</b> Taking part is voluntary, and the "Don't ask again" button below will permanently stop these questions.</p>
-
-                        <p><b>Contact:</b> If you would like further information about this research, please contact us through the <a href="{% url 'contact' %}">contact page</a>.</p>
-
-                        {# "Don't ask again" button. experiments.js saves the opt-out and removes the boxes. #}
-                        <form method="post" action="{% url 'user-feedback-opt-out' %}" data-experiment-optout data-dismiss-modal="categoryFilterInfoModal" class="v-spacing-3">
-                            {% csrf_token %}
-                            <input type="hidden" name="experiment_id" value="{{ experiment_id }}">
-                            <button type="submit" class="btn-inverse" style="align-self: center;">Don't ask again</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include "user_feedback/info_modal.html" %}
 {% endif %}

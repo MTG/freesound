@@ -7,7 +7,7 @@
     {# sound_id travels as a named input so the generic binder posts it without knowing this experiment's fields. #}
     <input type="hidden" name="sound_id" value="{{ sound.id }}">
     {# Circled "i" pinned top-right; opens the info + opt-out modal below (binder -> activateModal). #}
-    <button type="button" data-info-modal="categoryValidationInfoModal" title="About this study" aria-label="About this study"
+    <button type="button" data-info-modal="{{ config.experiment_id }}_info_modal" title="About this study" aria-label="About this study"
             class="cursor-pointer text-light-grey"
             style="position: absolute; top: 8px; right: 10px; margin: 0; padding: 0; background: none; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
     {# Question on its own line; Yes/No on the row below. #}
@@ -53,38 +53,5 @@
     </div>
 </div>
 
-{# Study information sheet + opt-out. Self-contained modal (no view/URL), opened with the top-right "i". #}
-<div class="modal" id="categoryValidationInfoModal" tabindex="-1" role="dialog" aria-label="About this study" aria-hidden="true">
-    <div class="modal-wrapper">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <span class="close" data-dismiss="modal" aria-label="Close">{% bw_icon 'close' %}</span>
-                </div>
-                <div class="modal-body">
-                    <h4 class="v-spacing-5">About this study</h4>
-
-                    <p><b>Study:</b> Validating Sound Categorization in Freesound</p>
-
-                    <p>
-                        You are occasionally shown a short question asking whether a sound has been placed in the
-                        correct category according to the <a href="https://freesound.org/help/faq/#the-broad-sound-taxonomy" target="_blank" rel="noopener noreferrer">Broad Sound Taxonomy</a>.
-                        Your answers will help us evaluate sound categorization on Freesound and
-                        better understand how users perceive sound categories.
-                    </p>
-
-                    <p><b>Participation:</b> Taking part is voluntary, and the "Don't ask again" button below will permanently stop them.</p>
-
-                    <p><b>Contact:</b> If you would like further information about this research, please contact us through the <a href="{% url 'contact' %}">contact page</a>.</p>
-
-                    {# "Don't ask again": AJAX opt-out (binder) closes this modal and drops the box; falls back to a plain POST + reload. #}
-                    <form method="post" action="{% url 'user-feedback-opt-out' %}" data-experiment-optout data-dismiss-modal="categoryValidationInfoModal" class="v-spacing-3">
-                        {% csrf_token %}
-                        <input type="hidden" name="experiment_id" value="category_validation">
-                        <button type="submit" class="btn-inverse" style="align-self: center;">Don't ask again</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{# Study information sheet + opt-out, opened with the top-right "i". #}
+{% include "user_feedback/info_modal.html" %}

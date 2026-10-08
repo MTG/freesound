@@ -307,6 +307,8 @@ class RenderInlineHtmlTest(TestCase):
         html = self.experiment.render_inline_html(self._request(), sound=self.sound)
         self.assertIn("data-experiment-box", html)
         self.assertIn('name="selected_category"', html)  # the correction form is built in
+        # Check the category links to its description in the taxonomy page
+        self.assertIn(reverse("bst-info-page") + "#fx-o", html)
 
     @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 0.0}})
     def test_empty_string_when_not_shown(self):

@@ -80,7 +80,7 @@ class DeletedUserAdmin(admin.ModelAdmin):
     list_filter = ("reason",)
     readonly_fields = ("user", "username", "email", "date_joined", "last_login", "deletion_date", "reason")
     list_display = ("get_object_link", "get_view_link", "deletion_date", "reason")
-    search_fields = ("=username",)
+    search_fields = ("=username", "=email")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

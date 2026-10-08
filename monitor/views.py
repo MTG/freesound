@@ -56,7 +56,14 @@ def get_queues_status(request):
         celery_task_counts = get_queues_task_counts()
     except Exception:
         celery_task_counts = []
-    return render(request, "monitor/queues_status.html", {"celery_task_counts": celery_task_counts})
+    return render(
+        request,
+        "monitor/queues_status.html",
+        {
+            "celery_task_counts": celery_task_counts,
+            "RABBITMQ_MANAGEMENT_URL": settings.RABBITMQ_MANAGEMENT_URL,
+        },
+    )
 
 
 @login_required
@@ -89,6 +96,7 @@ def monitor_processing(request):
         "sounds_ok_count": sounds_ok_count,
         "queues_stats_url": reverse("queues-stats"),
         "activePage": "processing",
+        "RABBITMQ_MANAGEMENT_URL": settings.RABBITMQ_MANAGEMENT_URL,
     }
     return render(request, "monitor/processing.html", tvars)
 
@@ -134,6 +142,7 @@ def monitor_analysis(request):
         "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
         "queues_stats_url": reverse("queues-stats"),
         "activePage": "analysis",
+        "RABBITMQ_MANAGEMENT_URL": settings.RABBITMQ_MANAGEMENT_URL,
         "consolidated": {
             "ok": consolidated_ok,
             "sk": consolidated_sk,

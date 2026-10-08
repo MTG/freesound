@@ -9,7 +9,7 @@
     {# Circled "i" pinned top-right; opens the info + opt-out modal below (binder -> activateModal). #}
     {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 8px; right: 10px;" extra_class="text-light-grey" %}
     {# Question on its own line; Yes/No on the row below. #}
-    <div><b>Does this sound belong to the <a href="{% url 'bst-info-page' %}#{{ sound.category_code }}" target="_blank" rel="noopener noreferrer" style="color: #c99700;">{{ sound.category_names.0 }} > {{ sound.category_names.1 }}</a> category?</b></div>
+    <div><b>Does this sound belong to the <a href="{% url 'bst-info-page' %}#{{ sound.category_code }}" target="_blank" rel="noopener noreferrer">{{ sound.category_names.0 }} > {{ sound.category_names.1 }}</a> category?</b></div>
     {# Both answers reveal the follow-up below; buttons stay visible. #}
     <div class="v-spacing-top-2">
         <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block" data-experiment-answer="yes">Yes</a>

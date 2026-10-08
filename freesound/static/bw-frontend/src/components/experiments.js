@@ -119,10 +119,13 @@ const bindFeedbackBox = box => {
     button.addEventListener('click', () => {
       chosenAnswer = button.dataset.experimentAnswer;
       // Highlight the chosen answer; keep the others outlined so the choice can change.
-      answerButtons.forEach(other => {
-        other.classList.toggle('btn-primary', other === button);
-        other.classList.toggle('btn-inverse', other !== button);
-      });
+      // Not needed without a Send button, because the answer is saved right away.
+      if (sendButton) {
+        answerButtons.forEach(other => {
+          other.classList.toggle('btn-primary', other === button);
+          other.classList.toggle('btn-inverse', other !== button);
+        });
+      }
       if (expand) expand.style.display = '';
       // Reveal only the extras tied to this answer (e.g. the "no" category picker).
       extras.forEach(extra => {

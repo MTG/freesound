@@ -17,7 +17,7 @@
         {# Circled "i" that opens the info modal below. #}
         {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 10px; left: 12px; color: inherit;" %}
         <span data-experiment-bar-close class="cursor-pointer" title="Close" aria-label="Close" style="position: absolute; top: 8px; right: 12px;">{% bw_icon 'close' %}</span>
-        <div class="h-padding-4"><b>How useful was filtering by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer" style="color: #c99700;">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</b></div>
+        <div class="h-padding-4"><b>How useful was filtering by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</b></div>
         <div class="v-spacing-top-2">
             <span class="text-14 h-spacing-2">Not useful</span>
             {% for value in "12345" %}

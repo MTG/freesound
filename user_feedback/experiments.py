@@ -163,6 +163,7 @@ class CategoryFilterFeedback(Experiment):
     result_template = "user_feedback/inline_category_filter_result.html"
     page_url_name = "sounds-search"
     result_container = "[data-score]"  # Element of the search page that wraps one result
+    bar_delay_seconds = 0  # Seconds to wait before showing the overall rating bar
 
     @staticmethod
     def _filter_value(sqp, field_name):
@@ -211,6 +212,16 @@ class CategoryFilterFeedback(Experiment):
         )
         return set(answers.values_list("data__sound_id", flat=True))
 
+    def _is_rated(self, user, search):
+        """Returns True if the user already rated this search (same category and query)."""
+        return UserFeedback.objects.filter(
+            user=user,
+            experiment_id=self.experiment_id,
+            data__kind="overall",
+            data__category=search["category"],
+            data__query=search["query"],
+        ).exists()
+
     def _question_item(self, request, context, sound_id, position):
         """Returns the yes/no question of one result, to be placed right after the sound."""
         context = {**context, "sound_id": sound_id, "position": position}
@@ -236,9 +247,12 @@ class CategoryFilterFeedback(Experiment):
             for position, sound_id in enumerate(sound_ids, start=1)
             if sound_id not in answered_sound_ids
         ]
-        if not items:
+        # The overall rating bar is shown until the user rates this search.
+        context["show_bar"] = not self._is_rated(request.user, search)
+        context["bar_delay_seconds"] = self.bar_delay_seconds
+        if not items and not context["show_bar"]:
             return []
-        # The info about the search goes at the end of the page.
+        # The info about the search and the bar go at the end of the page.
         return items + [{"html": render_to_string(self.inline_template, context, request=request)}]
 
 

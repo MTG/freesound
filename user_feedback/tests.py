@@ -435,3 +435,17 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check it is asked again for a different query
         targets = [item.get("target") for item in self._items(q="guitar")]
         self.assertIn(answered, targets)
+
+    def test_rating_bar_is_shown_until_rated(self):
+        # Check the last piece has the bar, with the info modal and the opt-out
+        html = self._items()[-1]["html"]
+        self.assertIn("data-experiment-bar", html)
+        self.assertIn("How useful was filtering by the Music category?", html)
+        self.assertIn("data-experiment-optout", html)
+        # Check the bar is not shown again after rating this search, but the questions are
+        self._submit(kind="overall", rating="4")
+        items = self._items()
+        self.assertNotIn("data-experiment-bar", items[-1]["html"])
+        self.assertEqual(len(items), len(self.sounds) + 1)
+        # Check the bar is shown again for another search in the same category
+        self.assertIn("data-experiment-bar", self._items(q="guitar")[-1]["html"])

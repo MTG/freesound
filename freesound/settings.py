@@ -93,10 +93,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ("accounts.modelbackend.CustomModelBackend",)
 
-# This was the default serializer in django 1.6. Now we keep using it because
-# we saw some errors when running tests, in the future we should change to the
-# new one.
-SESSION_SERIALIZER = "django.contrib.sessions.serializers.PickleSerializer"
+# Read JSON or legacy pickle; write JSON.
+SESSION_SERIALIZER = "utils.session_serializers.TransitionalPickleSerializer"
 
 TIME_ZONE = "Europe/Brussels"
 
@@ -122,6 +120,7 @@ CLUSTERING_CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
 CELERY_BROKER_REDIS_STORE_ID = 3
 ABUSE_REDIS_STORE_ID = 4
+SEARCH_QUERIES_REDIS_STORE_ID = 5
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -143,6 +142,10 @@ CACHES = {
     "abuse": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{ABUSE_REDIS_STORE_ID}",
+    },
+    "search_queries": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{SEARCH_QUERIES_REDIS_STORE_ID}",
     },
 }
 
@@ -321,6 +324,7 @@ DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5
 MESSAGES_PER_PAGE = 10
 BOOKMARKS_PER_PAGE = 12
+COLLECTIONS_PER_PAGE = 12
 SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
 NUM_SIMILAR_SOUNDS_PER_PAGE = 9
 NUM_SIMILAR_SOUNDS_PAGES = 1  # In the modal we only show one page, full results can be seen in search page
@@ -579,6 +583,7 @@ SEARCH_SOUNDS_FIELD_CHANNELS = "channels"
 SEARCH_SOUNDS_FIELD_LICENSE_NAME = "license"
 SEARCH_SOUNDS_FIELD_CATEGORY = "category"
 SEARCH_SOUNDS_FIELD_SUBCATEGORY = "subcategory"
+SEARCH_SOUNDS_FIELD_COLLECTION_NAMES = "collection_names"
 SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING = "collection_grouping"
 
 # Default weights for fields to match
@@ -689,6 +694,10 @@ SEARCH_EMPTY_QUERY_CACHE_TIME = (
 
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
+SEARCH_SAVE_QUERY_RECORDS = True
+SEARCH_SAVE_QUERY_RECORDS_CACHE_EXPIRATION = (
+    3600 * 5
+)  # Save queries for that period of time. An async process should run before expiration time to collect data and save to disk
 
 # -------------------------------------------------------------------------------
 # AI preferences panel
@@ -848,14 +857,11 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
-        "rest_framework_yaml.renderers.YAMLRenderer",
-        "rest_framework_jsonp.renderers.JSONPRenderer",
-        "rest_framework_xml.renderers.XMLRenderer",
+        "apiv2.renderers.XMLRenderer",
     ),
     "DEFAULT_THROTTLE_CLASSES": (
         "apiv2.throttling.ClientBasedThrottlingBurst",
         "apiv2.throttling.ClientBasedThrottlingSustained",
-        "apiv2.throttling.IpBasedThrottling",
     ),
     "VIEW_DESCRIPTION_FUNCTION": "apiv2.apiv2_utils.get_view_description",
 }
@@ -933,12 +939,17 @@ RABBITMQ_USER = "guest"
 RABBITMQ_PASS = "guest"  # noqa: S105
 RABBITMQ_HOST = "rabbitmq"
 RABBITMQ_PORT = "5672"
-RABBITMQ_API_PORT = "5673"
+RABBITMQ_API_PORT = "15672"
+# Browser-facing URL for the RabbitMQ management UI (used by monitor dashboard links). No trailing slash.
+RABBITMQ_MANAGEMENT_URL = ""
 
 # -------------------------------------------------------------------------------
 # Collections
-ENABLE_COLLECTIONS = False
-MAX_SOUNDS_PER_COLLECTION = 250
+ENABLE_COLLECTIONS = True
+ENABLE_CREATE_EDIT_BOOKMARKS = (
+    True  # This will only be used while collection objects are created and the feature is not shown to public yet
+)
+MAX_SOUNDS_PER_COLLECTION = 500
 MAX_FEATURED_SOUNDS_PER_COLLECTION = 6
 
 # -------------------------------------------------------------------------------
@@ -958,6 +969,7 @@ if USE_CDN_FOR_DOWNLOADS and not CDN_SECURE_LINK_SECRET:
 
 if ENABLE_COLLECTIONS:
     SEARCH_SOUNDS_DEFAULT_FACETS[SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING] = {"limit": 10, "title": "Collections"}
+    SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[SEARCH_SOUNDS_FIELD_COLLECTION_NAMES] = 2
 
 # -------------------------------------------------------------------------------
 # Celery
@@ -1001,6 +1013,7 @@ FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR: str = os.path.join(DATA_PATH, "tmp_processing/")
 PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
 DATA_PACKS_PATH = os.path.join(DATA_PATH, "data_packs/")
+ARCHIVED_DATA_PATH = os.path.join(DATA_PATH, "archived_data/")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"

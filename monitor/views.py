@@ -56,7 +56,14 @@ def get_queues_status(request):
         celery_task_counts = get_queues_task_counts()
     except Exception:
         celery_task_counts = []
-    return render(request, "monitor/queues_status.html", {"celery_task_counts": celery_task_counts})
+    return render(
+        request,
+        "monitor/queues_status.html",
+        {
+            "celery_task_counts": celery_task_counts,
+            "RABBITMQ_MANAGEMENT_URL": settings.RABBITMQ_MANAGEMENT_URL,
+        },
+    )
 
 
 @login_required
@@ -89,6 +96,7 @@ def monitor_processing(request):
         "sounds_ok_count": sounds_ok_count,
         "queues_stats_url": reverse("queues-stats"),
         "activePage": "processing",
+        "RABBITMQ_MANAGEMENT_URL": settings.RABBITMQ_MANAGEMENT_URL,
     }
     return render(request, "monitor/processing.html", tvars)
 
@@ -134,6 +142,7 @@ def monitor_analysis(request):
         "analyzers_data": [(key, value) for key, value in analyzers_data.items()],
         "queues_stats_url": reverse("queues-stats"),
         "activePage": "analysis",
+        "RABBITMQ_MANAGEMENT_URL": settings.RABBITMQ_MANAGEMENT_URL,
         "consolidated": {
             "ok": consolidated_ok,
             "sk": consolidated_sk,
@@ -214,6 +223,8 @@ def moderators_stats(request):
     return HttpResponseRedirect(reverse("monitor-moderation"))
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def queries_stats_ajax(request):
     try:
         auth = (settings.GRAYLOG_USERNAME, settings.GRAYLOG_PASSWORD)
@@ -234,36 +245,50 @@ def queries_stats_ajax(request):
         return HttpResponse(status=500)
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def tags_stats_ajax(request):
     tags_stats = caches["persistent"].get("tags_stats")
     return JsonResponse(tags_stats or {})
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def sounds_stats_ajax(request):
     sounds_stats = caches["persistent"].get("sounds_stats")
     return JsonResponse(sounds_stats or {})
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def active_users_stats_ajax(request):
     active_users_stats = caches["persistent"].get("active_users_stats")
     return JsonResponse(active_users_stats or {})
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def users_stats_ajax(request):
     users_stats = caches["persistent"].get("users_stats")
     return JsonResponse(users_stats or {})
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def downloads_stats_ajax(request):
     downloads_stats = caches["persistent"].get("downloads_stats")
     return JsonResponse(downloads_stats or {})
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def donations_stats_ajax(request):
     donations_stats = caches["persistent"].get("donations_stats")
     return JsonResponse(donations_stats or {})
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def totals_stats_ajax(request):
     totals_stats = caches["persistent"].get("totals_stats")
     return JsonResponse(totals_stats or {})
@@ -301,6 +326,8 @@ def process_sounds(request):
     return HttpResponseRedirect(reverse("monitor-processing"))
 
 
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def moderator_stats_ajax(request):
     user_id = request.GET.get("user_id", None)
     time_span = timezone.now() - datetime.timedelta((6 * 365) // 12)

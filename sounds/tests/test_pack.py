@@ -24,11 +24,26 @@ from unittest import mock
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 
 from sounds.models import Pack, Sound
 from utils.test_helpers import create_user_and_sounds
+
+
+@pytest.mark.django_db
+def test_name_can_be_reused_after_repeated_deletion():
+    call_command("loaddata", "users", verbosity=0)
+    user = User.objects.get(username="User1")
+    for _ in range(2):
+        pack = Pack.objects.create(user=user, name="Birds")
+        pack.delete_pack(remove_sounds=False)
+    Pack.objects.create(user=user, name="Birds")
+    assert Pack.objects.filter(user=user, name="Birds", is_deleted=True).count() == 2
+    with pytest.raises(IntegrityError), transaction.atomic():
+        Pack.objects.create(user=user, name="Birds")
+    Pack.objects.create(user=User.objects.get(username="User2"), name="Birds")
 
 
 class PackNumSoundsTestCase(TestCase):

@@ -18,29 +18,34 @@
 #     See AUTHORS file.
 #
 
+import pytest
 from django.contrib.auth.models import User
-from django.test import TestCase
 from django.urls import reverse
+from pytest_django.asserts import assertContains, assertRedirects
 
 from geotags.models import GeoTag
 from sounds.models import Sound
 
 
-class GeoTagsTests(TestCase):
-    fixtures = ["licenses", "sounds"]
+@pytest.fixture
+def geotag_data(load_fixtures):
+    load_fixtures(["licenses", "sounds"])
 
-    def check_context(self, context, values):
+
+class TestGeoTags:
+    @staticmethod
+    def check_context(context, values):
         for k, v in values.items():
-            self.assertIn(k, context)
-            self.assertEqual(context[k], v)
+            assert k in context
+            assert context[k] == v
 
-    def test_browse_geotags(self):
-        resp = self.client.get(reverse("geotags", kwargs={"tag": "soundscape"}))
+    def test_browse_geotags(self, geotag_data, client):
+        resp = client.get(reverse("geotags", kwargs={"tag": "soundscape"}))
         check_values = {"tag": "soundscape", "username": None}
         self.check_context(resp.context, check_values)
 
-    def test_geotags_embed(self):
-        resp = self.client.get(reverse("embed-geotags"))
+    def test_geotags_embed(self, geotag_data, client):
+        resp = client.get(reverse("embed-geotags"))
         check_values = {
             "m_width": 942,
             "m_height": 600,
@@ -52,42 +57,42 @@ class GeoTagsTests(TestCase):
         }
         self.check_context(resp.context, check_values)
 
-    def test_browse_geotags_for_user(self):
+    def test_browse_geotags_for_user(self, geotag_data, client):
         user = User.objects.get(username="Anton")
-        resp = self.client.get(reverse("geotags-for-user", kwargs={"username": "Anton"}))
+        resp = client.get(reverse("geotags-for-user", kwargs={"username": "Anton"}))
         check_values = {"tag": None, "username": user.username}
         self.check_context(resp.context, check_values)
 
-    def test_browse_geotags_for_user_oldusername(self):
+    def test_browse_geotags_for_user_oldusername(self, geotag_data, client):
         user = User.objects.get(username="Anton")
         user.username = "new_username"
         user.save()
-        resp = self.client.get(reverse("geotags-for-user", kwargs={"username": "Anton"}))
-        self.assertRedirects(resp, reverse("geotags-for-user", kwargs={"username": user.username}), status_code=301)
+        resp = client.get(reverse("geotags-for-user", kwargs={"username": "Anton"}))
+        assertRedirects(resp, reverse("geotags-for-user", kwargs={"username": user.username}), status_code=301)
 
-    def test_browse_geotags_for_user_deleted_user(self):
+    def test_browse_geotags_for_user_deleted_user(self, geotag_data, client):
         user = User.objects.get(username="Anton")
         user.profile.delete_user()
-        resp = self.client.get(reverse("geotags-for-user", kwargs={"username": "Anton"}))
-        self.assertEqual(resp.status_code, 404)
+        resp = client.get(reverse("geotags-for-user", kwargs={"username": "Anton"}))
+        assert resp.status_code == 404
 
-    def test_browse_geotags_for_sound_without_geotag_returns_404(self):
+    def test_browse_geotags_for_sound_without_geotag_returns_404(self, geotag_data, client):
         sound = Sound.objects.first()
         # Ensure sound has no geotag associated
         GeoTag.objects.filter(sound=sound).delete()
 
         url = reverse("sound-geotag", kwargs={"username": sound.user.username, "sound_id": sound.id})
-        resp = self.client.get(url)
-        self.assertEqual(resp.status_code, 404)
+        resp = client.get(url)
+        assert resp.status_code == 404
 
-    def test_geotags_infowindow(self):
+    def test_geotags_infowindow(self, geotag_data, client):
         sound = Sound.objects.first()
         gt = GeoTag.objects.create(sound=sound, lat=45.8498, lon=-62.6879, zoom=9)
-        resp = self.client.get(reverse("geotags-infowindow", kwargs={"sound_id": sound.id}))
+        resp = client.get(reverse("geotags-infowindow", kwargs={"sound_id": sound.id}))
         self.check_context(resp.context, {"sound": sound})
-        self.assertContains(resp, f'href="/people/{sound.user.username}/sounds/{sound.id}/"')
+        assertContains(resp, f'href="/people/{sound.user.username}/sounds/{sound.id}/"')
 
-    def test_browse_geotags_case_insensitive(self):
+    def test_browse_geotags_case_insensitive(self, geotag_data, client):
         user = User.objects.get(username="Anton")
         sounds = list(Sound.objects.filter(user=user)[:2])
 
@@ -101,19 +106,19 @@ class GeoTagsTests(TestCase):
         for sound in sounds:
             GeoTag.objects.create(sound=sound, lat=lat + 0.0001, lon=lon + 0.0001, zoom=9)
 
-        resp = self.client.get(reverse("geotags-barray", kwargs={"tag": tag}))
+        resp = client.get(reverse("geotags-barray", kwargs={"tag": tag}))
         # Response contains 3 int32 objects per sound: id, lat and lng. Total size = 3 * 4 bytes = 12 bytes
         n_sounds = len(resp.content) // 12
-        self.assertEqual(n_sounds, 2)
+        assert n_sounds == 2
 
-    def test_browse_geotags_for_query(self):
-        resp = self.client.get(reverse("geotags-query") + "?q=barcelona")
+    def test_browse_geotags_for_query(self, geotag_data, client):
+        resp = client.get(reverse("geotags-query") + "?q=barcelona")
         check_values = {"query_description": '"barcelona"'}
         self.check_context(resp.context, check_values)
 
-    def test_geotags_for_query_barray_invalid_filter_returns_empty(self):
+    def test_geotags_for_query_barray_invalid_filter_returns_empty(self, geotag_data, client):
         # A corrupted/invalid filter sets sqp.errors, which must short-circuit before
         # Solr; the endpoint returns an empty bytearray rather than crashing.
-        resp = self.client.get(reverse("geotags-for-query-barray") + "?f=samplerate%3Aabc")
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(len(resp.content), 0)
+        resp = client.get(reverse("geotags-for-query-barray") + "?f=samplerate%3Aabc")
+        assert resp.status_code == 200
+        assert len(resp.content) == 0

@@ -1,12 +1,46 @@
 from unittest import mock
 
 import requests
+from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 
 class QueryStatsAjaxTestCase(TestCase):
     """test the /monitor/ajax_queries_stats/ endpoint"""
+
+    fixtures = ["users"]
+
+    def setUp(self):
+        self.user = User.objects.get(username="User1")
+        self.user.is_staff = True
+        self.user.save()
+        self.client.force_login(self.user)
+
+    def test_stats_require_staff(self):
+        self.user.is_staff = False
+        self.user.save()
+        for logged_in in [False, True]:
+            if logged_in:
+                self.client.force_login(self.user)
+            else:
+                self.client.logout()
+            for name in [
+                "queries",
+                "tags",
+                "sounds",
+                "active-users",
+                "users",
+                "downloads",
+                "donations",
+                "totals",
+                "moderator",
+            ]:
+                with self.subTest(logged_in=logged_in, endpoint=name):
+                    self.assertEqual(self.client.get(reverse(f"monitor-{name}-stats-ajax")).status_code, 302)
+        self.user.is_staff = True
+        self.user.save()
+        self.assertEqual(self.client.get(reverse("monitor-totals-stats-ajax")).status_code, 200)
 
     @override_settings(GRAYLOG_DOMAIN="http://graylog")
     @mock.patch("requests.get")

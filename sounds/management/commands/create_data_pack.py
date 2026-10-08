@@ -31,6 +31,8 @@ from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
+from django.core.management.base import CommandError
+from django.utils import timezone
 
 from sounds.models import Sound
 from utils.management_commands import LoggingBaseCommand
@@ -266,7 +268,7 @@ def create_datapack_variant(
 
 
 def condition_commercial_allowed(sound: dict[str, MetadataValue]) -> bool:
-    return sound.get("license") not in ["Attribution-NonCommercial"]
+    return sound.get("license") not in ["Attribution NonCommercial"]
 
 
 def condition_gen_ai_allowed(
@@ -326,9 +328,21 @@ def create_data_pack_files(
             },
         ),
         (
+            "Commercial use + No Generative AI",
+            lambda sound: condition_commercial_allowed(sound),
+            {
+                "gen_ai_allowed": False,
+                "commercial_use_allowed": True,
+                "attribution_required": True,
+                "open_source_gen_ai_model_required": True,
+            },
+        ),
+        (
             "Commercial use + Generative AI (Open source model)",
-            lambda sound: condition_commercial_allowed(sound)
-            and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=True),
+            lambda sound: (
+                condition_commercial_allowed(sound)
+                and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=True)
+            ),
             {
                 "gen_ai_allowed": True,
                 "commercial_use_allowed": True,
@@ -338,8 +352,10 @@ def create_data_pack_files(
         ),
         (
             "Commercial use + Generative AI (No open source model)",
-            lambda sound: condition_commercial_allowed(sound)
-            and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False),
+            lambda sound: (
+                condition_commercial_allowed(sound)
+                and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False)
+            ),
             {
                 "gen_ai_allowed": True,
                 "commercial_use_allowed": True,
@@ -349,9 +365,11 @@ def create_data_pack_files(
         ),
         (
             "Commercial use + Generative AI (No open source model) + No attribution required",
-            lambda sound: condition_commercial_allowed(sound)
-            and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False)
-            and condition_attribution_not_required(sound),
+            lambda sound: (
+                condition_commercial_allowed(sound)
+                and condition_gen_ai_allowed(sound, commercial_use_wanted=True, open_source_model=False)
+                and condition_attribution_not_required(sound)
+            ),
             {
                 "gen_ai_allowed": True,
                 "commercial_use_allowed": True,
@@ -393,26 +411,43 @@ class Command(LoggingBaseCommand):
             help="Enable verbose logging.",
         )
         parser.add_argument(
-            "--datapack-dir-name",
+            "--dirname",
             action="store",
             dest="datapack_dir_name",
             default="",
             help="Optional suffix to append to the YYYYMMDD output directory name.",
+        )
+        parser.add_argument(
+            "--max-date",
+            action="store",
+            dest="max_date",
+            default=None,
+            help="Maximum upload date in YYYYMMDD format (excluded).",
         )
 
     def handle(self, *args, **options):
         self.log_start()
 
         # Load all sounds metadata from the database. Do it in chunks.
+        # Only include sounds that are moderated and processed ok.
         limit = options.get("limit", None)
-        all_sound_ids = list(Sound.objects.values_list("id", flat=True))[: int(limit) if limit is not None else None]
-        max_sound_id = max(all_sound_ids)
+        max_date = options.get("max_date")
+        sounds_qs = Sound.public
+        if max_date is not None:
+            try:
+                max_date_as_datetime = timezone.make_aware(datetime.strptime(max_date, "%Y%m%d"))
+            except ValueError as error:
+                raise CommandError("Invalid --max-date format. Use YYYYMMDD.") from error
+            sounds_qs = sounds_qs.filter(created__lt=max_date_as_datetime)
+
+        sound_ids_qs = sounds_qs.values_list("id", flat=True)
+        if limit is not None:
+            sound_ids_qs = sound_ids_qs[: int(limit)]
+        all_sound_ids = list(sound_ids_qs)
         sounds_metadata = []
         num_non_existing = 0
-        total_chunks = (max_sound_id // 1000) + 1
-        for chunk_start in range(0, max_sound_id + 1, 1000):
-            chunk_index = (chunk_start // 1000) + 1
-
+        total_chunks = (len(all_sound_ids) // 1000) + 1
+        for chunk_index, chunk_start in enumerate(range(0, len(all_sound_ids), 1000), start=1):
             # Get corresponding Sound objects. include_audio_descriptors=True is used to avoid N+1 queries when accessing the generated bst category (if needed).
             sound_ids = all_sound_ids[chunk_start : chunk_start + 1000]
             sound_objects = Sound.objects.ordered_ids(sorted(sound_ids), include_audio_descriptors=True)
@@ -420,6 +455,14 @@ class Command(LoggingBaseCommand):
                 if not options["skip_audio_existence_check"]:
                     if not os.path.exists(sound.locations("path")):
                         num_non_existing += 1
+                        continue
+                if sound.crc == "":
+                    # If the sound has no CRC, compute it and save it to the database first
+                    try:
+                        sound.compute_crc()
+                    except Exception as e:
+                        # If for some reason crc computation fails, skip this sound
+                        console_logger.warning(f"Failed to compute CRC for sound {sound.id}: {e}")
                         continue
                 sound_dict = {f: l(sound) for f, l in fields}
                 sounds_metadata.append(sound_dict)
@@ -438,9 +481,12 @@ class Command(LoggingBaseCommand):
             print(f"Number of sampling+ sounds skipped: {num_skipped_sampling_plus}")
 
         # Create output directory if missing, or delete it if existing
-        date_prefix = datetime.now().strftime("%Y-%m-%d")
         datapack_dir_name = (options.get("datapack_dir_name") or "").strip()
-        output_dir_basename = f"{date_prefix}-{datapack_dir_name}" if datapack_dir_name else date_prefix
+        if datapack_dir_name:
+            output_dir_basename = datapack_dir_name
+        else:
+            # If no dir name is provided, use date prefix
+            output_dir_basename = datetime.now().strftime("%Y-%m-%d")
         output_dir_path = Path(settings.DATA_PACKS_PATH) / "data_packs" / output_dir_basename
         if output_dir_path.exists():
             shutil.rmtree(output_dir_path)

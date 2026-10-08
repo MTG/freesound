@@ -22,7 +22,6 @@ import json
 import logging
 import math
 import os
-import time
 import uuid
 from operator import itemgetter
 from urllib.parse import urlparse
@@ -44,7 +43,7 @@ from django_ratelimit.decorators import ratelimit
 from accounts.models import Profile
 from comments.forms import CommentForm
 from comments.models import Comment
-from donations.models import DonationsModalSettings
+from donations.models import DonationRequest, DonationsModalSettings
 from follow import follow_utils
 from forum.views import get_hot_threads
 from geotags.models import GeoTag
@@ -330,22 +329,19 @@ def after_download_modal(request):
     should_show_modal = False
     bw_response = None
 
-    def modal_shown_timestamps_cache_key(user):
-        return "modal_shown_timestamps_donations_shown_%i" % user.id
-
     if DonationsModalSettings.get_donation_modal_settings().enabled:
-        # Get timestamps of last times modal was shown from cache
-        modal_shown_timestamps = cache.get(modal_shown_timestamps_cache_key(request.user), [])
+        # Get timestamps of last times a download modal was shown this user during the last 24h
+        num_popups_shown_last_24h = DonationRequest.objects.filter(
+            user=request.user,
+            request_type=DonationRequest.RequestType.AFTER_DOWNLOAD_POPUP,
+            created__gte=timezone.now() - datetime.timedelta(hours=24),
+        ).count()
 
-        # Iterate over timestamps, keep only the ones in last 24 hours and do the counting
-        modal_shown_timestamps = [item for item in modal_shown_timestamps if item > (time.time() - 24 * 3600)]
-
-        if should_suggest_donation(request.user, len(modal_shown_timestamps)):
+        if should_suggest_donation(request.user, num_popups_shown_last_24h):
+            DonationRequest.objects.create(
+                user=request.user, request_type=DonationRequest.RequestType.AFTER_DOWNLOAD_POPUP
+            )
             web_logger.info(f"Showing after download donate modal ({json.dumps({'user_id': request.user.id})})")
-            modal_shown_timestamps.append(time.time())
-            cache.set(
-                modal_shown_timestamps_cache_key(request.user), modal_shown_timestamps, 60 * 60 * 24
-            )  # 24 lifetime cache
             should_show_modal = True
 
     if should_show_modal:
@@ -557,7 +553,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
         packs_to_process = []
         if data["new_pack"]:
-            pack, _ = Pack.objects.get_or_create(user=sound.user, name=data["new_pack"])
+            pack, _ = Pack.objects.get_or_create(user=sound.user, name=data["new_pack"], is_deleted=False)
             if sound.pack:
                 packs_to_process.append(sound.pack)  # Append previous sound pack if exists
             sound.pack = pack
@@ -610,14 +606,7 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
 
     files = request.session.get(f"{session_key_prefix}-describe_sounds", None)
     sound_ids = request.session.get(f"{session_key_prefix}-edit_sounds", None)
-    # Back-compat shim for sessions written before the switch to JSON-safe values
-    # (pickled File / Sound instances). Remove once SESSION_SERIALIZER is flipped to
-    # JSONSerializer in the follow-up PR.
-    if files and not isinstance(files[0], dict):
-        files = [{"name": f.name, "full_path": f.full_path} for f in files]
-    if sound_ids and not isinstance(sound_ids[0], int):
-        sound_ids = [s.id for s in sound_ids]
-    # Preserve today's `is None` vs `== []` distinction: empty list ≠ missing key.
+    # An empty list is distinct from a missing session key.
     sounds = list(Sound.objects.ordered_ids(sound_ids)) if sound_ids is not None else None
     if (describing and files is None) or (not describing and sounds is None):
         # Expecting either a list of sounds or audio files to describe, got none. Redirect to main manage sounds page.
@@ -639,11 +628,6 @@ def edit_and_describe_sounds_helper(request, describing=False, session_key_prefi
     files_data_for_players = []  # Used when describing sounds (not when editing) to be able to show sound players
     preselected_license_id = request.session.get(f"{session_key_prefix}-describe_license", False)
     preselected_pack_id = request.session.get(f"{session_key_prefix}-describe_pack", False)
-    # Back-compat shim (bool is a subclass of int, so the int check covers False/True too).
-    if preselected_license_id and not isinstance(preselected_license_id, int):
-        preselected_license_id = preselected_license_id.id
-    if preselected_pack_id and not isinstance(preselected_pack_id, int):
-        preselected_pack_id = preselected_pack_id.id
     preselected_license = License.objects.filter(id=preselected_license_id).first() if preselected_license_id else False
     preselected_pack = Pack.objects.filter(id=preselected_pack_id).first() if preselected_pack_id else False
 

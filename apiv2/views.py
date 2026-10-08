@@ -30,11 +30,13 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.cache import caches
 from django.db import IntegrityError
-from django.http import Http404, HttpResponseRedirect
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 from oauth2_provider.models import AccessToken, Grant
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
@@ -62,6 +64,7 @@ from apiv2.forms import (
 from apiv2.models import ApiV2Client
 from apiv2.serializers import (
     BookmarkCategorySerializer,
+    CollectionSerializer,
     CreateBookmarkSerializer,
     CreateCommentSerializer,
     CreateRatingSerializer,
@@ -74,15 +77,19 @@ from apiv2.serializers import (
     UploadAndDescribeAudioFileSerializer,
     UserSerializer,
 )
+from apiv2.throttling import ClientBasedThrottlingBurst, ClientBasedThrottlingSustained
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
+from fscollections.models import Collection, CollectionSound
 from geotags.models import GeoTag
 from ratings.models import SoundRating
-from sounds.models import License, Pack, Sound
+from sounds.models import DownloadAPI, License, Pack, PackDownloadAPI, PackDownloadSoundAPI, Sound
+from utils.download_limit import DownloadType, is_new_download, set_sentinel
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search.search_sounds import save_record_of_search_query
 from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import (
@@ -98,6 +105,7 @@ from .apiv2_utils import (
 )
 
 api_logger = logging.getLogger("api")
+cache_api_monitoring = caches["api_monitoring"]
 resources_doc_filename = "resources_apiv2.html"
 
 
@@ -118,8 +126,9 @@ def get_needed_audio_descriptors(fields):
         return True
 
     descriptor_names = []
-    if "category" in requested_fields or "category_code" in requested_fields:
-        # This is a special case, estimated bst category should be included to provide the category field
+    if any(field in requested_fields for field in ("category", "category_code", "gen_ai_preference")):
+        # Category fields need the estimated BST category.
+        # gen_ai_preference needs category because you can opt out specifically for speech
         descriptor_names += ["category", "subcategory"]
 
     # Add the rest of descriptors requested
@@ -158,7 +167,7 @@ def get_include_remix_subqueries(fields):
         return False
 
 
-class TextSearch(GenericAPIView):
+class Search(GenericAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -166,8 +175,8 @@ class TextSearch(GenericAPIView):
             '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>. %s'
             % (
                 prepend_base("/docs/api"),
-                "%s#text-search" % resources_doc_filename,
-                get_formatted_examples_for_view("TextSearch", "apiv2-sound-search", max=5),
+                "%s#search" % resources_doc_filename,
+                get_formatted_examples_for_view("Search", "apiv2-sound-search", max=5),
             )
         )
 
@@ -189,12 +198,20 @@ class TextSearch(GenericAPIView):
 
         # Get search results
         try:
-            results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
-                api_search(search_form, resource=self)
-            )
+            (
+                results,
+                count,
+                non_grouped_count,
+                distance_to_target_data,
+                more_from_pack_data,
+                note,
+                params_for_next_page,
+                debug_note,
+                q_time,
+            ) = api_search(search_form, resource=self)
         except APIException as e:
             raise e
-        except Exception:
+        except Exception as e:
             raise ServerErrorException(msg="Unexpected error", resource=self)
 
         # Paginate results
@@ -258,6 +275,15 @@ class TextSearch(GenericAPIView):
                 sounds.append(None)
         response_data["results"] = sounds
 
+        if settings.SEARCH_SAVE_QUERY_RECORDS:
+            save_record_of_search_query(
+                url=search_form.construct_link(base_url="/apiv2/search/", include_domain=False),
+                num_results=non_grouped_count or paginator.count,  # Return non grouped number of results if available
+                query_time=q_time,
+                ip=self.end_user_ip,
+                user_id=self.user.id if self.user is not None else None,
+            )
+
         if note:
             response_data["note"] = note
 
@@ -301,7 +327,7 @@ class SoundInstance(RetrieveAPIView):
             include_audio_descriptors=needs_analyzers_output,
             include_similarity_vectors=needs_similarity_vectors,
             include_remix_subqueries=include_remix_subqueries,
-        )
+        ).filter(moderation_state="OK", processing_state="OK")
 
     def get(self, request, *args, **kwargs):
         api_logger.info(self.log_message("sound:%i instance" % (int(kwargs["pk"]))))
@@ -372,9 +398,17 @@ class SimilarSounds(GenericAPIView):
 
         # Get search results
         similarity_sound_form.cleaned_data["similar_to"] = str(sound_id)
-        results, count, distance_to_target_data, more_from_pack_data, note, params_for_next_page, debug_note = (
-            api_search(similarity_sound_form, resource=self)
-        )
+        (
+            results,
+            count,
+            non_grouped_count,
+            distance_to_target_data,
+            more_from_pack_data,
+            note,
+            params_for_next_page,
+            debug_note,
+            q_time,
+        ) = api_search(similarity_sound_form, resource=self)
 
         id_score_map = {sound_id: sound_score for sound_id, sound_score in results}
         results = [sound_id for sound_id, _ in results]
@@ -443,7 +477,11 @@ class SoundComments(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
-        return Comment.objects.filter(sound_id=self.kwargs["pk"]).select_related("user")
+        try:
+            sound = Sound.public.get(id=self.kwargs["pk"])
+        except Sound.DoesNotExist:
+            raise NotFoundException(resource=self)
+        return Comment.objects.filter(sound=sound).select_related("user")
 
 
 class DownloadSound(DownloadAPIView):
@@ -465,6 +503,16 @@ class DownloadSound(DownloadAPIView):
         sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
         if not os.path.exists(sound_path):
             raise NotFoundException(resource=self)
+
+        if self.client is not None:
+            # Save download record in database
+            # Because the view requires Oauth2, request.user is guaranteed to be set (this is used in the is_new_download check)
+            if is_new_download(request, DownloadType.SOUND_API, sound.id):
+                set_sentinel(request, DownloadType.SOUND_API, sound.id)
+                DownloadAPI.objects.create(
+                    api_client=self.client, user=self.user, sound=sound, license_id=sound.license_id
+                )
+
         return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
@@ -682,6 +730,17 @@ class DownloadPack(DownloadAPIView):
         sounds_list = pack.sounds.filter(processing_state="OK", moderation_state="OK").select_related("user", "license")
         licenses_url = reverse("pack-licenses", args=[pack.user.username, pack.id])
         licenses_content = pack.get_attribution(sound_qs=sounds_list)
+
+        if self.client is not None:
+            # Save download record in database
+            if is_new_download(request, DownloadType.PACK_API, pack.id):
+                set_sentinel(request, DownloadType.PACK_API, pack.id)
+                pd = PackDownloadAPI.objects.create(api_client=self.client, user=self.user, pack=pack)
+                pds = []
+                for sound in pack.sounds.all():
+                    pds.append(PackDownloadSoundAPI(sound=sound, license_id=sound.license_id, pack_download_api=pd))
+                PackDownloadSoundAPI.objects.bulk_create(pds)
+
         return download_sounds(licenses_url, licenses_content, sounds_list, pack.friendly_filename())
 
 
@@ -974,14 +1033,9 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         geotag = GeoTag.objects.create(sound=sound, lat=float(lat), lon=float(lon), zoom=int(zoom))
                 if "pack" in serializer.data:
                     if serializer.data["pack"]:
-                        if (
-                            Pack.objects.filter(name=serializer.data["pack"], user=self.user)
-                            .exclude(is_deleted=True)
-                            .exists()
-                        ):
-                            p = Pack.objects.get(name=serializer.data["pack"], user=self.user)
-                        else:
-                            p, created = Pack.objects.get_or_create(user=self.user, name=serializer.data["pack"])
+                        p, created = Pack.objects.get_or_create(
+                            user=self.user, name=serializer.data["pack"], is_deleted=False
+                        )
                         sound.pack = p
                 sound.is_index_dirty = True
                 sound.save()
@@ -1008,6 +1062,9 @@ class BookmarkSound(WriteRequiredGenericAPIView):
         )
 
     def post(self, request, *args, **kwargs):
+        if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+            raise BadRequestException(msg="Bookmarking sounds is current disabled.", resource=self)
+
         sound_id = kwargs["pk"]
         try:
             sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
@@ -1026,15 +1083,31 @@ class BookmarkSound(WriteRequiredGenericAPIView):
                     status=status.HTTP_201_CREATED,
                 )
             else:
-                category_name = serializer.data.get("category", None)
-                if category_name is not None:
-                    category, _ = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
-                    Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=category)
+                if settings.ENABLE_COLLECTIONS:
+                    collection_name = serializer.data.get("category", None)
+                    if collection_name is not None:
+                        collection, _ = Collection.objects.get_or_create(user=self.user, name=collection_name)
+                    else:
+                        collection_name = "My bookmarks"
+                        collection, _ = Collection.objects.get_or_create(
+                            user=self.user, name="My bookmarks", is_default_collection=True
+                        )
+                    collection.add_sound(sound, self.user)
+
+                    return Response(
+                        data={"detail": f"Successfully added sound {sound_id} to collection {collection_name}."},
+                        status=status.HTTP_201_CREATED,
+                    )
                 else:
-                    Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=None)
-                return Response(
-                    data={"detail": f"Successfully bookmarked sound {sound_id}."}, status=status.HTTP_201_CREATED
-                )
+                    category_name = serializer.data.get("category", None)
+                    if category_name is not None:
+                        category, _ = BookmarkCategory.objects.get_or_create(user=self.user, name=category_name)
+                        Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=category)
+                    else:
+                        Bookmark.objects.get_or_create(user=self.user, sound_id=sound_id, category=None)
+                    return Response(
+                        data={"detail": f"Successfully bookmarked sound {sound_id}."}, status=status.HTTP_201_CREATED
+                    )
         else:
             return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1184,7 +1257,7 @@ class Me(OauthRequiredAPIView):
 
 
 class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
-    serializer_class = BookmarkCategorySerializer
+    serializer_class = BookmarkCategorySerializer if not settings.ENABLE_COLLECTIONS else CollectionSerializer
 
     @classmethod
     def get_description(cls):
@@ -1204,21 +1277,30 @@ class MeBookmarkCategories(OauthRequiredAPIView, ListAPIView):
 
     def get_queryset(self):
         if self.user:
-            categories = BookmarkCategory.objects.filter(user__username=self.user.username)
-            try:
-                user = User.objects.get(username=self.user.username, is_active=True)
-            except User.DoesNotExist:
-                raise NotFoundException(resource=self)
+            if settings.ENABLE_COLLECTIONS:
+                try:
+                    user = User.objects.get(username=self.user.username, is_active=True)
+                except User.DoesNotExist:
+                    raise NotFoundException(resource=self)
+                categories = Collection.objects.filter(user__username=self.user.username)
 
-            if (
-                Bookmark.objects.select_related("sound")
-                .filter(user__username=self.user.username, category=None)
-                .count()
-            ):
-                uncategorized = BookmarkCategory(name="Uncategorized", user=user, id=0)
-                return [uncategorized] + list(categories)
-            else:
                 return list(categories)
+            else:
+                categories = BookmarkCategory.objects.filter(user__username=self.user.username)
+                try:
+                    user = User.objects.get(username=self.user.username, is_active=True)
+                except User.DoesNotExist:
+                    raise NotFoundException(resource=self)
+
+                if (
+                    Bookmark.objects.select_related("sound")
+                    .filter(user__username=self.user.username, category=None)
+                    .count()
+                ):
+                    uncategorized = BookmarkCategory(name="Uncategorized", user=user, id=0)
+                    return [uncategorized] + list(categories)
+                else:
+                    return list(categories)
         else:
             raise ServerErrorException(resource=self)
 
@@ -1252,17 +1334,41 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
             kwargs = dict()
             kwargs["user__username"] = self.user.username
 
-            if "category_id" in self.kwargs:
+            if settings.ENABLE_COLLECTIONS:
                 if int(self.kwargs["category_id"]) != 0:
-                    kwargs["category__id"] = self.kwargs["category_id"]
+                    collection_id = self.kwargs["category_id"]
+                else:
+                    # NOTE: If the category ID is 0, it is assumed to be user's "My bookmarks" collection
+                    # This is for backwards compatibility, but it could be removed in the future
+                    # This only make sense in the context of this API endpoint where user is specified as the logged
+                    # in user and there'll be only one collection named "My bookmnarks"
+                    collection = Collection.objects.filter(name="My bookmarks", user=self.user)
+                    if collection.exists():
+                        collection_id = collection.first().id
+                    else:
+                        # User has no uncategorized bookmarks
+                        return []
+                try:
+                    queryset = [
+                        cs.sound
+                        for cs in CollectionSound.objects.select_related("sound").filter(collection_id=collection_id)
+                    ]
+                except:
+                    raise NotFoundException(resource=self)
+            else:
+                if "category_id" in self.kwargs:
+                    if int(self.kwargs["category_id"]) != 0:
+                        kwargs["category__id"] = self.kwargs["category_id"]
+                    else:
+                        kwargs["category"] = None
                 else:
                     kwargs["category"] = None
-            else:
-                kwargs["category"] = None
-            try:
-                queryset = [bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)]
-            except:
-                raise NotFoundException(resource=self)
+                try:
+                    queryset = [
+                        bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)
+                    ]
+                except:
+                    raise NotFoundException(resource=self)
             return queryset
         else:
             raise ServerErrorException(resource=self)
@@ -1422,6 +1528,58 @@ class FreesoundApiV2Resources(GenericAPIView):
         return Response(api_index)
 
 
+@throttle_classes([])  # This view is never throttled
+class CurrentUsage(GenericAPIView):
+    @classmethod
+    def get_description(cls):
+        return (
+            'Return current usage of the API from that client. That includes the number of requests made in the last "burst" period and in the last "sustained" period.'
+            '<br>Full documentation can be found <a href="%s/%s" target="_blank">here</a>.'
+            % (prepend_base("/docs/api"), "index.html")
+        )
+
+    def get(self, request, *args, **kwargs):
+        api_logger.info(self.log_message("usage"))
+
+        # Burst
+        cache_key = ClientBasedThrottlingBurst.get_cache_key_for_request_and_client(request)
+        num_requests_burst = len(cache_api_monitoring.get(cache_key, []))
+        rate_burst = ClientBasedThrottlingBurst.get_limit_rate_from_throttling_level(self, self.throttling_level)
+
+        # Sustained
+        cache_key = ClientBasedThrottlingSustained.get_cache_key_for_request_and_client(request)
+        num_requests_sustained = len(cache_api_monitoring.get(cache_key, []))
+        rate_sustained = ClientBasedThrottlingSustained.get_limit_rate_from_throttling_level(
+            self, self.throttling_level
+        )
+
+        # Historic usage
+        if self.client is not None:
+            today_count_from_cache = (
+                self.client.get_current_today_usage_from_cache()
+            )  # This gets today's num requests for that specific client (not user) from cache
+            num_days = int(request.GET.get("num_days", 7))  # Default to last 7 days if not specified
+            num_days = min(num_days, 60)  # Limit to a maximum of 30 days
+            last_days_count_from_db = self.client.get_usage_history(
+                n_days_back=num_days
+            )  # This gets the num requests for that specific client from DB over last X days
+            historic_usage = [
+                (datetime.date.today().strftime("%Y-%m-%d"), today_count_from_cache)
+            ] + last_days_count_from_db[1:]
+        else:
+            historic_usage = []
+
+        return Response(
+            {
+                "current": {
+                    "burst": {"num": num_requests_burst, "limit": rate_burst},
+                    "sustained": {"num": num_requests_sustained, "limit": rate_sustained},
+                },
+                "historic": historic_usage,
+            }
+        )
+
+
 @api_view(["GET"])
 @authentication_classes([OAuth2Authentication, TokenAuthentication, SessionAuthentication])
 def invalid_url(request):
@@ -1470,14 +1628,7 @@ def create_apiv2_key(request):
 
 @login_required
 def edit_api_credential(request, key):
-    client = None
-    try:
-        client = ApiV2Client.objects.get(key=key)
-    except ApiV2Client.DoesNotExist:
-        pass
-
-    if not client:
-        raise Http404
+    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
 
     if request.method == "POST":
         form = ApiV2ClientForm(request.POST)
@@ -1515,42 +1666,36 @@ def edit_api_credential(request, key):
 
 @login_required
 def monitor_api_credential(request, key):
+    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+    level = int(client.throttling_level)
+    limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
     try:
-        client = ApiV2Client.objects.get(key=key)
-        level = int(client.throttling_level)
-        limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
-        try:
-            day_limit = limit_rates[1].split("/")[0]
-        except IndexError:
-            day_limit = 0
-        n_days = int(request.GET.get("n_days", 30))
-        usage_history = client.get_usage_history(n_days_back=n_days)
-        last_year = timezone.now().year - 1
-        tvars = {
-            "n_days": n_days,
-            "n_days_options": [(30, "1 month"), (93, "3 months"), (182, "6 months"), (365, "1 year")],
-            "client": client,
-            "data": json.dumps([(str(date), count) for date, count in usage_history]),
-            "total_in_range": sum([count for _, count in usage_history]),
-            "total_in_range_above_5000": sum([count - 5000 for _, count in usage_history if count > 5000]),
-            "total_previous_year_above_5000": client.get_usage_history_total(year=last_year, discard_per_day=5000),
-            "last_year": last_year,
-            "limit": day_limit,
-        }
-        return render(request, "api/monitor_api_credential.html", tvars)
-    except ApiV2Client.DoesNotExist:
-        raise Http404
+        day_limit = limit_rates[1].split("/")[0]
+    except IndexError:
+        day_limit = 0
+    n_days = int(request.GET.get("n_days", 30))
+    usage_history = client.get_usage_history(n_days_back=n_days)
+    last_year = timezone.now().year - 1
+    tvars = {
+        "n_days": n_days,
+        "n_days_options": [(30, "1 month"), (93, "3 months"), (182, "6 months"), (365, "1 year")],
+        "client": client,
+        "data": json.dumps([(str(date), count) for date, count in usage_history]),
+        "total_in_range": sum([count for _, count in usage_history]),
+        "total_in_range_above_5000": sum([count - 5000 for _, count in usage_history if count > 5000]),
+        "total_previous_year_above_5000": client.get_usage_history_total(year=last_year, discard_per_day=5000),
+        "last_year": last_year,
+        "limit": day_limit,
+    }
+    return render(request, "api/monitor_api_credential.html", tvars)
 
 
 @login_required
+@require_POST
 def delete_api_credential(request, key):
-    name = ""
-    try:
-        client = ApiV2Client.objects.get(key=key)
-        name = client.name
-        client.delete()
-    except ApiV2Client.DoesNotExist:
-        pass
+    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+    name = client.name
+    client.delete()
     messages.add_message(request, messages.INFO, f"Credentials with name {name} have been deleted.")
     return HttpResponseRedirect(reverse("apiv2-apply"))
 

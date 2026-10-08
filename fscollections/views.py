@@ -39,7 +39,7 @@ from fscollections.forms import (
     MaintainerForm,
     SelectCollectionForm,
 )
-from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound
+from fscollections.models import Collection, CollectionDownload, CollectionDownloadSound, CollectionSound
 from sounds.models import Sound
 from sounds.sound_grid_editor import (
     FEATURED_SORT,
@@ -58,6 +58,13 @@ from utils.download_limit import (
 )
 from utils.downloads import download_sounds
 from utils.pagination import paginate
+
+PUBLIC_COLLECTIONS_SORT_OPTIONS = {
+    "recent": {"label": "Recently updated", "ordering": ["-modified", "name"]},
+    "name": {"label": "Name (A-Z)", "ordering": ["name", "-modified"]},
+    "sounds": {"label": "Number of sounds", "ordering": ["-num_sounds", "name"]},
+}
+PUBLIC_COLLECTIONS_DEFAULT_SORT = "recent"
 
 
 def resolve_collection_from_url(view_func):
@@ -78,6 +85,65 @@ def resolve_collection_from_url(view_func):
         return view_func(request, collection, *args, **kwargs)
 
     return _wrapped_view
+
+
+def collections(request):
+    sort = request.GET.get("sort", PUBLIC_COLLECTIONS_DEFAULT_SORT)
+    if sort not in PUBLIC_COLLECTIONS_SORT_OPTIONS:
+        sort = PUBLIC_COLLECTIONS_DEFAULT_SORT
+    search = request.GET.get("q", "").strip()
+
+    ordering = PUBLIC_COLLECTIONS_SORT_OPTIONS[sort]["ordering"]
+    public_collections = Collection.objects.filter(public=True)
+    if search:
+        public_collections = public_collections.filter(name__icontains=search)
+    public_collection_ids = list(public_collections.order_by(*ordering).values_list("id", flat=True))
+    pagination = paginate(request, public_collection_ids, settings.COLLECTIONS_PER_PAGE)
+    page_collection_ids = list(pagination["page"])
+    page_collections = Collection.objects.ordered_ids(page_collection_ids)
+
+    tvars = {
+        "collections": page_collections,
+        "sort_options": PUBLIC_COLLECTIONS_SORT_OPTIONS,
+        "current_sort": sort,
+        "current_search": search,
+    }
+    tvars.update(pagination)
+    return render(request, "collections/collections.html", tvars)
+
+
+@login_required
+def collections_for_user(request):
+    user = request.user
+    sort = request.GET.get("sort", PUBLIC_COLLECTIONS_DEFAULT_SORT)
+    if sort not in PUBLIC_COLLECTIONS_SORT_OPTIONS:
+        sort = PUBLIC_COLLECTIONS_DEFAULT_SORT
+    search = request.GET.get("q", "").strip()
+
+    ordering = PUBLIC_COLLECTIONS_SORT_OPTIONS[sort]["ordering"]
+
+    user_collections = Collection.objects.filter(user=user)
+    maintainer_collections = Collection.objects.filter(maintainers__id=user.id)
+    if search:
+        user_collections = user_collections.filter(name__icontains=search)
+        maintainer_collections = maintainer_collections.filter(name__icontains=search)
+
+    user_collection_ids = list(user_collections.order_by(*ordering).values_list("id", flat=True))
+    maintainer_collection_ids = list(maintainer_collections.order_by(*ordering).values_list("id", flat=True))
+    user_collections = Collection.objects.ordered_ids(user_collection_ids)
+    maintainer_collections = Collection.objects.ordered_ids(maintainer_collection_ids)
+
+    tvars = {
+        "user_collections": user_collections,
+        "maintainer_collections": maintainer_collections,
+        "total_collections": len(user_collections) + len(maintainer_collections),
+        "sort_options": PUBLIC_COLLECTIONS_SORT_OPTIONS,
+        "current_sort": sort,
+        "current_search": search,
+    }
+    # one URL needed to display all collections and one URL to display ONE collection at a time
+    # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
+    return render(request, "collections/your_collections.html", tvars)
 
 
 @resolve_collection_from_url
@@ -137,29 +203,16 @@ def collection(request, collection):
 
 
 @login_required
-def collections_for_user(request):
-    user = request.user
-    user_collections = Collection.objects.filter(user=user).order_by("-modified")
-    maintainer_collections = Collection.objects.filter(maintainers__id=user.id).order_by("-modified")
-    tvars = {
-        "user_collections": user_collections,
-        "maintainer_collections": maintainer_collections,
-    }
-    # one URL needed to display all collections and one URL to display ONE collection at a time
-    # the collections_for_user can be reused to display ONE collection so give it a thought on full collections display
-    return render(request, "collections/your_collections.html", tvars)
-
-
-@login_required
 def add_sound_to_collection(request, sound_id):
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ""
     user_collections = Collection.objects.filter(Q(user=request.user) | Q(maintainers=request.user))
-    user_collections = user_collections.distinct().order_by("modified")
-    last_collection = user_collections.last()
+    user_collections = user_collections.distinct()
+    last_collectionsound_for_user = CollectionSound.objects.filter(user=request.user).last()
+    last_collection = last_collectionsound_for_user.collection if last_collectionsound_for_user else None
 
     if not request.GET.get("ajax"):
-        HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
+        return HttpResponseRedirect(reverse("sound", args=[sound.user.username, sound.id]))
 
     if request.method == "POST":
         form = SelectCollectionForm(
@@ -182,7 +235,7 @@ def add_sound_to_collection(request, sound_id):
         form = SelectCollectionForm(
             initial={
                 "collection": last_collection.id
-                if last_collection
+                if last_collection is not None
                 else SelectCollectionForm.BOOKMARK_COLLECTION_CHOICE_VALUE
             },
             sound_id=sound.id,

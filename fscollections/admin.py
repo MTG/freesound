@@ -7,21 +7,22 @@ from .models import Collection, CollectionSound
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    fields = ["user", "name", "num_sounds", "public", "featured_sound_ids"]
+    fields = ["user", "name", "num_sounds", "public", "featured_sound_ids", "description"]
     filter_horizontal = ["sounds"]
-    list_display = ("name", "user", "num_sounds", "public", "get_sounds", "featured_sound_ids")
+    list_display = ("name", "user", "num_sounds", "public")
     readonly_fields = ["created"]
     actions = ["make_public", "make_private"]
-
-    def has_delete_permission(self, request, obj=None):
-        if obj and obj.sounds.count() > 0:
-            return False
-        return True
+    raw_id_fields = ["user"]
 
     def get_sounds(self, obj):
         return ", ".join(str(sound.id) for sound in obj.sounds.all())
 
     get_sounds.short_description = "Sounds"
+
+    def save_related(self, request, form, formsets, change):
+        # sounds m2m is saved here (after save_model), so mark them dirty once it's up to date
+        super().save_related(request, form, formsets, change)
+        form.instance.sounds.update(is_index_dirty=True)
 
     @admin.action(description="Make selected collections public")
     def make_public(self, request, queryset):

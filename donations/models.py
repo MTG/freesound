@@ -27,6 +27,38 @@ class Donation(models.Model):
     )
     source = models.CharField(max_length=2, choices=DONATION_CHOICES, default="p")
 
+    def get_donation_requests_before_donation(self):
+        if self.user is None:
+            return DonationRequest.objects.none()
+
+        qs = DonationRequest.objects.filter(user=self.user, created__lte=self.created)
+
+        # If a previous donation exists, we only want donation requests created after that donation.
+        previous_donation = self.get_previous_donations(only_last=True)
+        if previous_donation is not None:
+            qs = qs.filter(created__gt=previous_donation.created)
+        return qs
+
+    def get_previous_donations(self, only_last=False):
+        """Returns a Donation object related to this one because it happened before and because it was made by the same user.
+        Returns None if there's no previous donation."""
+
+        if self.user is None:
+            # Check if there's a previous donation with the same email
+            previous_donations = Donation.objects.filter(email=self.email, created__lt=self.created).order_by(
+                "-created"
+            )
+        else:
+            # Check with same user object
+            previous_donations = Donation.objects.filter(user=self.user, created__lt=self.created).order_by("-created")
+
+        if only_last:
+            if previous_donations.exists():
+                return previous_donations.first()
+            return None
+
+        return previous_donations
+
 
 class DonationsModalSettings(models.Model):
     enabled = models.BooleanField(default=False)
@@ -69,3 +101,21 @@ class DonationsEmailSettings(models.Model):
         default=30 * 3, help_text="Don't send a donation email if the last one was sent in less than X days"
     )
     downloads_in_period = models.PositiveIntegerField(default=100, help_text="After user has download Z sounds...")
+
+
+class DonationRequest(models.Model):
+    class RequestType(models.TextChoices):
+        EMAIL_REMINDER_REPEAT_DONATION = "erm"
+        EMAIL_REQUEST_MANY_DOWNLOADS = "erq"
+        AFTER_DOWNLOAD_POPUP = "dp"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    REQUEST_TYPES = RequestType.choices
+    request_type = models.CharField(max_length=3, choices=RequestType.choices)
+    created = models.DateTimeField(db_index=True, auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return f"DonationRequest(user={self.user}, request_type={self.request_type}, created={self.created})"

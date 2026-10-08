@@ -37,6 +37,7 @@ Resources
 The Freesound APIv2 has plenty of resources allowing you to do a lot of stuff with Freesound data.
 Here we just give an overview of the available resources, you will find the full documentation in  :ref:`resources`.
 
+
 Searching
 =========
 
@@ -119,18 +120,11 @@ For requests that do not include file uploads, we do also support ``application/
 Response Format
 ---------------
 
-The format of the response can be specified in the request and can be
-one of JSON, XML and YAML. We recommend using JSON, as this
-is currently the only response format we actively test.
-
-To specify the desired response format use a ``format`` request parameter.
-Specify the desired format in lowercase letters as follows:
+Responses are returned as JSON. You can request this explicitly with a ``format`` request parameter:
 
 ::
 
   https://freesound.org/apiv2/sounds/1234/?format=json
-  https://freesound.org/apiv2/sounds/1234/?format=xml
-  https://freesound.org/apiv2/sounds/1234/?format=yaml
 
 If the format is not specified, it will be automatically determined in the content-negotiation phase, typically defaulting to json.
 
@@ -166,12 +160,14 @@ Throttling
 
 The usage of the APIv2 is limited to certain usage rates.
 The standard usage rate is set to 60 requests per minute and 2000 requests per day.
-Resources including uploading, describing, commenting, rating and bookmarking sounds have a more strict rate of 30 requests per minute and 500 requests per day.
+Resources including original quality sound downloading, uploading, describing, commenting, rating and bookmarking sounds have a more strict rate of 30 requests per minute and 500 requests per day.
 
 If a request is throttled, the APIv2 will return a 429 Too many requests response error with a ``detail`` field indicating which rate limit has been exceeded.
 
 Although we have set the default usage limits so that they should be enough for most applications,
-if these usage limits are not enough for you, please contact Freesound administrators at mtg *at* upf.edu to request more permissive limits.
+if these usage limits are not enough for you, please contact Freesound administrators using the contact form (https://freesound.org/contact/) to request more permissive limits.
+
+For more information about throttling and how you can find about about your current usage, please refer to the :ref:`current-usage` resource documentation.
 
 
 More help

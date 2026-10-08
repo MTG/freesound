@@ -40,8 +40,9 @@ class SelectCollectionForm(forms.Form):
     ``(collection, featured_skipped)`` tuple.
     """
 
-    collection = forms.ChoiceField(label=None, choices=[], required=True)
-
+    collection = forms.ChoiceField(
+        label=None, choices=[], required=False
+    )  # not required because use_last_collection can be used instead
     use_last_collection = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
 
     mark_as_featured = forms.BooleanField(label=False, required=False, initial=False)
@@ -63,6 +64,7 @@ class SelectCollectionForm(forms.Form):
                 .exclude(sounds__id=self.sound_id)
                 .exclude(is_default_collection=True)
                 .exclude(num_sounds__gte=settings.MAX_SOUNDS_PER_COLLECTION)
+                .order_by("name")
             )
 
         display_bookmark_collection = True
@@ -92,7 +94,10 @@ class SelectCollectionForm(forms.Form):
         sound = Sound.objects.get(id=self.sound_id)
 
         if self.cleaned_data["use_last_collection"]:
-            collection_to_use = Collection.objects.filter(user=self.user_saving_sound).order_by("-created").first()
+            last_sounds_added_to_collection = (
+                CollectionSound.objects.filter(user=self.user_saving_sound).order_by("-created").first()
+            )
+            collection_to_use = last_sounds_added_to_collection.collection if last_sounds_added_to_collection else None
         elif self.cleaned_data["collection"] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
             collection_to_use, _ = Collection.objects.get_or_create(
                 name="My bookmarks", user=self.user_saving_sound, is_default_collection=True
@@ -115,7 +120,10 @@ class SelectCollectionForm(forms.Form):
         except Sound.DoesNotExist:
             raise forms.ValidationError("Unexpected errors occured while handling the sound.")
         try:
-            if clean_data["collection"] == "-1":
+            if clean_data["use_last_collection"]:
+                # If saving to last collection, we don't validate the collection field here, it is set on save()
+                collection = None
+            elif clean_data["collection"] == "-1":
                 default_col = Collection.objects.filter(user=self.user_saving_sound, is_default_collection=True).first()
                 if default_col is not None:
                     if default_col.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:

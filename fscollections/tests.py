@@ -1,13 +1,15 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
-from django.utils.text import slugify
 
 from fscollections.models import Collection, CollectionSound
 from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
+from utils.text import slugify
 
 
 class CollectionTest(TestCase):
@@ -78,11 +80,148 @@ class CollectionTest(TestCase):
             reverse("delete-collection", args=[delete_collection.id, slugify(delete_collection.name)])
         )
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual("/collections/", resp.url)
+        self.assertEqual(reverse("your-collections"), resp.url)
 
         # Test collection URL for collection.id does not exist
         resp = self.client.get(reverse("collection", args=[delete_collection.id, slugify(delete_collection.name)]))
         self.assertEqual(resp.status_code, 404)
+
+    def test_public_collections_view_lists_only_public(self):
+        private_collection = Collection.objects.create(user=self.user, name="Private Collection", public=False)
+        public_collection = Collection.objects.create(user=self.user, name="Public Collection", public=True)
+
+        resp = self.client.get(reverse("collections"))
+        self.assertEqual(resp.status_code, 200)
+
+        listed_names = [collection.name for collection in resp.context["collections"]]
+        self.assertIn(public_collection.name, listed_names)
+        self.assertNotIn(private_collection.name, listed_names)
+
+    def test_public_collections_view_sorting(self):
+        collection_a = Collection.objects.create(user=self.user, name="Alpha", public=True)
+        collection_b = Collection.objects.create(user=self.user, name="Beta", public=True)
+
+        # Make sure collections have different num_sounds for "sounds" sorting
+        collection_a.add_sound(self.sound, user=self.user)
+        collection_a.refresh_from_db()
+        collection_b.refresh_from_db()
+
+        resp_by_name = self.client.get(reverse("collections") + "?sort=name")
+        self.assertEqual(resp_by_name.status_code, 200)
+        sorted_by_name = [collection.name for collection in resp_by_name.context["collections"]]
+        self.assertLess(sorted_by_name.index("Alpha"), sorted_by_name.index("Beta"))
+
+        resp_by_sounds = self.client.get(reverse("collections") + "?sort=sounds")
+        self.assertEqual(resp_by_sounds.status_code, 200)
+        sorted_by_sounds = [collection.name for collection in resp_by_sounds.context["collections"]]
+        self.assertLess(sorted_by_sounds.index("Alpha"), sorted_by_sounds.index("Beta"))
+
+    def test_public_collections_view_filter_by_name(self):
+        Collection.objects.create(user=self.user, name="Ocean Waves", public=True)
+        Collection.objects.create(user=self.user, name="Forest Birds", public=True)
+
+        resp = self.client.get(reverse("collections") + "?q=Ocean")
+        self.assertEqual(resp.status_code, 200)
+
+        listed_names = [collection.name for collection in resp.context["collections"]]
+        self.assertIn("Ocean Waves", listed_names)
+        self.assertNotIn("Forest Birds", listed_names)
+
+    def test_collections_for_user_filter_by_name(self):
+        self.client.force_login(self.user)
+        Collection.objects.create(user=self.user, name="Ocean Waves")
+        Collection.objects.create(user=self.user, name="Forest Birds")
+
+        resp = self.client.get(reverse("your-collections") + "?q=Ocean")
+        self.assertEqual(resp.status_code, 200)
+
+        owned_names = [collection.name for collection in resp.context["user_collections"]]
+        self.assertIn("Ocean Waves", owned_names)
+        self.assertNotIn("Forest Birds", owned_names)
+
+    def test_collections_for_user_sorting(self):
+        self.client.force_login(self.user)
+        collection_a = Collection.objects.create(user=self.user, name="Alpha")
+        collection_b = Collection.objects.create(user=self.user, name="Beta")
+
+        collection_a.add_sound(self.sound, user=self.user)
+        collection_a.refresh_from_db()
+        collection_b.refresh_from_db()
+
+        resp_by_name = self.client.get(reverse("your-collections") + "?sort=name")
+        self.assertEqual(resp_by_name.status_code, 200)
+        sorted_by_name = [collection.name for collection in resp_by_name.context["user_collections"]]
+        self.assertLess(sorted_by_name.index("Alpha"), sorted_by_name.index("Beta"))
+
+        resp_by_sounds = self.client.get(reverse("your-collections") + "?sort=sounds")
+        self.assertEqual(resp_by_sounds.status_code, 200)
+        sorted_by_sounds = [collection.name for collection in resp_by_sounds.context["user_collections"]]
+        self.assertLess(sorted_by_sounds.index("Alpha"), sorted_by_sounds.index("Beta"))
+
+    def test_public_collections_view_num_queries_does_not_scale_with_num_collections(self):
+        def build_public_collections(num_collections):
+            collections = []
+            for i in range(num_collections):
+                collection = Collection.objects.create(user=self.user, name=f"Public {i}", public=True)
+                collection.add_sound(self.sound, user=self.user)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+                collection.maintainers.add(self.maintainer)
+                collections.append(collection)
+            return collections
+
+        def get_num_queries():
+            with CaptureQueriesContext(connection) as ctx:
+                resp = self.client.get(reverse("collections"))
+                self.assertEqual(resp.status_code, 200)
+            return len(ctx.captured_queries)
+
+        build_public_collections(1)
+        queries_with_one = get_num_queries()
+
+        Collection.objects.exclude(id=self.collection.id).delete()
+        build_public_collections(10)
+        queries_with_ten = get_num_queries()
+
+        # Listing more collections should not trigger per-collection DB query growth.
+        self.assertLessEqual(queries_with_ten, queries_with_one + 2)
+
+    def test_collections_for_user_view_num_queries_does_not_scale_with_num_collections(self):
+        self.client.force_login(self.user)
+
+        def build_owned_and_maintained_collections(num_owned, num_maintained):
+            for i in range(num_owned):
+                collection = Collection.objects.create(user=self.user, name=f"Owned {i}")
+                collection.add_sound(self.sound, user=self.user)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+
+            owner = User.objects.create_user(username=f"owner_{num_maintained}", email=f"o{num_maintained}@a.com")
+            for i in range(num_maintained):
+                collection = Collection.objects.create(user=owner, name=f"Maintained {i}")
+                collection.add_sound(self.sound1, user=owner)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound1.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+                collection.maintainers.add(self.user)
+
+        def get_num_queries():
+            with CaptureQueriesContext(connection) as ctx:
+                resp = self.client.get(reverse("your-collections"))
+                self.assertEqual(resp.status_code, 200)
+            return len(ctx.captured_queries)
+
+        build_owned_and_maintained_collections(1, 1)
+        queries_with_few = get_num_queries()
+
+        Collection.objects.exclude(id=self.collection.id).delete()
+        build_owned_and_maintained_collections(10, 10)
+        queries_with_many = get_num_queries()
+
+        # Rendering should remain near-constant regardless of list sizes.
+        self.assertLessEqual(queries_with_many, queries_with_few + 3)
 
     def test_add_remove_sounds_as_user(self):
         # test edit collection's parameters as owner of the collection
@@ -135,7 +274,7 @@ class CollectionTest(TestCase):
 
         # Test adding sound to collection as a maintainer
         resp = self.client.post(
-            reverse("add-sound-to-collection", args=[self.sound.id]), {"collection": self.collection.id}
+            reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", {"collection": self.collection.id}
         )
         self.collection.refresh_from_db()
         self.assertEqual(resp.status_code, 200)
@@ -176,7 +315,7 @@ class CollectionTest(TestCase):
 
         # Test adding sound to collection as external user (not owner nor maintainer -> shouldn't be added)
         resp = self.client.post(
-            reverse("add-sound-to-collection", args=[self.sound.id]), {"collection": self.collection.id}
+            reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", {"collection": self.collection.id}
         )
         self.collection.refresh_from_db()
         self.assertEqual(resp.status_code, 200)

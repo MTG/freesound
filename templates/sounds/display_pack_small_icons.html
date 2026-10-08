@@ -1,7 +1,7 @@
 {% load util %}
 {% load bw_templatetags %}
 <div class="right text-light-grey col-auto" style="max-height: 22px;overflow: hidden;padding-right:0px!important;padding-left:0px!important;">                  
-    <div class="h-spacing-left-1" title="This pack has {{ pack.num_sounds }} sound {{ pack.num_sounds|pluralize }}">
+    <div class="h-spacing-left-1" title="This pack has {{ pack.num_sounds }} sound{{ pack.num_sounds|pluralize }}">
         <a href="{{ pack.get_pack_sounds_in_search_url }}" class="bw-link--grey">
             <span class="bw-icon-wave"></span> {{ pack.num_sounds|formatnumber }}
         </a>  

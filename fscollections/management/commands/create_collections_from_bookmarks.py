@@ -45,21 +45,22 @@ class Command(LoggingBaseCommand):
             user = bookmark_category.user
             collection_name = bookmark_category.name
             bookmark_category_sounds = Bookmark.objects.filter(user=user, category=bookmark_category)
-            if bookmark_category_sounds.exists():
-                collection, created = Collection.objects.get_or_create(user=user, name=collection_name, public=False)
-                if created:
-                    for bookmark in bookmark_category_sounds:
-                        CollectionSound.objects.get_or_create(
-                            collection=collection,
-                            sound=bookmark.sound,
-                            defaults={"status": "OK", "user": collection.user},
-                        )
-                    # No need to manually set num_sounds as it is set on save()
-                    collection.save()
-                    n_collections_created += 1
+
+            collection, created = Collection.objects.get_or_create(user=user, name=collection_name, public=False)
+            if created:
+                for bookmark in bookmark_category_sounds:
+                    CollectionSound.objects.get_or_create(
+                        collection=collection,
+                        sound=bookmark.sound,
+                        defaults={"status": "OK", "user": collection.user},
+                    )
+                # No need to manually set num_sounds as it is set on save()
+                collection.save()
+                n_collections_created += 1
 
             if count % 100 == 0:
                 console_logger.info(f"Processed {count + 1} out of {num_bookmark_collections} bookmark categories.")
+        console_logger.info(f"Processed {count + 1} out of {num_bookmark_collections} bookmark categories.")
 
         # Now create default "My bookmarks" collection for users that have bookmarks without category
         bookmarks_without_category_uids = (
@@ -89,5 +90,8 @@ class Command(LoggingBaseCommand):
                 console_logger.info(
                     f"Processed {count + 1} out of {num_bookmarks_without_category_uids} users with uncategorized bookmarks."
                 )
+        console_logger.info(
+            f"Processed {count + 1} out of {num_bookmarks_without_category_uids} users with uncategorized bookmarks."
+        )
 
         self.log_end({"n_collections_created": n_collections_created})

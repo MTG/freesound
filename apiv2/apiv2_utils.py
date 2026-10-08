@@ -27,7 +27,6 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.cache import cache, caches
 from django.http import HttpResponseRedirect, JsonResponse
-from django.utils import timezone
 from django.utils.encoding import smart_str
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
@@ -52,6 +51,7 @@ from apiv2.exceptions import (
     UnauthorizedException,
 )
 from apiv2.forms import API_SORT_OPTIONS_MAP
+from apiv2.models import ApiV2Client
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
 from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
@@ -109,6 +109,7 @@ class FreesoundAPIViewMixin:
     auth_method_name = None
     developer = None
     user = None
+    client = None
     client_id = None
     client_name = None
     protocol = None
@@ -129,9 +130,11 @@ class FreesoundAPIViewMixin:
         set by this function expire in 72 hours so the management command has time to consolidate the results of the
         previous days.
         """
-        if self.client_id is not None:
-            now = timezone.now().date()
-            monitoring_key = f"{now.year}-{now.month}-{now.day}_{self.client_id}"
+        if self.client_id is not None and self.request.path != "/apiv2/usage/":
+            # Note that here we want to count the number of requests for the current API client, this is different than
+            # counting number of requests for throttling purpooses because in the latter case the key is based on the user ID
+            # and not the API client (a user might have multiple clients)
+            monitoring_key = ApiV2Client.get_today_usage_cache_key(self.client_id)
             current_value = cache_api_monitoring.get(monitoring_key, 0)
             cache_api_monitoring.set(monitoring_key, current_value + 1, 60 * 60 * 24 * 3)  # Expire in 3 days
 
@@ -143,10 +146,12 @@ class FreesoundAPIViewMixin:
             self.auth_method_name,
             self.developer,
             self.user,
+            self.client,
             self.client_id,
             self.client_name,
             self.protocol,
             self.contains_www,
+            self.throttling_level,
         ) = get_authentication_details_form_request(request)
 
     def redirect_if_needed(self, request, response):
@@ -217,7 +222,7 @@ class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
 
 
 class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
-    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+    throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS  # Use stricter limits
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
     def initial(self, request, *args, **kwargs):
@@ -309,7 +314,7 @@ def api_search(search_form, target_file=None, resource=None):
         and not target_file
     ):
         # No input data for search, return empty results
-        return [], 0, None, None, None, None, None
+        return [], 0, 0, None, None, None, None, None, None
 
     # Standard text-based search
     try:
@@ -336,7 +341,6 @@ def api_search(search_form, target_file=None, resource=None):
             # accessed later when serializing sounds
             distance_to_target_data = {int(element["id"]): element["dist"] for element in result.docs}
 
-        num_found = result.num_found
         more_from_pack_data = None
         if search_form.cleaned_data["group_by_pack"]:
             # If grouping option is on, store grouping info in a dictionary that we can add when serializing sounds
@@ -344,7 +348,17 @@ def api_search(search_form, target_file=None, resource=None):
                 int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
             }
 
-        return ids_score, num_found, distance_to_target_data, more_from_pack_data, None, None, None
+        return (
+            ids_score,
+            result.num_found,
+            result.non_grouped_number_of_results,
+            distance_to_target_data,
+            more_from_pack_data,
+            None,
+            None,
+            None,
+            result.q_time,
+        )
 
     except SearchEngineTimeoutException as e:
         search_logger.info(
@@ -419,7 +433,7 @@ def build_info_dict(resource=None, request=None):
             "api_www": resource.contains_www,
         }
     if request is not None:
-        auth_method_name, developer, user, client_id, client_name, protocol, contains_www = (
+        auth_method_name, developer, user, _, client_id, client_name, protocol, contains_www, _ = (
             get_authentication_details_form_request(request)
         )
         return {
@@ -459,30 +473,38 @@ def get_authentication_details_form_request(request):
     auth_method_name = None
     user = None
     developer = None
+    client = None
     client_id = None
     client_name = None
     protocol = "https" if request.is_secure() else "http"
     contains_www = "www" if "www" in request.get_host() else "none"
+    throttling_level = None
 
     if request.successful_authenticator:
         auth_method_name = request.successful_authenticator.authentication_method_name
         if auth_method_name == "OAuth2":
             user = request.user
             developer = request.auth.application.user
-            client_id = request.auth.application.apiv2_client.client_id
-            client_name = request.auth.application.apiv2_client.name
+            client = request.auth.application.apiv2_client
+            client_id = client.client_id
+            client_name = client.name
+            throttling_level = int(client.throttling_level)
         elif auth_method_name == "Token":
             user = None
             developer = request.auth.user
-            client_id = request.auth.client_id
-            client_name = request.auth.name
+            client = request.auth
+            client_id = client.client_id
+            client_name = client.name
+            throttling_level = int(client.throttling_level)
         elif auth_method_name == "Session":
             user = request.user
             developer = None
+            client = None
             client_id = None
             client_name = None
+            throttling_level = 1
 
-    return auth_method_name, developer, user, client_id, client_name, protocol, contains_www
+    return auth_method_name, developer, user, client, client_id, client_name, protocol, contains_www, throttling_level
 
 
 def request_parameters_info_for_log_message(get_parameters):

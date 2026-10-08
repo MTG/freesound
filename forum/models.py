@@ -30,12 +30,12 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.encoding import smart_str
-from django.utils.text import slugify
 
 import accounts
 from utils.cache import invalidate_template_cache
 from utils.search import SearchEngineException, get_search_engine
 from utils.search.search_forum import delete_posts_from_search_engine
+from utils.text import slugify
 
 web_logger = logging.getLogger("web")
 

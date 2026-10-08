@@ -90,6 +90,12 @@
 }
 
 .bw-post {
+  &__account-warning {
+    background-color: $warning-background;
+    color: $warning-text;
+    padding: 1px 4px;
+  }
+
   &__avatar {
     width: 70px;
     height: 70px;

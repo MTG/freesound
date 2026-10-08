@@ -24,15 +24,15 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apiv2.models import ApiV2Client
-from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer
+from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer, validate_tags
 from bookmarks.models import Bookmark, BookmarkCategory
-from sounds.models import Sound
+from sounds.models import DownloadAPI, PackDownloadAPI, PackDownloadSoundAPI, Sound
 from utils.ratelimit import request_limit_events_total
 from utils.test_helpers import counter_samples, create_user_and_sounds
 
@@ -44,10 +44,29 @@ from .exceptions import (
 )
 from .forms import SoundTextSearchFormAPI
 from .handlers import api_exception_handler
+from .renderers import XMLRenderer
 
 
 class TestAPiViews(TestCase):
     fixtures = ["licenses"]
+
+    def test_sound_detail_and_comments_require_public_sound(self):
+        user, _, sounds = create_user_and_sounds(processing_state="OK", moderation_state="OK")
+        sound = sounds[0]
+        self.client.force_login(user)
+        response = self.client.get(reverse("apiv2-sound-comments", args=[sound.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["results"], [])
+        for moderation, processing in [("PE", "OK"), ("OK", "PE")]:
+            sound.moderation_state, sound.processing_state = moderation, processing
+            sound.save()
+            for route in ["apiv2-sound-instance", "apiv2-sound-comments"]:
+                for sound_id in [sound.id, sound.id + 1]:
+                    with self.subTest(route=route, sound_id=sound_id, states=(moderation, processing)):
+                        response = self.client.get(reverse(route, args=[sound_id]))
+                        self.assertEqual(response.status_code, 404)
+                        if route == "apiv2-sound-comments":
+                            self.assertEqual(response.json(), {"detail": "Not found"})
 
     def test_pack_views_response_ok(self):
         user, packs, sounds = create_user_and_sounds(num_sounds=5, num_packs=1)
@@ -156,6 +175,81 @@ class TestAPI(TestCase):
             "/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers
         )
         self.assertEqual(resp.status_code, 200)
+
+
+class TestDownloadViews(TestCase):
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.password = "endpass"  # noqa: S105
+        self.user, self.packs, self.sounds = create_user_and_sounds(num_sounds=3, num_packs=1, username="downloaduser")
+        self.user.set_password(self.password)
+        self.user.save()
+        for sound in self.sounds:
+            sound.change_processing_state("OK")
+            sound.change_moderation_state("OK")
+
+        self.api_client = ApiV2Client.objects.create(
+            name="DownloadClient",
+            user=self.user,
+            allow_oauth_password_grant=True,
+        )
+        resp = self.client.post(
+            reverse("oauth2_provider:access_token"),
+            {
+                "client_id": self.api_client.client_id,
+                "grant_type": "password",
+                "username": self.user.username,
+                "password": self.password,
+            },
+            secure=True,
+        )
+        self.auth_headers = {
+            "HTTP_AUTHORIZATION": f"Bearer {resp.json()['access_token']}",
+        }
+
+    @mock.patch("apiv2.views.sendfile", return_value=HttpResponse("Dummy response"))
+    @mock.patch("apiv2.views.os.path.exists", return_value=True)
+    def test_download_sound_creates_download_api_object(self, exists, sendfile):
+        sound = self.sounds[0]
+        self.assertEqual(DownloadAPI.objects.count(), 0)
+
+        resp = self.client.get(
+            reverse("apiv2-sound-download", kwargs={"pk": sound.id}), secure=True, **self.auth_headers
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(DownloadAPI.objects.count(), 1)
+        download_api = DownloadAPI.objects.get()
+        self.assertEqual(download_api.sound_id, sound.id)
+        self.assertEqual(download_api.user_id, self.user.id)
+        self.assertEqual(download_api.api_client_id, self.api_client.id)
+        self.assertEqual(download_api.license_id, sound.license_id)
+
+    def test_download_pack_creates_pack_download_api_objects(self):
+        pack = self.packs[0]
+        self.assertEqual(PackDownloadAPI.objects.count(), 0)
+        self.assertEqual(PackDownloadSoundAPI.objects.count(), 0)
+
+        resp = self.client.get(reverse("apiv2-pack-download", kwargs={"pk": pack.id}), secure=True, **self.auth_headers)
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(PackDownloadAPI.objects.count(), 1)
+        pack_download_api = PackDownloadAPI.objects.get()
+        self.assertEqual(pack_download_api.pack_id, pack.id)
+        self.assertEqual(pack_download_api.user_id, self.user.id)
+        self.assertEqual(pack_download_api.api_client_id, self.api_client.id)
+
+        pack_sounds = list(pack.sounds.all())
+        self.assertEqual(
+            PackDownloadSoundAPI.objects.filter(pack_download_api=pack_download_api).count(), len(pack_sounds)
+        )
+        for sound in pack_sounds:
+            self.assertTrue(
+                PackDownloadSoundAPI.objects.filter(
+                    pack_download_api=pack_download_api, sound=sound, license_id=sound.license_id
+                ).exists()
+            )
 
 
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):
@@ -337,6 +431,29 @@ class TestSoundSerializer(TestCase):
 
 
 class TestApiV2Client(TestCase):
+    fixtures = ["users"]
+
+    def test_credentials_require_owner(self):
+        owner = User.objects.get(username="User1")
+        outsider = User.objects.get(username="User2")
+        credential = ApiV2Client.objects.create(user=owner, name="Owner app")
+        self.client.force_login(outsider)
+        for route in ["apiv2-edit-credential", "apiv2-monitor-credential", "apiv2-delete-credential"]:
+            with self.subTest(route=route):
+                request = self.client.post if route == "apiv2-delete-credential" else self.client.get
+                self.assertEqual(request(reverse(route, args=[credential.key])).status_code, 404)
+        credential.refresh_from_db()
+        credential.oauth_client.refresh_from_db()
+        self.client.force_login(owner)
+        self.assertEqual(self.client.get(reverse("apiv2-edit-credential", args=[credential.key])).status_code, 200)
+        delete_url = reverse("apiv2-delete-credential", args=[credential.key])
+        self.assertEqual(self.client.get(delete_url).status_code, 405)
+        credential.refresh_from_db()
+        oauth_client = credential.oauth_client
+        self.assertRedirects(self.client.post(delete_url), reverse("apiv2-apply"))
+        self.assertFalse(ApiV2Client.objects.filter(pk=credential.pk).exists())
+        self.assertFalse(type(oauth_client).objects.filter(pk=oauth_client.pk).exists())
+
     def test_urls_length_validation(self):
         """URLs are limited to a length of 200 characters at the DB level, test that passing a longer URL raised a
         for validation error instead of a DB error.
@@ -424,7 +541,7 @@ class TestMeResources(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
-        # 200 response on getting sounds for bookmark category without name
+        # 200 response on getting sounds for bookmark category with name
         resp = self.client.get(
             reverse("apiv2-me-bookmark-category-sounds", kwargs={"category_id": self.category.id}) + "?fields=*",
             secure=True,
@@ -828,3 +945,102 @@ class TestThrottledException(SimpleTestCase):
 
         assert response.status_code == 429
         assert self._samples()[("api_throttle", "true", "authenticated")] == before + 1
+
+
+class TestResponseFormatNegotiation(TestCase):
+    """JSON and XML are the only formats the API renders; yaml and jsonp were removed."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("format_user")
+        self.client.force_login(self.user)
+
+    def test_xml_via_format_parameter(self):
+        response = self.client.get("/apiv2/?format=xml", secure=True)
+
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/xml; charset=utf-8"
+        assert response.content.startswith(b'<?xml version="1.0" encoding="utf-8"?>')
+
+    def test_xml_via_accept_header(self):
+        response = self.client.get("/apiv2/", secure=True, HTTP_ACCEPT="application/xml")
+
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/xml; charset=utf-8"
+        assert response.content.startswith(b'<?xml version="1.0" encoding="utf-8"?>')
+
+    def test_api_index_sanitises_dict_keys_for_xml(self):
+        # Section names like "Search resources" are not valid XML tag names, so api_index rewrites them
+        response = self.client.get("/apiv2/?format=xml", secure=True)
+
+        assert b"<_Search_resources>" in response.content
+        assert b"<_01_Search>" in response.content
+
+    def test_removed_formats_are_not_found(self):
+        for format_name in ["yaml", "jsonp"]:
+            with self.subTest(format=format_name):
+                response = self.client.get(f"/apiv2/?format={format_name}", secure=True)
+
+                assert response.status_code == 404
+                assert response["Content-Type"] == "application/json"
+
+    def test_unauthenticated_request_for_removed_format_is_not_a_server_error(self):
+        # Regression guard for FREESOUND-WEB-2MT: the 401 raised by DRF carries an ErrorDetail, which
+        # the yaml renderer could not serialise, turning every such request into a 500. Content
+        # negotiation now rejects the format before authentication runs, so this must be a 404.
+        self.client.logout()
+
+        # Without the format parameter this endpoint is the 401 that used to trigger the 500
+        assert self.client.get("/apiv2/me/", secure=True).status_code == 401
+
+        response = self.client.get("/apiv2/me/?format=yaml", secure=True)
+
+        assert response.status_code == 404
+        assert response.json() == {"detail": "Not found."}
+
+
+class TestVendoredXMLRenderer(SimpleTestCase):
+    """The renderer is vendored from the unmaintained djangorestframework-xml, so pin its output."""
+
+    def test_renders_nested_structures(self):
+        data = {
+            "count": 2,
+            "next": None,
+            "results": [
+                {"id": 1, "name": "a & b < c > d", "ok": True},
+                {"id": 2, "tags": [], "score": None},
+            ],
+            "nested": {"a": {"b": "deep"}},
+            "detail": ErrorDetail("Not found.", code="not_found"),
+        }
+
+        assert XMLRenderer().render(data) == (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            "<root>"
+            "<count>2</count>"
+            "<next></next>"
+            "<results>"
+            "<list-item><id>1</id><name>a &amp; b &lt; c &gt; d</name><ok>True</ok></list-item>"
+            "<list-item><id>2</id><tags></tags><score></score></list-item>"
+            "</results>"
+            "<nested><a><b>deep</b></a></nested>"
+            "<detail>Not found.</detail>"
+            "</root>"
+        )
+
+    def test_renders_empty_string_for_no_data(self):
+        assert XMLRenderer().render(None) == ""
+
+
+class TagLengthValidationTests(SimpleTestCase):
+    def test_rejects_tag_longer_than_100_characters(self):
+        with self.assertRaises(ValidationError) as cm:
+            validate_tags(f"{'x' * 101} two three")
+        self.assertEqual(
+            cm.exception.detail,
+            ["One of the tags is too long. Each tag can have at most 100 characters."],
+        )
+
+    def test_length_is_checked_after_cleaning_and_raw_value_is_returned(self):
+        for value in (f"{'x' * 100},two,three", f"--{'x' * 98}---y-- two three"):
+            with self.subTest(value=value):
+                self.assertEqual(validate_tags(value), value)

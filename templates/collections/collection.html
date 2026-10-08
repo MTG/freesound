@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load tags %}
 {% load bw_templatetags %}
+{% load filter_img %}
 {% load display_sound %}
 {% load display_user %}
 {% load util %}
@@ -51,7 +52,7 @@
 
                     <div class="v-spacing-top-3">
                         {% if collection.description %}
-                        <div>{{collection.description}}</div>
+                        <div>{{collection.description|replace_img|safe|linebreaks|strip_unnecessary_br}}</div>
                         {% endif %}
                         <div class="v-spacing-top-3">
                             {% for tag in collection.get_collection_tags_bw|add_sizes:"count:0.1:1.0" %}
@@ -173,6 +174,9 @@
                     {% endif %}
                     {% if is_owner or is_maintainer %}
                         <a class="no-hover btn-secondary display-inline-block w-100 text-center v-spacing-top-3" href="{{ collection.edit_url }}" title="Edit collection">Edit collection</a>
+                    {% endif %}
+                    {% if request.user.is_staff %}
+                        <a class="no-hover btn-inverse display-inline-block w-100 text-center v-spacing-top-3" href="{% url 'admin:fscollections_collection_change' collection.id %}">Edit in the admin</a>
                     {% endif %}
                 </div>
             </div>

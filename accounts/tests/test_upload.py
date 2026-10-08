@@ -501,6 +501,19 @@ class SessionJsonSafetyTests(TestCase):
         self.assertIs(self.client.session["packno00-describe_pack"], False)
         self._assert_session_json_safe()
 
+    def test_describe_pack_ignores_deleted_pack_with_same_name(self):
+        user = User.objects.create_user("packuser", email="pack@example.com")
+        self.client.force_login(user)
+        deleted_pack = Pack.objects.create(user=user, name="Reused pack name", is_deleted=True)
+        url = reverse("accounts-describe-pack") + "?session=packtest"
+        data = {"pack-pack": PackForm.NEW_PACK_CHOICE_VALUE, "pack-new_pack": deleted_pack.name}
+        for _ in range(2):  # Create a live pack, then reuse it alongside the deleted one.
+            self.assertEqual(self.client.post(url, data).status_code, 302)
+            pack = Pack.objects.get(user=user, name=deleted_pack.name, is_deleted=False)
+            self._assert_session_value("packtest", "describe_pack", pack.id)
+        deleted_pack.refresh_from_db()
+        self.assertTrue(deleted_pack.is_deleted)
+
     def test_edit_flow_session_is_json_safe(self):
         user, _packs, sounds = create_user_and_sounds(
             num_sounds=2,

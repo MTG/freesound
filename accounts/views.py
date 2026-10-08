@@ -714,9 +714,8 @@ def manage_sounds(request, tab):
                 pack_ids = [int(part) for part in request.POST.get("object-ids", "").split(",")]
             except ValueError:
                 pack_ids = []
-            packs = Pack.objects.ordered_ids(pack_ids)
-            # Just as a sanity check, filter out packs not owned by the user
-            packs = [pack for pack in packs if pack.user == pack.user]
+            owned_ids = set(Pack.objects.filter(id__in=pack_ids, user=request.user).values_list("id", flat=True))
+            packs = Pack.objects.ordered_ids([pack_id for pack_id in pack_ids if pack_id in owned_ids])
 
             if packs:
                 if "edit" in request.POST:
@@ -772,9 +771,8 @@ def manage_sounds(request, tab):
                 sound_ids = [int(part) for part in request.POST.get("object-ids", "").split(",")]
             except ValueError:
                 sound_ids = []
-            sounds = Sound.objects.ordered_ids(sound_ids)
-            # Just as a sanity check, filter out sounds not owned by the user
-            sounds = [sound for sound in sounds if sound.user == request.user]
+            owned_ids = set(Sound.objects.filter(id__in=sound_ids, user=request.user).values_list("id", flat=True))
+            sounds = Sound.objects.ordered_ids([sound_id for sound_id in sound_ids if sound_id in owned_ids])
             if sounds:
                 if "edit" in request.POST:
                     # Edit the selected sounds
@@ -983,7 +981,7 @@ def describe_pack(request):
         if form.is_valid():
             data = form.cleaned_data
             if data["new_pack"]:
-                pack, created = Pack.objects.get_or_create(user=request.user, name=data["new_pack"])
+                pack, created = Pack.objects.get_or_create(user=request.user, name=data["new_pack"], is_deleted=False)
                 request.session[f"{session_key_prefix}-describe_pack"] = pack.id
             elif data["pack"]:
                 request.session[f"{session_key_prefix}-describe_pack"] = data["pack"].id
@@ -1840,7 +1838,7 @@ def flag_user(request, username):
         if object_id:
             try:
                 if request.POST["flag_type"] == "PM":
-                    flagged_object = Message.objects.get(id=object_id, user_from=flagged_user)
+                    flagged_object = Message.objects.get(id=object_id, user_from=flagged_user, user_to=request.user)
                 elif request.POST["flag_type"] == "FP":
                     flagged_object = Post.objects.get(id=object_id, author=flagged_user)
                 elif request.POST["flag_type"] == "SC":

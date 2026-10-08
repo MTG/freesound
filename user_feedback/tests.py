@@ -441,7 +441,8 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check the last piece has the bar, with the info modal and the opt-out
         html = self._items()[-1]["html"]
         self.assertIn("data-experiment-bar", html)
-        self.assertIn("How useful was filtering by the Music category?", html)
+        self.assertIn("How useful was filtering by the", html)
+        self.assertIn("Music</a> category?", html)
         self.assertIn("data-experiment-optout", html)
         # Check the bar is not shown again after rating this search, but the questions are
         self._submit(kind="overall", rating="4")
@@ -467,7 +468,9 @@ class CategoryFilterFeedbackTest(TestCase):
         subcategory_filter = 'category:"Music" subcategory:"Solo percussion"'
         # Check the bar names the subcategory when it is selected
         html = self._items(f=subcategory_filter)[-1]["html"]
-        self.assertIn("How useful was filtering by the Music > Solo percussion category?", html)
+        self.assertIn("Music > Solo percussion</a> category?", html)
+        # Check it links to the subcategory in the taxonomy page
+        self.assertIn(reverse("bst-info-page") + "#m-sp", html)
         # Rate the category and answer one result, without subcategory
         self._submit(kind="overall", rating="4")
         self._submit(kind="result", answer="yes", sound_id=self.sounds[0].id, position=1)

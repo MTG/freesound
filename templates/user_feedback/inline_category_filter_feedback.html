@@ -19,7 +19,7 @@
                 class="cursor-pointer"
                 style="position: absolute; top: 10px; left: 12px; margin: 0; padding: 0; background: none; color: inherit; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>
         <span data-experiment-bar-close class="cursor-pointer" title="Close" aria-label="Close" style="position: absolute; top: 8px; right: 12px;">{% bw_icon 'close' %}</span>
-        <div class="h-padding-4"><b>How useful was filtering by the {{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %} category?</b></div>
+        <div class="h-padding-4"><b>How useful was filtering by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer" style="color: #c99700;">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</b></div>
         <div class="v-spacing-top-2">
             <span class="text-14 h-spacing-2">Not useful</span>
             {% for value in "12345" %}

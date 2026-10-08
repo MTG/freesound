@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.module_loading import import_string
 from django.utils.safestring import mark_safe
 
+from sounds.templatetags.bst_category import bst_taxonomy_category_names_to_category_key
 from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
 from user_feedback.models import FeedbackOptOut, UserFeedback
 from utils.search.search_query_processor import SearchQueryProcessor
@@ -256,6 +257,10 @@ class CategoryFilterFeedback(Experiment):
         # The overall rating bar is shown until the user rates this search.
         context["show_bar"] = not self._is_rated(request.user, search)
         context["bar_delay_seconds"] = self.bar_delay_seconds
+        # Key of the category (e.g. "m-sp"), to link to its description in the taxonomy page.
+        context["category_key"] = bst_taxonomy_category_names_to_category_key(
+            search["category"], search["subcategory"] or None
+        )
         if not items and not context["show_bar"]:
             return []
         # The info about the search and the bar go at the end of the page.

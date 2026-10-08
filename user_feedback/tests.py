@@ -16,6 +16,11 @@ class _ToyExperiment(Experiment):
     experiment_id = "toy"
 
 
+def set_sample_rate(experiment_id, sample_rate):
+    # Set how often an experiment is shown. Its configuration is created if it does not exist.
+    FeedbackExperiment.objects.update_or_create(experiment_id=experiment_id, defaults={"sample_rate": sample_rate})
+
+
 class _FakeSound:
     """Duck-typed stand-in: is_context_eligible only reads .bst_category, so a real Sound is not needed here."""
 
@@ -23,9 +28,9 @@ class _FakeSound:
         self.bst_category = bst_category
 
 
-@override_settings(FEEDBACK_EXPERIMENTS={"toy": {"sample_rate": 1.0}})
 class ExperimentBaseTest(TestCase):
     def setUp(self):
+        set_sample_rate("toy", 1.0)
         self.factory = RequestFactory()
         self.user = User.objects.create_user("alice", email="alice@freesound.org", password="testpass")
 
@@ -37,15 +42,15 @@ class ExperimentBaseTest(TestCase):
     def test_anonymous_never_shown(self):
         self.assertFalse(_ToyExperiment().should_show(self._request(AnonymousUser())))
 
-    @override_settings(FEEDBACK_EXPERIMENTS={"toy": {"sample_rate": 0.0}})
     def test_rate_zero_never_sampled(self):
+        set_sample_rate("toy", 0.0)
         self.assertFalse(_ToyExperiment().is_sampled_in(self._request(self.user)))
 
     def test_rate_one_always_sampled(self):
         self.assertTrue(_ToyExperiment().is_sampled_in(self._request(self.user)))
 
-    @override_settings(FEEDBACK_EXPERIMENTS={"toy": {"sample_rate": 0.5}})
     def test_sampling_is_deterministic(self):
+        set_sample_rate("toy", 0.5)
         experiment = _ToyExperiment()
         request = self._request(self.user)
         # Same user -> same verdict every time (no re-rolling per page load).
@@ -215,7 +220,6 @@ class SubmitAndModalViewTest(TestCase):
         self.assertEqual(self.client.get(reverse("user-feedback-opt-out")).status_code, 405)
 
 
-@override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 1.0}})
 class PerSoundThrottleTest(TestCase):
     """Answering about one sound must not stop the box appearing on other sounds:
     category_validation throttles per sound, not once per user like the base class."""
@@ -223,6 +227,7 @@ class PerSoundThrottleTest(TestCase):
     fixtures = ["licenses"]
 
     def setUp(self):
+        set_sample_rate("category_validation", 1.0)
         self.user, _, self.sounds = create_user_and_sounds(num_sounds=2, bst_category="fx-o")
         self.experiment = CategoryValidation()
 
@@ -251,7 +256,6 @@ class PerSoundThrottleTest(TestCase):
         self.assertFalse(self.experiment.should_show(request, sound=second))
 
 
-@override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 0.5}})
 class PerUserSoundSamplingTest(TestCase):
     """category_validation samples per (user, sound): every user can be asked and the
     rate gates each sound they open, rather than a fixed cohort of users."""
@@ -259,6 +263,7 @@ class PerUserSoundSamplingTest(TestCase):
     fixtures = ["licenses"]
 
     def setUp(self):
+        set_sample_rate("category_validation", 0.5)
         self.user, _, self.sounds = create_user_and_sounds(num_sounds=2, bst_category="fx-o")
         self.experiment = CategoryValidation()
 
@@ -302,20 +307,19 @@ class RenderInlineHtmlTest(TestCase):
         request.user = self.user
         return request
 
-    @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 1.0}})
     def test_renders_box_when_shown(self):
+        set_sample_rate("category_validation", 1.0)
         html = self.experiment.render_inline_html(self._request(), sound=self.sound)
         self.assertIn("data-experiment-box", html)
         self.assertIn('name="selected_category"', html)  # the correction form is built in
         # Check the category links to its description in the taxonomy page
         self.assertIn(reverse("bst-info-page") + "#fx-o", html)
 
-    @override_settings(FEEDBACK_EXPERIMENTS={"category_validation": {"sample_rate": 0.0}})
     def test_empty_string_when_not_shown(self):
+        set_sample_rate("category_validation", 0.0)
         self.assertEqual(self.experiment.render_inline_html(self._request(), sound=self.sound), "")
 
 
-@override_settings(FEEDBACK_EXPERIMENTS={"category_filter_feedback": {"sample_rate": 1.0}})
 class CategoryFilterFeedbackTest(TestCase):
     """Tests for the category filter experiment of the search page."""
 
@@ -332,6 +336,7 @@ class CategoryFilterFeedbackTest(TestCase):
     }
 
     def setUp(self):
+        set_sample_rate("category_filter_feedback", 1.0)
         # One page of search results
         self.user, _, self.sounds = create_user_and_sounds(num_sounds=settings.SOUNDS_PER_PAGE)
         self.client.force_login(self.user)

@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 
 from sounds.templatetags.bst_category import bst_taxonomy_category_names_to_category_key
 from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
-from user_feedback.models import FeedbackOptOut, UserFeedback
+from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 from utils.search.search_query_processor import SearchQueryProcessor
 
 
@@ -29,8 +29,9 @@ class Experiment:
 
     @property
     def sample_rate(self):
-        """Fraction of eligible people to show it to (from settings; 0.0 = off)."""
-        return settings.FEEDBACK_EXPERIMENTS.get(self.experiment_id, {}).get("sample_rate", 0.0)
+        """Fraction of eligible people to show it to (0.0 = off). It is edited in the admin."""
+        config = FeedbackExperiment.objects.filter(experiment_id=self.experiment_id).first()
+        return config.sample_rate if config else 0.0
 
     def sampling_key(self, request, **kwargs):
         """What we sample on. Default = the user (stable per user). Override to

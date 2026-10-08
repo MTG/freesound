@@ -479,18 +479,11 @@ BST_SUBCATEGORY_CHOICES: list = [
 # -------------------------------------------------------------------------------
 # User feedback experiments (user_feedback app)
 
-# Registry of feedback experiments: each experiment_id maps to its class (resolved in user_feedback/experiments.py)
-# and its sample_rate = fraction of eligible views that show it (0.0 = off, 1.0 = every view).
-# local_settings.py overrides these for local testing.
+# Registry of feedback experiments: each experiment_id maps to its class (resolved in user_feedback/experiments.py).
+# The sample rate and the texts of each experiment are in the FeedbackExperiment model, and are edited in the admin.
 FEEDBACK_EXPERIMENTS = {
-    "category_validation": {
-        "class": "user_feedback.experiments.CategoryValidation",
-        "sample_rate": 0.0,
-    },
-    "category_filter_feedback": {
-        "class": "user_feedback.experiments.CategoryFilterFeedback",
-        "sample_rate": 0.0,
-    },
+    "category_validation": {"class": "user_feedback.experiments.CategoryValidation"},
+    "category_filter_feedback": {"class": "user_feedback.experiments.CategoryFilterFeedback"},
 }
 
 # -------------------------------------------------------------------------------

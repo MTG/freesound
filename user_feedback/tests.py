@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from user_feedback.experiments import CategoryFilterFeedback, CategoryValidation, Experiment
 from user_feedback.models import FeedbackOptOut, UserFeedback
+from utils.search.search_query_processor import SearchQueryProcessor
 from utils.test_helpers import create_user_and_sounds
 
 
@@ -449,3 +450,15 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(len(items), len(self.sounds) + 1)
         # Check the bar is shown again for another search in the same category
         self.assertIn("data-experiment-bar", self._items(q="guitar")[-1]["html"])
+
+    def test_sampling_is_per_search(self):
+        def key(**params):
+            request = RequestFactory().get(reverse("sounds-search"), {"q": "piano", "f": 'category:"Music"', **params})
+            request.user = self.user
+            return self.experiment.sampling_key(request, sqp=SearchQueryProcessor(request))
+
+        # Check the pages of a search have the same key
+        self.assertEqual(key(), key(page=2))
+        # Check another query or another category has a different key
+        self.assertNotEqual(key(), key(q="guitar"))
+        self.assertNotEqual(key(), key(f='category:"Speech"'))

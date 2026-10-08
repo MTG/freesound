@@ -180,8 +180,12 @@ class CategoryFilterFeedback(Experiment):
         return not sqp.map_mode_active() and not sqp.display_as_packs_active()
 
     def sampling_key(self, request, sqp=None, **kwargs):
-        # Per (user, category), so every user can be asked for some categories.
-        return f"{request.user.id}:{self._filter_value(sqp, 'category')}" if sqp else ""
+        # Per search (user, category and query), so a user is asked in some of their searches.
+        if sqp is None:
+            return ""
+        category = self._filter_value(sqp, "category")
+        query = sqp.get_option_value_to_apply("query") or ""
+        return f"{request.user.id}:{category}:{query}"
 
     def is_throttled(self, request, **kwargs):
         # Only the opt-out hides everything. Results already answered are skipped in render_page_items.

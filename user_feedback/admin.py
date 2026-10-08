@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import FeedbackOptOut, UserFeedback
+from .models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 
 
 @admin.register(UserFeedback)
@@ -27,4 +27,16 @@ class FeedbackOptOutAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(FeedbackExperiment)
+class FeedbackExperimentAdmin(admin.ModelAdmin):
+    list_display = ("experiment_id", "sample_rate", "title")
+    readonly_fields = ("experiment_id",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False

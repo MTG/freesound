@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -52,3 +53,25 @@ class FeedbackOptOut(models.Model):
 
     def __str__(self):
         return f"{self.user} opted out of {self.experiment_id}"
+
+
+class FeedbackExperiment(models.Model):
+    """Configuration of one experiment that can be changed in the admin.
+
+    The code of each experiment is in experiments.py (see settings.FEEDBACK_EXPERIMENTS).
+    This model has what does not need a code change: how often it is shown and the texts of its information modal.
+    """
+
+    experiment_id = models.CharField(max_length=100, unique=True)
+    sample_rate = models.FloatField(
+        default=0.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="Fraction of the eligible views that show the experiment (0 = off, 1 = every view).",
+    )
+    title = models.CharField(max_length=200, help_text="Name of the study, shown in the information modal.")
+    description = models.TextField(
+        help_text="Description of the study, shown in the information modal. It can have HTML links."
+    )
+
+    def __str__(self):
+        return self.experiment_id

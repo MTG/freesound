@@ -4,7 +4,7 @@ from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from user_feedback.experiments import CategoryFilterFeedback, CategoryValidation, Experiment
-from user_feedback.models import FeedbackOptOut, UserFeedback
+from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.test_helpers import create_user_and_sounds
 
@@ -480,3 +480,12 @@ class CategoryFilterFeedbackTest(TestCase):
         items = self._items(f=subcategory_filter)
         self.assertIn("data-experiment-bar", items[-1]["html"])
         self.assertEqual(len(items), len(self.sounds) + 1)
+
+
+class FeedbackExperimentTest(TestCase):
+    def test_experiments_in_settings_have_configuration(self):
+        # Check the migrations created the configuration of every experiment, with sample rate 0
+        for experiment_id in settings.FEEDBACK_EXPERIMENTS:
+            experiment = FeedbackExperiment.objects.get(experiment_id=experiment_id)
+            self.assertEqual(experiment.sample_rate, 0.0)
+            self.assertNotEqual(experiment.title, "")

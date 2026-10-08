@@ -1,6 +1,5 @@
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
 from django.urls import Resolver404, resolve
 from django.views.decorators.http import require_POST
 
@@ -73,15 +72,3 @@ def page_items(request):
         if experiment.page_url_name == url_name:
             items += experiment.render_page_items(request, sound_ids)
     return JsonResponse({"items": items})
-
-
-@login_required
-def modal(request):
-    """Render an experiment's follow-up modal, fetched by the modal JS."""
-    experiment = get_experiment(request.GET.get("experiment_id", ""))
-    if experiment is None or experiment.modal_template is None:
-        raise Http404("Unknown experiment")
-    # Query string doubles as the form's initial data, so the modal knows its context
-    # (which sound, which answer) without this view knowing any experiment's fields.
-    form = experiment.form_class(initial=request.GET.dict())
-    return render(request, experiment.modal_template, {"form": form, **experiment.modal_context(request, form)})

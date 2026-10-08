@@ -79,9 +79,9 @@ class ExperimentBaseTest(TestCase):
         self.assertTrue(experiment.is_context_eligible(request, sound=_FakeSound("music")))
 
 
-class SubmitAndModalViewTest(TestCase):
-    """The generic submit + modal views, driven through their real URLs with the
-    test client -- i.e. exactly what the box and modal hit in the browser."""
+class SubmitViewTest(TestCase):
+    """The generic submit view, driven through its real URL with the
+    test client -- i.e. exactly what the box hits in the browser."""
 
     fixtures = ["licenses"]
 
@@ -90,7 +90,6 @@ class SubmitAndModalViewTest(TestCase):
         self.sound = sounds[0]
         self.client.force_login(self.user)
         self.submit_url = reverse("user-feedback-submit")
-        self.modal_url = reverse("user-feedback-modal")
 
     def _rows(self):
         return UserFeedback.objects.filter(experiment_id="category_validation")
@@ -193,10 +192,6 @@ class SubmitAndModalViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("login", response["Location"])
         self.assertEqual(self._rows().count(), 0)
-
-    # -- modal view (generic) --
-    def test_modal_unknown_experiment_404(self):
-        self.assertEqual(self.client.get(self.modal_url, {"experiment_id": "nope"}).status_code, 404)
 
     # -- opt-out view --
     def _opt_out(self, **data):

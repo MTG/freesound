@@ -23,7 +23,6 @@ class Experiment:
 
     experiment_id = None  # unique id, also stored on each UserFeedback row
     form_class = None  # form the generic submit view validates for this experiment
-    modal_template = None  # optional follow-up modal, rendered by the modal view
     inline_template = None  # optional inline box rendered on a host page
     page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
 
@@ -62,11 +61,6 @@ class Experiment:
     def is_context_eligible(self, request, **kwargs):
         """Experiment-specific trigger condition (e.g. 'the sound has a category')."""
         return True
-
-    def modal_context(self, request, form):
-        """Extra template context for this experiment's modal, so the views that
-        render it do not need to know what any experiment shows."""
-        return {}
 
     def inline_context(self, request, **kwargs):
         """Extra template context for this experiment's inline box (its form, etc.),

@@ -206,23 +206,25 @@ class CategoryFilterFeedback(Experiment):
         }
 
     def _answered_sound_ids(self, user, search):
-        """Returns the sounds that the user already answered for this category and query."""
+        """Returns the sounds that the user already answered for this category, subcategory and query."""
         answers = UserFeedback.objects.filter(
             user=user,
             experiment_id=self.experiment_id,
             data__kind="result",
             data__category=search["category"],
+            data__subcategory=search["subcategory"],
             data__query=search["query"],
         )
         return set(answers.values_list("data__sound_id", flat=True))
 
     def _is_rated(self, user, search):
-        """Returns True if the user already rated this search (same category and query)."""
+        """Returns True if the user already rated this search (same category, subcategory and query)."""
         return UserFeedback.objects.filter(
             user=user,
             experiment_id=self.experiment_id,
             data__kind="overall",
             data__category=search["category"],
+            data__subcategory=search["subcategory"],
             data__query=search["query"],
         ).exists()
 

@@ -462,3 +462,16 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check another query or another category has a different key
         self.assertNotEqual(key(), key(q="guitar"))
         self.assertNotEqual(key(), key(f='category:"Speech"'))
+
+    def test_subcategory_is_asked_separately(self):
+        subcategory_filter = 'category:"Music" subcategory:"Solo percussion"'
+        # Check the bar names the subcategory when it is selected
+        html = self._items(f=subcategory_filter)[-1]["html"]
+        self.assertIn("How useful was filtering by the Music > Solo percussion category?", html)
+        # Rate the category and answer one result, without subcategory
+        self._submit(kind="overall", rating="4")
+        self._submit(kind="result", answer="yes", sound_id=self.sounds[0].id, position=1)
+        # Check the bar and all the results are still asked with the subcategory
+        items = self._items(f=subcategory_filter)
+        self.assertIn("data-experiment-bar", items[-1]["html"])
+        self.assertEqual(len(items), len(self.sounds) + 1)

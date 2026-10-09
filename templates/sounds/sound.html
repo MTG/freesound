@@ -135,6 +135,10 @@
                                 </div>
                             {% endif %}
                         </div>
+                        {% endcache %}
+                        {# Box sits OUTSIDE the cache on purpose: it is a per-user/request decision and must not be baked into the shared sound-keyed cache. Empty string when the experiment should not show. #}
+                        {{ category_validation_html }}
+                        {% cache 3600 bw_sound_page_details sound.id %}
                         <div class="v-spacing-top-1">
                             <div id="soundDescriptionSection">
                                 {{ sound.description|replace_img|safe|linebreaks|strip_unnecessary_br }}

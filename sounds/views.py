@@ -67,6 +67,7 @@ from sounds.sound_grid_editor import (
 )
 from tickets import TICKET_STATUS_CLOSED
 from tickets.models import Ticket, TicketComment
+from user_feedback.experiments import get_experiment
 from utils.cache import invalidate_user_template_caches
 from utils.cdn import generate_cdn_download_url
 from utils.download_limit import (
@@ -297,6 +298,10 @@ def sound(request, username, sound_id):
     is_following = request.user.is_authenticated and follow_utils.is_user_following_user(request.user, sound.user)
     is_explicit = sound.is_explicit and (not request.user.is_authenticated or not request.user.profile.is_adult)
 
+    # Category-validation experiment: the experiment owns all the rules and renders
+    # its own box (empty string when it should not show), so this view stays generic.
+    category_validation_html = get_experiment("category_validation").render_inline_html(request, sound=sound)
+
     tvars = {
         "sound": sound,
         "username": username,
@@ -306,6 +311,7 @@ def sound(request, username, sound_id):
         "is_explicit": is_explicit,  # if the sound should be shown blurred, already checks for adult profile
         "sizes": settings.IFRAME_PLAYER_SIZE,
         "min_num_ratings": settings.MIN_NUMBER_RATINGS,
+        "category_validation_html": category_validation_html,
         "download_limit_reached": user_download_limit_reached(request),
     }
     tvars.update(paginate(request, qs, settings.SOUND_COMMENTS_PER_PAGE))

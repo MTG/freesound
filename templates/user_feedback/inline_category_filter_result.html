@@ -1,0 +1,19 @@
+{# Yes/no question under one search result (category filter experiment); rendered by CategoryFilterFeedback.render_page_items. #}
+{# It has no Send button, so experiments.js saves it when an answer is clicked. #}
+<div data-experiment-box data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}" data-thanks="Thanks!"
+     class="text-grey text-14 text-right v-spacing-2">
+    <input type="hidden" name="kind" value="result">
+    <input type="hidden" name="sound_id" value="{{ sound_id }}">
+    <input type="hidden" name="position" value="{{ position }}">
+    {# Soft grey background behind the question. #}
+    <span class="display-inline-block" style="padding: 4px 6px 4px 14px; border-radius: 20px; background: rgba(116, 116, 144, 0.15);">
+        <span class="h-spacing-1">Is this what you were looking for?</span>
+        {# Thumbs up and down icons. #}
+        <a href="javascript:void(0)" class="btn-inverse display-inline-block" style="padding: 3px 8px; line-height: 0;" data-experiment-answer="yes" title="Yes" aria-label="Yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10H6V20H3Z M9 10L12 3L14 4.5L13 9.5H20L18.5 20H9Z"/></svg>
+        </a>
+        <a href="javascript:void(0)" class="btn-inverse display-inline-block" style="padding: 3px 8px; line-height: 0;" data-experiment-answer="no" title="No" aria-label="No">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(180 12 12)"><path d="M3 10H6V20H3Z M9 10L12 3L14 4.5L13 9.5H20L18.5 20H9Z"/></g></svg>
+        </a>
+    </span>
+</div>

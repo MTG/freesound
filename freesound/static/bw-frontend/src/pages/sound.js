@@ -4,6 +4,7 @@ import { playAtTime } from '../components/player/utils';
 import { handleGenericModalWithForm, dismissModal } from '../components/modal';
 import { addRecaptchaScriptTagToMainHead } from '../utils/recaptchaDynamicReload';
 import { prepareAfterDownloadSoundModals } from '../components/afterDownloadModal.js';
+import { prepareFeedbackExperiments } from '../components/experiments';
 
 const toggleEmbedCodeElement = document.getElementById('toggle-embed-code');
 const toggleShareLinkElement = document.getElementById('toggle-share-link');
@@ -16,6 +17,9 @@ const shareLinkElement = document.getElementById('share-link');
 const urlParams = new URLSearchParams(window.location.search);
 
 prepareAfterDownloadSoundModals();
+
+// Inline feedback-experiment boxes (e.g. category validation) are wired generically.
+prepareFeedbackExperiments();
 
 const copyFromInputElement = inputElement => {
   inputElement.select();

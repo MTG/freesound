@@ -1,0 +1,39 @@
+{% load bw_templatetags %}
+{# Category filter experiment in the search page; rendered by CategoryFilterFeedback.render_page_items. #}
+
+{# Info about the search. experiments.js sends it with every answer of this experiment. #}
+<div data-experiment-shared="{{ experiment_id }}" style="display: none;">
+    {% for name, value in search.items %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+</div>
+
+{% if show_bar %}
+    {# Overall rating, shown as a bar at the bottom of the page. Clicking a number opens the comment and Send saves. #}
+    <div class="toast" role="region" aria-label="Feedback question" style="z-index: 1040; font-weight: normal;"
+         data-experiment-box data-experiment-bar data-experiment-bar-delay="{{ bar_delay_seconds }}" data-experiment-answer-name="rating"
+         data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}">
+        <input type="hidden" name="kind" value="overall">
+        {# Circled "i" that opens the info modal below. #}
+        {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 10px; left: 12px; color: inherit;" %}
+        <span data-experiment-bar-close class="cursor-pointer" title="Close" aria-label="Close" style="position: absolute; top: 8px; right: 12px;">{% bw_icon 'close' %}</span>
+        <div class="h-padding-4"><b>How useful was filtering by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</b></div>
+        <div class="v-spacing-top-2">
+            <span class="text-14 h-spacing-2">Not useful</span>
+            {% for value in "12345" %}
+                <a href="javascript:void(0)" class="btn-inverse text-14 display-inline-block" style="padding: 8px 14px; color: inherit;" data-experiment-answer="{{ value }}">{{ value }}</a>
+            {% endfor %}
+            <span class="text-14 h-spacing-left-2">Very useful</span>
+        </div>
+        <div data-experiment-expand style="display: none;" class="v-spacing-top-2">
+            <textarea name="text" rows="2" placeholder="Anything else? (optional)"
+                      class="text-14" style="width: 100%; max-width: 500px; min-height: 0; background: transparent; color: inherit; border: 1px solid #999; border-radius: 5px; padding: 8px;"></textarea>
+            <div class="v-spacing-top-2">
+                <button type="button" data-experiment-send class="btn-primary text-14">Send</button>
+            </div>
+        </div>
+    </div>
+
+    {# Study information sheet + opt-out in "i" of the bar. #}
+    {% include "user_feedback/info_modal.html" %}
+{% endif %}

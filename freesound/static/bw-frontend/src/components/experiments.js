@@ -200,6 +200,7 @@ const placePageItem = item => {
 // Loads the experiments of a page that does not have them in its template. The server gets
 // the parameters of the page and the sounds shown in it, and returns the HTML to place.
 const loadFeedbackExperiments = () => {
+  // For now all the experiments need login, so not logged-in users skip the request.
   if (!userIsAuthenticated) return;
   const soundIds = [...document.querySelectorAll('[data-sound-id]')].map(
     element => element.dataset.soundId

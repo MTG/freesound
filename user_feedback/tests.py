@@ -1,9 +1,11 @@
+from unittest import mock
+
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from user_feedback.experiments import CategoryFilterFeedback, CategoryValidation, Experiment
+from user_feedback.experiments import EXPERIMENTS, CategoryFilterFeedback, CategoryValidation, Experiment
 from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.test_helpers import create_user_and_sounds
@@ -41,6 +43,11 @@ class ExperimentBaseTest(TestCase):
 
     def test_anonymous_never_shown(self):
         self.assertFalse(_ToyExperiment().should_show(self._request(AnonymousUser())))
+
+    def test_anonymous_shown_when_login_is_not_required(self):
+        experiment = _ToyExperiment()
+        experiment.requires_login = False
+        self.assertTrue(experiment.should_show(self._request(AnonymousUser())))
 
     def test_rate_zero_never_sampled(self):
         set_sample_rate("toy", 0.0)
@@ -192,6 +199,14 @@ class SubmitViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("login", response["Location"])
         self.assertEqual(self._rows().count(), 0)
+
+    def test_anonymous_answer_saves_when_login_is_not_required(self):
+        self.client.logout()
+        with mock.patch.object(EXPERIMENTS["category_validation"], "requires_login", False):
+            response = self._submit(answer="yes")
+        self.assertEqual(response.status_code, 302)
+        # Check that the answer is saved without a user
+        self.assertIsNone(self._rows().get().user)
 
     # -- opt-out view --
     def _opt_out(self, **data):

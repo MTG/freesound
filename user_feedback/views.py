@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import Resolver404, resolve
 from django.views.decorators.http import require_POST
@@ -7,7 +8,6 @@ from user_feedback.experiments import EXPERIMENTS, get_experiment
 from utils.logging_filters import get_client_ip
 
 
-@login_required
 @require_POST
 def submit(request):
     """Save one feedback answer for any experiment, then send the user back where
@@ -23,13 +23,16 @@ def submit(request):
     experiment = get_experiment(request.POST.get("experiment_id", ""))
     if experiment is None:
         raise Http404("Unknown experiment")
+    if experiment.requires_login and not request.user.is_authenticated:
+        return redirect_to_login(request.get_full_path())
     is_ajax = bool(request.GET.get("ajax"))
     form = experiment.form_class(request.POST)
     if form.is_valid():
         # get_client_ip returns "-" when there is no proxy header; store NULL then,
         # since "-" is not a valid value for the ip column.
         ip = get_client_ip(request)
-        experiment.save_response(request.user, form.cleaned_data, ip=ip if ip != "-" else None)
+        user = request.user if request.user.is_authenticated else None
+        experiment.save_response(user, form.cleaned_data, ip=ip if ip != "-" else None)
         if is_ajax:
             return JsonResponse({"success": True})
     elif is_ajax:
@@ -58,8 +61,6 @@ def page_items(request):
     The request has the same GET parameters as the page, plus the path of the page
     (``experiment_path``) and the sounds shown in it (``experiment_sound_ids``).
     """
-    if not request.user.is_authenticated:
-        return JsonResponse({"items": []})
     try:
         url_name = resolve(request.GET.get("experiment_path", "")).url_name
     except Resolver404:
@@ -69,6 +70,8 @@ def page_items(request):
     ]
     items = []
     for experiment in EXPERIMENTS.values():
+        if experiment.requires_login and not request.user.is_authenticated:
+            continue
         if experiment.page_url_name == url_name:
             items += experiment.render_page_items(request, sound_ids)
     return JsonResponse({"items": items})

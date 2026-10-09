@@ -492,3 +492,14 @@ class FeedbackExperimentTest(TestCase):
             experiment = FeedbackExperiment.objects.get(experiment_id=experiment_id)
             self.assertEqual(experiment.sample_rate, 0.0)
             self.assertNotEqual(experiment.title, "")
+
+    def test_download_feedback_from_admin(self):
+        user = User.objects.create_superuser("admin", email="admin@freesound.org", password="testpass")
+        UserFeedback.objects.create(experiment_id="category_validation", data={"answer": "yes"})
+        UserFeedback.objects.create(experiment_id="category_filter_feedback", data={"rating": 4})
+        experiment = FeedbackExperiment.objects.get(experiment_id="category_validation")
+        self.client.force_login(user)
+        url = reverse("admin:user_feedback_feedbackexperiment_actions", args=[experiment.id, "download_feedback"])
+        # Check the file has only the feedback of this experiment
+        rows = self.client.post(url).json()
+        self.assertEqual([row["data"] for row in rows], [{"answer": "yes"}])

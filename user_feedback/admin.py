@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.http import JsonResponse
+from django_object_actions import DjangoObjectActions, action
 
 from .models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 
@@ -31,9 +33,19 @@ class FeedbackOptOutAdmin(admin.ModelAdmin):
 
 
 @admin.register(FeedbackExperiment)
-class FeedbackExperimentAdmin(admin.ModelAdmin):
+class FeedbackExperimentAdmin(DjangoObjectActions, admin.ModelAdmin):
     list_display = ("experiment_id", "sample_rate", "title")
     readonly_fields = ("experiment_id",)
+    change_actions = ("download_feedback",)
+
+    @action(description="Download all the feedback of this experiment as a JSON file", label="Download feedback")
+    def download_feedback(self, request, obj):
+        # One item per UserFeedback of the experiment, with all its fields
+        feedback = UserFeedback.objects.filter(experiment_id=obj.experiment_id).order_by("created")
+        rows = list(feedback.values("id", "experiment_id", "user_id", "ip", "data", "created"))
+        response = JsonResponse(rows, safe=False, json_dumps_params={"indent": 2})
+        response["Content-Disposition"] = f'attachment; filename="{obj.experiment_id}_feedback.json"'
+        return response
 
     def has_add_permission(self, request):
         return False

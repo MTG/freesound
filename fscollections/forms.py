@@ -93,20 +93,11 @@ class SelectCollectionForm(forms.Form):
         """Add the sound to the chosen collection. Returns a (collection, featured_skipped) tuple."""
         sound = Sound.objects.get(id=self.sound_id)
 
-        if self.cleaned_data["use_last_collection"]:
-            last_sounds_added_to_collection = (
-                CollectionSound.objects.filter(user=self.user_saving_sound).order_by("-created").first()
-            )
-            collection_to_use = last_sounds_added_to_collection.collection if last_sounds_added_to_collection else None
-        elif self.cleaned_data["collection"] == self.BOOKMARK_COLLECTION_CHOICE_VALUE:
+        collection_to_use = self.cleaned_data["resolved_collection"]
+        if collection_to_use is None:
             collection_to_use, _ = Collection.objects.get_or_create(
                 name="My bookmarks", user=self.user_saving_sound, is_default_collection=True
             )
-        else:
-            collection_to_use = Collection.objects.get(id=self.cleaned_data["collection"])
-
-        if collection_to_use is None:
-            raise forms.ValidationError("Could not determine which collection to use.")
 
         featured_skipped = collection_to_use.add_sound(
             sound, self.user_saving_sound, feature=self.cleaned_data.get("mark_as_featured")
@@ -116,45 +107,47 @@ class SelectCollectionForm(forms.Form):
     def clean(self):
         clean_data = super().clean()
         try:
-            sound = Sound.objects.get(id=self.sound_id, moderation_state="OK")
+            sound = Sound.public.get(id=self.sound_id)
         except Sound.DoesNotExist:
             raise forms.ValidationError("Unexpected errors occured while handling the sound.")
         try:
             if clean_data["use_last_collection"]:
-                # If saving to last collection, we don't validate the collection field here, it is set on save()
-                collection = None
+                # Alt-click targets the collection of the user's most recent surviving addition.
+                last_added = (
+                    CollectionSound.objects.filter(user=self.user_saving_sound)
+                    .select_related("collection")
+                    .order_by("-created")
+                    .first()
+                )
+                if last_added is None:
+                    # The user has no sounds in a collection. They must choose one.
+                    raise forms.ValidationError("Could not determine which collection to use.")
+                collection = last_added.collection
             elif clean_data["collection"] == "-1":
-                default_col = Collection.objects.filter(user=self.user_saving_sound, is_default_collection=True).first()
-                if default_col is not None:
-                    if default_col.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
-                        raise forms.ValidationError(
-                            f'"My bookmarks" has reached the maximum number of sounds allowed'
-                            f" ({settings.MAX_SOUNDS_PER_COLLECTION})."
-                        )
-                    if CollectionSound.objects.filter(collection=default_col, sound=sound).exists():
-                        raise forms.ValidationError("This sound already exists in your bookmarks collection.")
+                # Save to "My Bookmarks"
+                collection = Collection.objects.filter(user=self.user_saving_sound, is_default_collection=True).first()
             else:
                 try:
                     collection = Collection.objects.get(id=clean_data["collection"])
-
-                    if collection.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
-                        raise forms.ValidationError(
-                            f"The chosen collection has reached the maximum number of sounds allowed ({settings.MAX_SOUNDS_PER_COLLECTION})"
-                        )
-
-                    if not collection.user_is_owner_or_maintainer(self.user_saving_sound):
-                        raise forms.ValidationError("You do not have permission to edit this collection.")
-
-                    # Check the through model directly: pending/refused sounds also occupy
-                    # the unique (sound, collection) slot
-                    if CollectionSound.objects.filter(collection=collection, sound=sound).exists():
-                        raise forms.ValidationError("This sound already exists in this collection")
-
-                except Collection.DoesNotExist:
+                except (Collection.DoesNotExist, ValueError):
                     raise forms.ValidationError("This collection does not exist.")
 
         except KeyError:
             raise forms.ValidationError("The chosen collection is not valid.")
+        if collection is not None:
+            # Re-check that the user has permission to add to this collection, this permission may have
+            # changed since the operation started, or if the user uses "add to last collection" and they've
+            # since been removed
+            if not collection.user_is_owner_or_maintainer(self.user_saving_sound):
+                raise forms.ValidationError("You do not have permission to edit this collection.")
+            if collection.num_sounds >= settings.MAX_SOUNDS_PER_COLLECTION:
+                raise forms.ValidationError(
+                    f"The chosen collection has reached the maximum number of sounds allowed ({settings.MAX_SOUNDS_PER_COLLECTION})"
+                )
+            # Pending/refused sounds also occupy the unique (sound, collection) slot.
+            if CollectionSound.objects.filter(collection=collection, sound=sound).exists():
+                raise forms.ValidationError("This sound already exists in this collection")
+        clean_data["resolved_collection"] = collection
         return clean_data
 
 
@@ -239,7 +232,7 @@ class CollectionEditForm(forms.ModelForm):
             CollectionSound.objects.filter(collection=self.instance).values_list("sound_id", flat=True)
         )
 
-        valid_added_ids = set(Sound.objects.filter(id__in=added).values_list("id", flat=True))
+        valid_added_ids = set(Sound.public.filter(id__in=added).values_list("id", flat=True))
         invalid_added_ids = added - valid_added_ids
         if invalid_added_ids:
             self.add_error("added_sounds", forms.ValidationError("Some sounds to add are invalid."))

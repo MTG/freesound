@@ -87,6 +87,35 @@ class CollectionTest(TestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 403)
 
+    def test_edit_collection_rejects_non_public_sounds(self):
+        self.client.force_login(self.user)
+        self.sound.moderation_state = "PE"
+        self.sound.save()
+        response = self.client.post(
+            self.collection.edit_url,
+            {"name": self.collection.name, "added_sounds": str(self.sound.id)},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("added_sounds", response.context["form"].errors)
+        self.assertFalse(CollectionSound.objects.filter(collection=self.collection, sound=self.sound).exists())
+
+    def test_last_collection_rechecks_maintainer_permission(self):
+        self.collection.maintainers.add(self.maintainer)
+        self.collection.add_sound(self.sound, self.maintainer)
+        self.client.force_login(self.maintainer)
+        response = self.client.post(
+            reverse("add-sound-to-collection", args=[self.sound1.id]) + "?ajax=1",
+            {"use_last_collection": True},
+        )
+        self.assertTrue(response.json()["success"])
+        self.collection.maintainers.remove(self.maintainer)
+        response = self.client.post(
+            reverse("add-sound-to-collection", args=[self.sound2.id]) + "?ajax=1",
+            {"use_last_collection": True},
+        )
+        self.assertFalse(response.json()["success"])
+        self.assertFalse(CollectionSound.objects.filter(collection=self.collection, sound=self.sound2).exists())
+
     def test_collections_create_and_delete(self):
         # User not logged in - redirects to login page
         # For this to be truly useful, collection urls should be moved into accounts

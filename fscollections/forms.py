@@ -123,6 +123,8 @@ class SelectCollectionForm(forms.Form):
                     # The user has no sounds in a collection. They must choose one.
                     raise forms.ValidationError("Could not determine which collection to use.")
                 collection = last_added.collection
+            elif not clean_data.get("collection"):
+                raise forms.ValidationError("Please select or create a collection.")
             elif clean_data["collection"] == "-1":
                 # Save to "My Bookmarks"
                 collection = Collection.objects.filter(user=self.user_saving_sound, is_default_collection=True).first()

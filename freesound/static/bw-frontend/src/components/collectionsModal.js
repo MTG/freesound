@@ -40,12 +40,6 @@ const initCollectionFormModal = () => {
   // To display the selector in case of an error in form, the following function is needed, despite it being called in
   // handleGenericModal.
   initializeStuffInContainer(modalContainer, false, false);
-  const selectElement = modalContainer.getElementsByTagName('select')[0];
-  if (selectElement === undefined) {
-    // If no select element, the modal has probably loaded for an unauthenticated user
-    return;
-  }
-
   // "Create and add to a new collection" link opens the create collection modal, passing the sound id so
   // the sound is added to the collection right after it is created.
   const createNewCollectionLink = document.getElementById(

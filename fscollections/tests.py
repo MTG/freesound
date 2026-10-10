@@ -312,7 +312,9 @@ class CollectionTest(TestCase):
         form_data = {"collection": -1, "use_last_collection": False}
         resp = self.client.post(reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", form_data)
         self.assertEqual(200, resp.status_code)
+        self.assertTrue(resp.json()["success"])
         default_collection = Collection.objects.get(user=self.user, name="My bookmarks", is_default_collection=True)
+        self.assertTrue(CollectionSound.objects.filter(sound=self.sound, collection=default_collection).exists())
         resp = self.client.get(reverse("collection", args=[default_collection.id, slugify(default_collection.name)]))
         self.assertEqual(200, resp.status_code)
 
@@ -326,6 +328,34 @@ class CollectionTest(TestCase):
         # Test download collection
         resp = self.client.get(reverse("download-collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 200)
+
+    def test_add_sound_requires_collection_selection(self):
+        self.client.force_login(self.user)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"success": False, "message": "Please select or create a collection."})
+        self.assertFalse(CollectionSound.objects.filter(sound=self.sound).exists())
+
+    def test_add_sound_modal_without_available_collections(self):
+        self.client.force_login(self.user)
+        bookmarks = Collection.objects.create(user=self.user, name="My bookmarks", is_default_collection=True)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        bookmarks.add_sound(self.sound, self.user)
+        self.collection.add_sound(self.sound, self.user)
+        response = self.client.get(url)
+        self.assertContains(response, "No collections available for this sound.")
+        self.assertNotContains(response, "<select")
+        self.assertNotContains(response, "Add sound to selected collection")
+        self.assertContains(response, 'id="createNewCollectionLink"')
+        self.assertContains(response, f"?ajax=1&sound_id={self.sound.id}")
+
+    def test_add_sound_modal_offers_bookmarks_without_existing_collections(self):
+        self.client.force_login(self.external_user)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        response = self.client.get(url)
+        self.assertContains(response, '<option value="-1" selected>My bookmarks</option>', html=True)
+        self.assertNotContains(response, "No collections available for this sound.")
 
     def test_add_remove_sounds_as_maintainer(self):
         # test edit collection's parameters as maintainer of the collection

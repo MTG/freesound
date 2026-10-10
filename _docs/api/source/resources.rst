@@ -1235,6 +1235,8 @@ My Bookmark Category Sounds
 
 This resource allows the retrieval of a list of sounds from a bookmark category created by the logged in Freesound user.
 
+Category ``0`` refers to the user's default bookmarks collection.
+
 
 Response
 --------

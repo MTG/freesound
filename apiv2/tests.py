@@ -25,13 +25,14 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.http import Http404, HttpResponse
-from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer, validate_tags
-from bookmarks.models import Bookmark, BookmarkCategory
+from bookmarks.models import Bookmark
+from fscollections.models import Collection, CollectionSound
 from sounds.models import DownloadAPI, PackDownloadAPI, PackDownloadSoundAPI, Sound
 from utils.ratelimit import request_limit_events_total
 from utils.test_helpers import counter_samples, create_user_and_sounds
@@ -516,11 +517,13 @@ class TestMeResources(TestCase):
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
 
-        self.category = BookmarkCategory.objects.create(name="Category1", user=self.end_user)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[0].id)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[1].id)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[2].id, category=self.category)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[3].id, category=self.category)
+        self.sounds = sounds
+        self.category = Collection.objects.create(name="Category1", user=self.end_user)
+        self.default_collection = Collection.objects.create(
+            name="My bookmarks", user=self.end_user, is_default_collection=True
+        )
+        for sound, collection in zip(sounds[:4], [self.default_collection] * 2 + [self.category] * 2):
+            collection.add_sound(sound, self.end_user)
 
     def test_me_resource(self):
         # 200 response on me resource
@@ -541,6 +544,8 @@ class TestMeResources(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
+        self.assertEqual({s["id"] for s in resp.json()["results"]}, {s.id for s in self.sounds[:2]})
+
         # 200 response on getting sounds for bookmark category with name
         resp = self.client.get(
             reverse("apiv2-me-bookmark-category-sounds", kwargs={"category_id": self.category.id}) + "?fields=*",
@@ -548,6 +553,65 @@ class TestMeResources(TestCase):
             **self.auth_headers,
         )
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual({s["id"] for s in resp.json()["results"]}, {s.id for s in self.sounds[2:4]})
+
+    def test_bookmark_collection_sounds_ordered_by_date_added(self):
+        # Return sounds in the order that they are added to the collection.
+        self.category.add_sound(self.sounds[0], self.end_user)
+        response = self.client.get(
+            reverse("apiv2-me-bookmark-category-sounds", args=[self.category.id]),
+            secure=True,
+            **self.auth_headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [sound["id"] for sound in response.json()["results"]],
+            [self.sounds[0].id, self.sounds[3].id, self.sounds[2].id],
+        )
+
+    def test_bookmark_collection_must_be_owned(self):
+        other_collection = Collection.objects.create(name="Other", user=self.dev_user, public=True)
+        other_collection.maintainers.add(self.end_user)
+        for category_id in [other_collection.id, other_collection.id + 1]:
+            with self.subTest(category_id=category_id):
+                response = self.client.get(
+                    reverse("apiv2-me-bookmark-category-sounds", args=[category_id]),
+                    secure=True,
+                    **self.auth_headers,
+                )
+                self.assertEqual(response.status_code, 404)
+
+    def test_bookmark_collections_only_return_public_accepted_sounds(self):
+        # Seed entries independently of form validation, then demote a bookmarked sound.
+        self.sounds[0].change_moderation_state("PE")
+        self.sounds[1].change_processing_state("PE")
+        for collection in [self.default_collection, self.category]:
+            for sound in self.sounds:
+                CollectionSound.objects.get_or_create(
+                    collection=collection, sound=sound, defaults={"user": self.end_user, "status": "OK"}
+                )
+            CollectionSound.objects.filter(collection=collection, sound=self.sounds[2]).update(status="PE")
+        for category_id in [0, self.category.id]:
+            with self.subTest(category_id=category_id):
+                response = self.client.get(
+                    reverse("apiv2-me-bookmark-category-sounds", args=[category_id]),
+                    secure=True,
+                    **self.auth_headers,
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual({s["id"] for s in response.json()["results"]}, {s.id for s in self.sounds[3:]})
+
+    @override_settings(ENABLE_COLLECTIONS=False)
+    def test_legacy_bookmarks_only_return_public_sounds(self):
+        for sound in self.sounds[:3]:
+            Bookmark.objects.create(user=self.end_user, sound=sound)
+        self.sounds[0].change_moderation_state("PE")
+        self.sounds[1].change_processing_state("PE")
+        response = self.client.get(
+            reverse("apiv2-me-bookmark-category-sounds", args=[0]), secure=True, **self.auth_headers
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([s["id"] for s in response.json()["results"]], [self.sounds[2].id])
 
 
 class APIAuthenticationTestCase(TestCase):

@@ -80,7 +80,7 @@ from apiv2.serializers import (
 from apiv2.throttling import ClientBasedThrottlingBurst, ClientBasedThrottlingSustained
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
-from fscollections.models import Collection, CollectionSound
+from fscollections.models import Collection
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from sounds.models import DownloadAPI, License, Pack, PackDownloadAPI, PackDownloadSoundAPI, Sound
@@ -1335,26 +1335,21 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
             kwargs["user__username"] = self.user.username
 
             if settings.ENABLE_COLLECTIONS:
-                if int(self.kwargs["category_id"]) != 0:
-                    collection_id = self.kwargs["category_id"]
-                else:
-                    # NOTE: If the category ID is 0, it is assumed to be user's "My bookmarks" collection
+                collections = Collection.objects.filter(user=self.user)
+                if self.kwargs["category_id"] == 0:
+                    # If the category ID is 0, it is assumed to be user's "My bookmarks" collection
                     # This is for backwards compatibility, but it could be removed in the future
-                    # This only make sense in the context of this API endpoint where user is specified as the logged
-                    # in user and there'll be only one collection named "My bookmnarks"
-                    collection = Collection.objects.filter(name="My bookmarks", user=self.user)
-                    if collection.exists():
-                        collection_id = collection.first().id
-                    else:
+                    collection = collections.filter(is_default_collection=True).first()
+                    if collection is None:
                         # User has no uncategorized bookmarks
                         return []
-                try:
-                    queryset = [
-                        cs.sound
-                        for cs in CollectionSound.objects.select_related("sound").filter(collection_id=collection_id)
-                    ]
-                except:
-                    raise NotFoundException(resource=self)
+                else:
+                    collection = collections.filter(id=self.kwargs["category_id"]).first()
+                    if collection is None:
+                        raise NotFoundException(resource=self)
+                queryset = Sound.objects.sounds_for_collection(collection.id).order_by(
+                    "-collectionsound__created", "-collectionsound__id"
+                )
             else:
                 if "category_id" in self.kwargs:
                     if int(self.kwargs["category_id"]) != 0:
@@ -1365,7 +1360,10 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
                     kwargs["category"] = None
                 try:
                     queryset = [
-                        bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)
+                        bookmark.sound
+                        for bookmark in Bookmark.objects.select_related("sound").filter(
+                            sound__moderation_state="OK", sound__processing_state="OK", **kwargs
+                        )
                     ]
                 except:
                     raise NotFoundException(resource=self)

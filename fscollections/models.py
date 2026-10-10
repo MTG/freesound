@@ -178,6 +178,9 @@ class Collection(LicenseSummaryMixin, models.Model):
             return False
         return user == self.user or self.maintainers.filter(id=user.id).exists()
 
+    def user_can_view(self, user):
+        return self.public or self.user_is_owner_or_maintainer(user)
+
     def update_num_sounds(self):
         # Single source of truth for the num_sounds recount
         self.num_sounds = Sound.objects.sounds_for_collection(self.id).count()

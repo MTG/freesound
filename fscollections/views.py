@@ -67,12 +67,16 @@ PUBLIC_COLLECTIONS_SORT_OPTIONS = {
 PUBLIC_COLLECTIONS_DEFAULT_SORT = "recent"
 
 
-def resolve_collection_from_url(view_func):
-    """Fetches collection, redirects to canonical URL if name doesn't match, passes collection to view."""
+def load_collection_and_check_visibility(view_func):
+    """Fetch a collection, check if the current user is allowed to view it,
+    redirects to its canonical URL if necessary, and passes the Collection
+    object to the view."""
 
     @wraps(view_func)
     def _wrapped_view(request, collection_id, collection_name, *args, **kwargs):
         collection = get_object_or_404(Collection, id=collection_id)
+        if not collection.user_can_view(request.user):
+            raise Http404
         expected_name = collection.url_kwargs["collection_name"]
 
         if collection_name != expected_name:
@@ -146,13 +150,11 @@ def collections_for_user(request):
     return render(request, "collections/your_collections.html", tvars)
 
 
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def collection(request, collection):
     user = request.user
     is_maintainer = collection.maintainers.filter(username=user.username).exists()
     is_owner = user == collection.user
-    if not collection.public and not (is_owner or is_maintainer):
-        raise Http404
 
     sort_options, sort_key = resolve_sort(request, has_featured=True)
     search = request.GET.get("q", "").strip()
@@ -292,7 +294,7 @@ def create_collection(request):
 
 
 @login_required
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def delete_collection(request, collection):
     if request.method == "POST" and request.user == collection.user:
         msg = f"Collection {collection.name} successfully deleted."
@@ -318,7 +320,7 @@ def _collection_saved_meta(collection):
 
 
 @login_required
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def render_collection_cards(request, collection):
     """Search/sort/paginated edit-grid cards for a collection; owner/maintainer only."""
     if not collection.user_is_owner_or_maintainer(request.user):
@@ -336,7 +338,7 @@ def render_collection_cards(request, collection):
 
 
 @login_required
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def edit_collection(request, collection):
     maintainers_query = User.objects.filter(collection_maintainer=collection.id)
     collection_maintainers = ",".join(str(u) for u in maintainers_query.values_list("id", flat=True))
@@ -386,7 +388,7 @@ def edit_collection(request, collection):
 
 @login_required
 @transaction.atomic()
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def download_collection(request, collection):
     sounds_list = Sound.objects.bulk_sounds_for_collection(collection.id)
 
@@ -404,7 +406,7 @@ def download_collection(request, collection):
     return download_sounds(licenses_url, licenses_content, sounds_list, collection.download_filename)
 
 
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def collection_downloaders(request, collection):
     if not request.GET.get("ajax"):
         # If not loaded as a modal, redirect to collection page with parameter to open modal
@@ -433,22 +435,26 @@ def collection_downloaders(request, collection):
     return render(request, "sounds/modal_downloaders.html", tvars)
 
 
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def collection_licenses(request, collection):
     attribution = collection.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
 
 
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def add_sounds_modal_for_collection_edit(request, collection):
+    if not collection.user_is_owner_or_maintainer(request.user):
+        return HttpResponse(status=403)
     saved_ids = Sound.objects.sounds_for_collection(collection.id).values_list("id", flat=True)
     tvars = add_sounds_modal_helper(request, exclude_sound_ids=saved_ids)
     tvars.update({"modal_title": "Add sounds to collection", "help_text": "Modal to add sounds to your collection"})
     return render(request, "sounds/modal_add_sounds.html", tvars)
 
 
-@resolve_collection_from_url
+@load_collection_and_check_visibility
 def add_maintainer_modal(request, collection):
+    if not collection.user_is_owner_or_maintainer(request.user):
+        return HttpResponse(status=403)
     form = MaintainerForm()
     # TODO: the below statements exclude users with whitespaces in their usernames (and they still exist)
     usernames = request.GET.get("q", "").split(",")

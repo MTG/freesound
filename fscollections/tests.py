@@ -68,6 +68,25 @@ class CollectionTest(TestCase):
         resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 404)
 
+    def test_private_collection_visibility_before_redirect(self):
+        # If a collection is private then check that the user can see it before redirecting, otherwise
+        # it could leak the collection's name to any user
+        wrong_url = reverse("collection-licenses", args=[self.collection.id, "wrong-name"])
+        self.assertEqual(self.client.get(wrong_url).status_code, 404)
+        self.client.force_login(self.external_user)
+        self.assertEqual(self.client.get(wrong_url).status_code, 404)
+        self.collection.maintainers.add(self.maintainer)
+        self.client.force_login(self.maintainer)
+        self.assertRedirects(self.client.get(wrong_url), self.collection.licenses_url)
+
+    def test_public_collection_edit_modals_require_membership(self):
+        self.collection.public = True
+        self.collection.save()
+        self.client.force_login(self.external_user)
+        for url in [self.collection.add_sounds_modal_url, self.collection.add_maintainers_modal_url]:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 403)
+
     def test_collections_create_and_delete(self):
         # User not logged in - redirects to login page
         # For this to be truly useful, collection urls should be moved into accounts
@@ -339,13 +358,11 @@ class CollectionTest(TestCase):
 
         # Additionally, test edit URL for external user
         resp = self.client.get(reverse("edit-collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(302, resp.status_code)
-        self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
+        self.assertEqual(404, resp.status_code)
 
         # Test deleting a collection as an external user (not owner -> not valid)
         resp = self.client.post(reverse("delete-collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
+        self.assertEqual(resp.status_code, 404)
 
     def test_edit_collection_as_user(self):
         # Test the edit collection form submission for different case scenarios
@@ -735,7 +752,7 @@ class CollectionTest(TestCase):
     def test_render_collection_cards_forbidden_for_non_member(self):
         self.client.force_login(self.external_user)
         resp = self.client.get(self.cards_url)
-        self.assertEqual(403, resp.status_code)
+        self.assertEqual(404, resp.status_code)
 
     def test_render_collection_cards_empty_state_with_search(self):
         """The render-cards endpoint owns the empty-state message so the JS

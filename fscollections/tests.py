@@ -27,6 +27,20 @@ class CollectionTest(TestCase):
         self.sound2 = sounds[2]
         self.collection = Collection.objects.create(user=self.user, name="testcollection")
 
+    def test_license_summary(self):
+        self.collection.sounds.add(self.sound, self.sound1, through_defaults={"status": "OK", "user": self.user})
+        license = self.sound.license
+
+        self.assertEqual(
+            self.collection.licenses_data,
+            [
+                {"id": license.id, "name": license.name},
+                {"id": license.id, "name": license.name},
+            ],
+        )
+        self.assertEqual(self.collection.license_summary_name_and_id, (license.name, license.id))
+        self.assertEqual(self.collection.license_summary, license)
+
     def test_load_collection_page(self):
         # Test a collection page is visible to all users if the collection is public
         self.collection.public = True

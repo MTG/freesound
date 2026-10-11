@@ -243,10 +243,12 @@ class Collection(LicenseSummaryMixin, models.Model):
 
     @cached_property
     def licenses_data(self):
-        licenses_data = list(Sound.objects.sounds_for_collection(self.id).values_list("license__name", "license_id"))
-        license_ids = [lid for _, lid in licenses_data]
-        license_names = [lname for lname, _ in licenses_data]
-        return license_ids, license_names
+        return [
+            {"id": license_id, "name": name}
+            for license_id, name in Sound.objects.sounds_for_collection(self.id).values_list(
+                "license_id", "license__name"
+            )
+        ]
 
     def get_collection_tags_bw(self):
         tags = (

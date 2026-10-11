@@ -2168,10 +2168,7 @@ class PackManager(models.Manager):
         for p in packs:
             p.num_sounds_unpublished_precomputed = p.total_sounds_count - p.num_sounds
 
-            pairs = p.license_pairs or []
-            license_ids = [pair["id"] for pair in pairs]
-            license_names = [pair["name"] for pair in pairs]
-            p.licenses_data_precomputed = (license_ids, license_names)
+            p.licenses_data_precomputed = p.license_pairs
 
             p.pack_tags = [
                 {
@@ -2230,16 +2227,16 @@ class PackManager(models.Manager):
 
 class LicenseSummaryMixin:
     # Summarizes the licenses of a group of sounds, requires a `licenses_data` property
-    # returning ([license_ids], [license_names])
+    # returning a list of {"id": license_id, "name": license_name} dictionaries.
 
     VARIOUS_LICENSES_NAME = "Various licenses"
 
     @property
     def license_summary_name_and_id(self):
         # Name/id of the license shared by all sounds, no DB query needed
-        license_ids, license_names = self.licenses_data
-        if len(set(license_ids)) == 1:
-            return license_names[0], license_ids[0]
+        licenses = self.licenses_data
+        if len({license["id"] for license in licenses}) == 1:
+            return licenses[0]["name"], licenses[0]["id"]
         return self.VARIOUS_LICENSES_NAME, None
 
     @cached_property
@@ -2429,10 +2426,10 @@ class Pack(LicenseSummaryMixin, models.Model):
         if hasattr(self, "licenses_data_precomputed"):
             return self.licenses_data_precomputed  # If precomputed from PackManager.bulk_query_id method
         else:
-            licenses_data = list(self.sounds.select_related("license").values_list("license__name", "license_id"))
-            license_ids = [lid for _, lid in licenses_data]
-            license_names = [lname for lname, _ in licenses_data]
-            return license_ids, license_names
+            return [
+                {"id": license_id, "name": name}
+                for license_id, name in self.sounds.values_list("license_id", "license__name")
+            ]
 
     @property
     def has_geotags(self):

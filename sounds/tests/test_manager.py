@@ -169,7 +169,11 @@ def test_pack_aggregate_data_uses_all_public_sounds(populated_pack, other_popula
     results = Pack.objects.dict_ids([populated_pack.id, other_populated_pack.id])
     first_pack = results[populated_pack.id]
     assert first_pack.num_sounds_unpublished_precomputed == 1
-    assert first_pack.licenses_data_precomputed == ([cc0.id, attribution.id], [cc0.name, attribution.name])
+    assert first_pack.licenses_data_precomputed == [
+        {"id": cc0.id, "name": cc0.name},
+        {"id": attribution.id, "name": attribution.name},
+    ]
+    assert first_pack.license_summary_name_and_id == ("Various licenses", None)
     assert first_pack.pack_tags == [
         {"name": "field_recordist", "count": 4, "browse_url": first_pack.browse_pack_tag_url("field_recordist")},
         {"name": "old-only", "count": 1, "browse_url": first_pack.browse_pack_tag_url("old-only")},
@@ -181,7 +185,8 @@ def test_pack_aggregate_data_uses_all_public_sounds(populated_pack, other_popula
 
     second_pack = results[other_populated_pack.id]
     assert second_pack.num_sounds_unpublished_precomputed == 1
-    assert second_pack.licenses_data_precomputed == ([cc0.id], [cc0.name])
+    assert second_pack.licenses_data_precomputed == [{"id": cc0.id, "name": cc0.name}]
+    assert second_pack.license_summary_name_and_id == (cc0.name, cc0.id)
     assert second_pack.pack_tags == [
         {"name": "synth_player", "count": 4, "browse_url": second_pack.browse_pack_tag_url("synth_player")},
         {"name": "tone", "count": 2, "browse_url": second_pack.browse_pack_tag_url("tone")},
@@ -503,7 +508,8 @@ class PackManagerQueryMethods(TestCase):
         result = Pack.objects.bulk_query_id([pack.id])[0]
         self.assertEqual(result.selected_sounds_data, [])
         self.assertEqual(result.num_sounds_unpublished_precomputed, 0)
-        self.assertEqual(result.licenses_data_precomputed, ([], []))
+        self.assertEqual(result.licenses_data_precomputed, [])
+        self.assertEqual(result.license_summary_name_and_id, ("Various licenses", None))
         self.assertEqual(result.pack_tags, [])
         self.assertFalse(result.has_geotags_precomputed)
         self.assertEqual(result.num_ratings_precomputed, 0)

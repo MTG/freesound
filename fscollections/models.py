@@ -127,6 +127,15 @@ class Collection(LicenseSummaryMixin, models.Model):
         models.IntegerField(), size=settings.MAX_FEATURED_SOUNDS_PER_COLLECTION, blank=True, default=list
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(is_default_collection=True),
+                name="unique_default_collection_per_user",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.name}"
 

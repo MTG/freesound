@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -40,6 +40,17 @@ class CollectionTest(TestCase):
         )
         self.assertEqual(self.collection.license_summary_name_and_id, (license.name, license.id))
         self.assertEqual(self.collection.license_summary, license)
+
+    def test_only_one_default_collection_per_user(self):
+        Collection.objects.create(user=self.user, name="Another collection")
+        Collection.objects.create(user=self.user, name="My bookmarks", is_default_collection=True)
+        Collection.objects.create(user=self.external_user, name="My bookmarks", is_default_collection=True)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Collection.objects.create(user=self.user, name="Second default", is_default_collection=True)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Collection.objects.filter(pk=self.collection.pk).update(is_default_collection=True)
 
     def test_load_collection_page(self):
         # Test a collection page is visible to all users if the collection is public

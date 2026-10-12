@@ -209,6 +209,7 @@ class TestDownloadViews(TestCase):
             "HTTP_AUTHORIZATION": f"Bearer {resp.json()['access_token']}",
         }
 
+    @override_settings(USE_CDN_FOR_DOWNLOADS=True, USE_CDN_FOR_API_DOWNLOADS=False)
     @mock.patch("apiv2.views.sendfile", return_value=HttpResponse("Dummy response"))
     @mock.patch("apiv2.views.os.path.exists", return_value=True)
     def test_download_sound_creates_download_api_object(self, exists, sendfile):
@@ -227,6 +228,31 @@ class TestDownloadViews(TestCase):
         self.assertEqual(download_api.api_client_id, self.api_client.id)
         self.assertEqual(download_api.license_id, sound.license_id)
 
+    @override_settings(USE_CDN_FOR_DOWNLOADS=False, USE_CDN_FOR_API_DOWNLOADS=True)
+    @mock.patch("apiv2.views.os.path.exists", return_value=True)
+    @mock.patch("apiv2.views.generate_cdn_download_url")
+    def test_download_sound_cdn_redirect(self, cdn_url, exists):
+        sound = self.sounds[0]
+        signed_url = "https://cdn.freesound.org/sounds/0/1.wav?md5=signature&expires=123&filename=sound.wav"
+        cdn_url.return_value = signed_url
+
+        response = self.client.get(reverse("apiv2-sound-download", args=[sound.id]), secure=True, **self.auth_headers)
+
+        self.assertRedirects(response, signed_url, fetch_redirect_response=False)
+        self.assertEqual(DownloadAPI.objects.filter(sound=sound).count(), 1)
+
+    @override_settings(USE_CDN_FOR_API_DOWNLOADS=True)
+    @mock.patch("apiv2.views.sendfile", return_value=HttpResponse("Dummy response"))
+    @mock.patch("apiv2.views.os.path.exists", return_value=True)
+    @mock.patch("apiv2.views.generate_cdn_download_url", return_value=None)
+    def test_download_sound_cdn_fallback(self, cdn_url, exists, sendfile):
+        sound = self.sounds[0]
+
+        self.client.get(reverse("apiv2-sound-download", args=[sound.id]), secure=True, **self.auth_headers)
+
+        sendfile.assert_called_once()
+
+    @override_settings(USE_CDN_FOR_DOWNLOADS=True, USE_CDN_FOR_API_DOWNLOADS=True)
     def test_download_pack_creates_pack_download_api_objects(self):
         pack = self.packs[0]
         self.assertEqual(PackDownloadAPI.objects.count(), 0)
@@ -234,6 +260,7 @@ class TestDownloadViews(TestCase):
 
         resp = self.client.get(reverse("apiv2-pack-download", kwargs={"pk": pack.id}), secure=True, **self.auth_headers)
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["X-Archive-Files"], "zip")
 
         self.assertEqual(PackDownloadAPI.objects.count(), 1)
         pack_download_api = PackDownloadAPI.objects.get()

@@ -3,6 +3,9 @@ import os
 DEBUG = True
 DISPLAY_DEBUG_TOOLBAR = True
 
+# API sound downloads inherit USE_CDN_FOR_DOWNLOADS unless explicitly overridden.
+# USE_CDN_FOR_API_DOWNLOADS = False
+
 # Set support param so contact form does not fail
 SUPPORT = (("Name Surname", "support@freesound.org"),)
 

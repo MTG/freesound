@@ -84,6 +84,7 @@ from fscollections.models import Collection
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from sounds.models import DownloadAPI, License, Pack, PackDownloadAPI, PackDownloadSoundAPI, Sound
+from utils.cdn import generate_cdn_download_url
 from utils.download_limit import DownloadType, is_new_download, set_sentinel
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
@@ -512,6 +513,11 @@ class DownloadSound(DownloadAPIView):
                 DownloadAPI.objects.create(
                     api_client=self.client, user=self.user, sound=sound, license_id=sound.license_id
                 )
+
+        if settings.USE_CDN_FOR_API_DOWNLOADS:
+            cdn_url = generate_cdn_download_url(sound)
+            if cdn_url is not None:
+                return HttpResponseRedirect(cdn_url)
 
         return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
@@ -1223,6 +1229,10 @@ def download_from_token(request, token):
     sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
     if not os.path.exists(sound_path):
         raise NotFoundException
+    if settings.USE_CDN_FOR_API_DOWNLOADS:
+        cdn_url = generate_cdn_download_url(sound)
+        if cdn_url is not None:
+            return HttpResponseRedirect(cdn_url)
     return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 

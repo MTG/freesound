@@ -422,6 +422,8 @@ LOG_DOWNLOADS = False
 
 # Use external CDN for downloading sounds and serving previews/displays
 USE_CDN_FOR_DOWNLOADS = False
+# None inherits USE_CDN_FOR_DOWNLOADS after local_settings has been imported.
+USE_CDN_FOR_API_DOWNLOADS = None
 USE_CDN_FOR_PREVIEWS = False
 USE_CDN_FOR_DISPLAYS = False
 CDN_DOWNLOADS_BASE_URL = "https://cdn.freesound.org"
@@ -946,11 +948,17 @@ MAX_FEATURED_SOUNDS_PER_COLLECTION = 6
 from .local_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
+# Resolve the API default using the final site setting, preserving explicit overrides.
+if USE_CDN_FOR_API_DOWNLOADS is None:
+    USE_CDN_FOR_API_DOWNLOADS = USE_CDN_FOR_DOWNLOADS
+
 # CDN secret validation (must be after local_settings import)
-if USE_CDN_FOR_DOWNLOADS and not CDN_SECURE_LINK_SECRET:
+if (USE_CDN_FOR_DOWNLOADS or USE_CDN_FOR_API_DOWNLOADS) and not CDN_SECURE_LINK_SECRET:
     from django.core.exceptions import ImproperlyConfigured
 
-    raise ImproperlyConfigured("CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS is True")
+    raise ImproperlyConfigured(
+        "CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS or USE_CDN_FOR_API_DOWNLOADS is True"
+    )
 
 # -------------------------------------------------------------------------------
 # More collections stuff

@@ -271,6 +271,9 @@ class CategoryFilterFeedback(Experiment):
         if not self.should_show(request, sqp=sqp, sound_ids=sound_ids):
             return []
         search = self._search_info(sqp, sound_ids)
+        # Rating a search closes its questions, so a rated search is not asked again.
+        if self._is_rated(request.user, search):
+            return []
         context = {
             "experiment_id": self.experiment_id,
             "config": self.config,
@@ -286,14 +289,10 @@ class CategoryFilterFeedback(Experiment):
             for position, sound_id in enumerate(sound_ids, start=1)
             if sound_id not in answered_sound_ids
         ]
-        # The overall rating bar is shown until the user rates this search.
-        context["show_bar"] = not self._is_rated(request.user, search)
         # Key of the category (e.g. "m-sp"), to link to its description in the taxonomy page.
         context["category_key"] = bst_taxonomy_category_names_to_category_key(
             search["category"], search["subcategory"] or None
         )
-        if not items and not context["show_bar"]:
-            return []
         # The info about the search and the bar go at the end of the page.
         return items + [{"html": render_to_string(self.inline_template, context, request=request)}]
 

@@ -1,0 +1,5 @@
+{# Circled "i" button that opens the information modal of an experiment (info_modal.html). It is the same for all the experiments. #}
+{# Include it with "extra_style" (to place the button) and, optionally, "extra_class". #}
+<button type="button" data-info-modal="{{ config.experiment_id }}_info_modal" title="About this study" aria-label="About this study"
+        class="cursor-pointer {{ extra_class }}"
+        style="{{ extra_style }} margin: 0; padding: 0; background: none; width: 16px; height: 16px; line-height: 14px; text-align: center; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-style: italic; font-family: Georgia, 'Times New Roman', serif;">i</button>

@@ -1,0 +1,34 @@
+{% load bw_templatetags %}
+{# Information modal of an experiment, with the opt-out. It is the same for all the experiments. #}
+{# The name and description of the study come from the FeedbackExperiment model (config). #}
+{# It is opened by a button with data-info-modal="{{ config.experiment_id }}_info_modal". #}
+<div class="modal" id="{{ config.experiment_id }}_info_modal" tabindex="-1" role="dialog" aria-label="About this study" aria-hidden="true">
+    <div class="modal-wrapper">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close" data-dismiss="modal" aria-label="Close">{% bw_icon 'close' %}</span>
+                </div>
+                <div class="modal-body">
+                    <h4 class="v-spacing-5">About this study</h4>
+
+                    <p><b>Study:</b> {{ config.title }}</p>
+
+                    {# The description is edited in the admin and can have HTML links. #}
+                    <p>{{ config.description|safe }}</p>
+
+                    <p><b>Participation:</b> Taking part is voluntary, and the "Don't ask again" button below will permanently stop these questions.</p>
+
+                    <p><b>Contact:</b> If you would like further information about this research, please contact us through the <a href="{% url 'contact' %}">contact page</a>.</p>
+
+                    {# "Don't ask again" button. experiments.js saves the opt-out and removes the boxes. #}
+                    <form method="post" action="{% url 'user-feedback-opt-out' %}" data-experiment-optout data-dismiss-modal="{{ config.experiment_id }}_info_modal" class="v-spacing-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="experiment_id" value="{{ config.experiment_id }}">
+                        <button type="submit" class="btn-inverse" style="align-self: center;">Don't ask again</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

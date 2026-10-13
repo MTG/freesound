@@ -1,0 +1,55 @@
+{% load bw_templatetags bst_category %}
+{# Inline "category validation" box; shown by sounds.views.sound only when the category_validation experiment is on. #}
+{# Neither answer saves on click: it expands the box and only Send confirms it, so a misclick costs nothing. #}
+{# Bound by the generic components/experiments.js via the data-experiment-* attributes below; no per-experiment JS. #}
+<div data-experiment-box data-experiment-id="category_validation" data-submit-url="{% url 'user-feedback-submit' %}"
+     class="padding-3 border-grey-light border-radius v-spacing-top-2 text-14 text-grey" style="position: relative; padding-right: 34px;">
+    {# sound_id travels as a named input so the generic binder posts it without knowing this experiment's fields. #}
+    <input type="hidden" name="sound_id" value="{{ sound.id }}">
+    {# Circled "i" pinned top-right; opens the info + opt-out modal below (binder -> activateModal). #}
+    {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 8px; right: 10px;" extra_class="text-light-grey" %}
+    {# Question on its own line; Yes/No on the row below. #}
+    <div><b>Does this sound belong to the <a href="{% url 'bst-info-page' %}#{{ sound.category_code }}" target="_blank" rel="noopener noreferrer">{{ sound.category_names.0 }} > {{ sound.category_names.1 }}</a> category?</b></div>
+    {# Both answers reveal the follow-up below; buttons stay visible. #}
+    <div class="v-spacing-top-2">
+        <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block" data-experiment-answer="yes">Yes</a>
+        <a href="javascript:void(0)" class="btn-inverse text-14 h-spacing-2 display-inline-block" data-experiment-answer="no">No</a>
+    </div>
+    {# Follow-up, hidden until an answer. The category picker (data-experiment-answer-extra="no") shows only for "No". #}
+    <div data-experiment-expand style="display: none;" class="v-spacing-top-3">
+        {# Category picker: mirrors molecules/bst_category_form_field.html; the binder wires it via .bst-category-field. #}
+        <div data-experiment-answer-extra="no" class="bst-category-field" style="display: none;">
+            <div class="v-spacing-2"><b>Which category fits better?</b></div>
+            {{ category_validation_form.selected_category.as_hidden }}
+            <div><label>Category</label></div>
+            <div class="top-buttons line-height-50">
+                {% for value, label in bst_top_level_categories %}
+                    <button type="button" class="btn no-hover btn-inverse tooltip_top" data_value="{{ value }}">
+                        {{ label }}
+                        <span class="tooltiptext">{{ value|get_bst_taxonomy_description }}</span>
+                    </button>
+                {% endfor %}
+            </div>
+            <div class="subcategory-buttons v-spacing-top-2 display-none">
+                <div><label>Subcategory</label></div>
+                <div class="line-height-50">
+                    {% for value, label in category_validation_form.fields.selected_category.choices %}
+                        <button type="button" class="btn no-hover btn-inverse btn-subcategory tooltip_top" top_level="{{ value|get_bst_taxonomy_top_level_category_key }}" data_value="{{ value }}">
+                            {{ label }}
+                            <span class="tooltiptext">{{ value|get_bst_taxonomy_description|safe }}</span>
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="v-spacing-top-2"><label>Comment (optional)</label></div>
+        <textarea name="text" rows="3" placeholder="Anything else?"
+                  class="text-14" style="width: 100%; background: transparent; color: inherit; border: 1px solid #999; border-radius: 5px; padding: 8px;"></textarea>
+        <div class="v-spacing-top-2">
+            <button type="button" data-experiment-send class="btn-secondary text-14">Send</button>
+        </div>
+    </div>
+</div>
+
+{# Study information sheet + opt-out, opened with the top-right "i". #}
+{% include "user_feedback/info_modal.html" %}

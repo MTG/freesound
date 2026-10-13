@@ -156,6 +156,14 @@ const bindFeedbackBox = box => {
   let chosenAnswer = null;
   let sending = false;
 
+  // Click out of the bar to minimize it, click in to open it.
+  if (isBar && expand) {
+    document.addEventListener('click', event => {
+      if (!box.contains(event.target)) expand.style.display = 'none';
+      else if (chosenAnswer) expand.style.display = '';
+    });
+  }
+
   const send = () => {
     if (!chosenAnswer || sending) return;
     // Disabled until the reply arrives (double-click cannot save twice).

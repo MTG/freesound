@@ -174,6 +174,7 @@ class CategoryFilterFeedback(Experiment):
     page_url_name = "sounds-search"
     result_container = "[data-score]"  # Element of the search page that wraps one result
     # The overall rating bar is shown after X different sounds are played, and then Y seconds.
+    # The question of a result is shown when its sound is played, or with the bar.
     bar_plays = 2
     bar_delay_seconds = 2
 
@@ -256,7 +257,13 @@ class CategoryFilterFeedback(Experiment):
         if not self.should_show(request, sqp=sqp, sound_ids=sound_ids):
             return []
         search = self._search_info(sqp, sound_ids)
-        context = {"experiment_id": self.experiment_id, "config": self.config, "search": search}
+        context = {
+            "experiment_id": self.experiment_id,
+            "config": self.config,
+            "search": search,
+            "bar_plays": self.bar_plays,
+            "bar_delay_seconds": self.bar_delay_seconds,
+        }
 
         # The results of the page that are not answered yet get the yes/no question.
         answered_sound_ids = self._answered_sound_ids(request.user, search)
@@ -267,8 +274,6 @@ class CategoryFilterFeedback(Experiment):
         ]
         # The overall rating bar is shown until the user rates this search.
         context["show_bar"] = not self._is_rated(request.user, search)
-        context["bar_plays"] = self.bar_plays
-        context["bar_delay_seconds"] = self.bar_delay_seconds
         # Key of the category (e.g. "m-sp"), to link to its description in the taxonomy page.
         context["category_key"] = bst_taxonomy_category_names_to_category_key(
             search["category"], search["subcategory"] or None

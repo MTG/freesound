@@ -1,7 +1,9 @@
 {# Yes/no question under one search result (category filter experiment); rendered by CategoryFilterFeedback.render_page_items. #}
 {# It has no Send button, so experiments.js saves it when an answer is clicked. #}
+{# It is hidden until its sound is played, or until the rating bar is shown. #}
 <div data-experiment-box data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}" data-thanks="Thanks!"
-     class="text-grey text-14 text-right v-spacing-2">
+     data-experiment-show-on-play="{{ sound_id }}" data-experiment-plays="{{ bar_plays }}" data-experiment-delay="{{ bar_delay_seconds }}"
+     class="text-grey text-14 text-right v-spacing-2" style="display: none;">
     <input type="hidden" name="kind" value="result">
     <input type="hidden" name="sound_id" value="{{ sound_id }}">
     <input type="hidden" name="position" value="{{ position }}">

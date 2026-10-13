@@ -81,9 +81,36 @@ const fillPlayInputs = () => {
   fill('[data-experiment-seconds-in-page]', secondsInPage());
 };
 
+// Runs the callback Y seconds after X different sounds are played in the page.
+const afterPlays = (element, callback) => {
+  const plays = Number(element.dataset.experimentPlays || 0);
+  const delay = Number(element.dataset.experimentDelay || 0) * 1000;
+  let waiting = true;
+  const runIfEnoughPlays = () => {
+    if (!waiting || playedSounds.size < plays) return;
+    waiting = false;
+    setTimeout(callback, delay);
+  };
+  playCallbacks.push(runIfEnoughPlays);
+  runIfEnoughPlays();
+};
+
+// Shows a box when its sound is played, or when enough sounds are played.
+const bindShowOnPlay = box => {
+  const soundId = box.dataset.experimentShowOnPlay;
+  const show = () => {
+    box.style.display = '';
+  };
+  const showIfPlayed = () => {
+    if (playedSounds.has(soundId)) show();
+  };
+  playCallbacks.push(showIfPlayed);
+  showIfPlayed();
+  afterPlays(box, show);
+};
+
 // Boxes with [data-experiment-bar] are shown as a bar at the bottom of the page, with
-// the styles of the toast. The bar waits until [data-experiment-bar-plays] different
-// sounds are played in the page, and then [data-experiment-bar-delay] seconds.
+// the styles of the toast. The bar waits for the plays and the delay of afterPlays.
 const BAR_ANIMATION_DURATION_MS = 260;
 const BAR_HIDE_AFTER_THANKS_MS = 3000;
 
@@ -104,16 +131,7 @@ const hideBar = bar => {
 };
 
 const bindBar = bar => {
-  const plays = Number(bar.dataset.experimentBarPlays || 0);
-  const delay = Number(bar.dataset.experimentBarDelay || 0) * 1000;
-  let waiting = true;
-  const showIfEnoughPlays = () => {
-    if (!waiting || playedSounds.size < plays) return;
-    waiting = false;
-    setTimeout(() => showBar(bar), delay);
-  };
-  playCallbacks.push(showIfEnoughPlays);
-  showIfEnoughPlays();
+  afterPlays(bar, () => showBar(bar));
   const closeButton = bar.querySelector('[data-experiment-bar-close]');
   if (closeButton) closeButton.addEventListener('click', () => hideBar(bar));
 };
@@ -128,6 +146,7 @@ const bindFeedbackBox = box => {
   }
   const isBar = box.hasAttribute('data-experiment-bar');
   if (isBar) bindBar(box);
+  if (box.dataset.experimentShowOnPlay) bindShowOnPlay(box);
   const expand = box.querySelector('[data-experiment-expand]');
   const answerButtons = [...box.querySelectorAll('[data-experiment-answer]')];
   const extras = [...box.querySelectorAll('[data-experiment-answer-extra]')];

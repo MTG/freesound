@@ -14,7 +14,7 @@
 {% if show_bar %}
     {# Overall rating, shown as a bar at the bottom of the page. Clicking a number opens the comment and Send saves. #}
     <div class="toast" role="region" aria-label="Feedback question" style="z-index: 1040; font-weight: normal;"
-         data-experiment-box data-experiment-bar data-experiment-bar-plays="{{ bar_plays }}" data-experiment-bar-delay="{{ bar_delay_seconds }}" data-experiment-answer-name="rating"
+         data-experiment-box data-experiment-bar data-experiment-plays="{{ bar_plays }}" data-experiment-delay="{{ bar_delay_seconds }}" data-experiment-answer-name="rating"
          data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}">
         <input type="hidden" name="kind" value="overall">
         {# Circled "i" that opens the info modal below. #}

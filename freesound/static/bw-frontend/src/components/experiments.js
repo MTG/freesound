@@ -112,7 +112,7 @@ const bindShowOnPlay = box => {
 // Boxes with [data-experiment-bar] are shown as a bar at the bottom of the page, with
 // the styles of the toast. The bar waits for the plays and the delay of afterPlays.
 const BAR_ANIMATION_DURATION_MS = 260;
-const BAR_HIDE_AFTER_THANKS_MS = 3000;
+const HIDE_AFTER_THANKS_MS = 3000;
 
 const showBar = bar => {
   bar.style.display = 'block';
@@ -172,8 +172,19 @@ const bindFeedbackBox = box => {
       },
       () => {
         box.innerHTML = `<b>${box.dataset.thanks || 'Thanks for your feedback!'}</b>`;
-        // Hide the bar a bit after the thanks.
-        if (isBar) setTimeout(() => hideBar(box), BAR_HIDE_AFTER_THANKS_MS);
+        // Hide the answered bar and boxes a bit after the thanks.
+        if (isBar) setTimeout(() => hideBar(box), HIDE_AFTER_THANKS_MS);
+        else if (box.hasAttribute('data-experiment-hide-after-thanks'))
+          setTimeout(() => box.remove(), HIDE_AFTER_THANKS_MS);
+        // A box with [data-experiment-closes-boxes] also removes the other boxes of its experiment.
+        if (box.hasAttribute('data-experiment-closes-boxes'))
+          setTimeout(() => {
+            document
+              .querySelectorAll(
+                `[data-experiment-box][data-experiment-id="${box.dataset.experimentId}"]`
+              )
+              .forEach(other => other !== box && other.remove());
+          }, HIDE_AFTER_THANKS_MS);
       },
       responseText => {
         sending = false;

@@ -328,6 +328,19 @@ class RenderInlineHtmlTest(TestCase):
         # Check the info modal has the name of the study, which is in the model
         self.assertIn("Validating Sound Categorization in Freesound", html)
 
+    def test_sound_page_shows_box(self):
+        # Check the sound page shows the box, with the tag of its template
+        set_sample_rate("category_validation", 1.0)
+        self.sound.change_processing_state("OK")
+        self.sound.change_moderation_state("OK")
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("sound", args=[self.user.username, self.sound.id]))
+        self.assertContains(response, 'data-experiment-id="category_validation"')
+        # Check it is not shown when the experiment is off
+        set_sample_rate("category_validation", 0.0)
+        response = self.client.get(reverse("sound", args=[self.user.username, self.sound.id]))
+        self.assertNotContains(response, 'data-experiment-id="category_validation"')
+
     def test_renders_box_for_automatic_category(self):
         # Check a sound without a category from the user is asked about its automatic category
         set_sample_rate("category_validation", 1.0)

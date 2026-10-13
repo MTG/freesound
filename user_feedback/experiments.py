@@ -24,6 +24,7 @@ class Experiment:
     experiment_id = None  # unique id, also stored on each UserFeedback row
     form_class = None  # form the generic submit view validates for this experiment
     inline_template = None  # optional inline box rendered on a host page
+    inline_page = None  # name of the host page of the inline box, used in its {% feedback_experiments %} tag
     page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
     requires_login = True  # set to False to also show the experiment to not logged-in users
 
@@ -128,6 +129,7 @@ class CategoryValidation(Experiment):
     experiment_id = "category_validation"
     form_class = CategoryValidationForm
     inline_template = "user_feedback/inline_category_validation.html"
+    inline_page = "sound_page"
 
     def is_context_eligible(self, request, sound=None, **kwargs):
         # Only ask about sounds that have a category, given by the user or added automatically.

@@ -173,7 +173,9 @@ class CategoryFilterFeedback(Experiment):
     result_template = "user_feedback/inline_category_filter_result.html"
     page_url_name = "sounds-search"
     result_container = "[data-score]"  # Element of the search page that wraps one result
-    bar_delay_seconds = 0  # Seconds to wait before showing the overall rating bar
+    # The overall rating bar is shown after X different sounds are played, and then Y seconds.
+    bar_plays = 2
+    bar_delay_seconds = 2
 
     @staticmethod
     def _filter_value(sqp, field_name):
@@ -265,6 +267,7 @@ class CategoryFilterFeedback(Experiment):
         ]
         # The overall rating bar is shown until the user rates this search.
         context["show_bar"] = not self._is_rated(request.user, search)
+        context["bar_plays"] = self.bar_plays
         context["bar_delay_seconds"] = self.bar_delay_seconds
         # Key of the category (e.g. "m-sp"), to link to its description in the taxonomy page.
         context["category_key"] = bst_taxonomy_category_names_to_category_key(

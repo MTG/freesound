@@ -40,7 +40,9 @@ const collectSharedInputs = experimentId => {
 };
 
 // Boxes with [data-experiment-bar] are shown as a bar at the bottom of the page, with
-// the styles of the toast. The bar is shown after [data-experiment-bar-delay] seconds.
+// the styles of the toast. The bar waits until [data-experiment-bar-plays] different
+// sounds are played in the page, and then [data-experiment-bar-delay] seconds.
+// The number of sounds played is kept in the [data-experiment-bar-plays-count] field.
 const BAR_ANIMATION_DURATION_MS = 260;
 const BAR_HIDE_AFTER_THANKS_MS = 3000;
 
@@ -61,8 +63,26 @@ const hideBar = bar => {
 };
 
 const bindBar = bar => {
+  const plays = Number(bar.dataset.experimentBarPlays || 0);
   const delay = Number(bar.dataset.experimentBarDelay || 0) * 1000;
-  setTimeout(() => showBar(bar), delay);
+  // Field of the bar that sends the number of sounds played with the answer.
+  const playsInput = bar.querySelector('[data-experiment-bar-plays-count]');
+  const played = new Set();
+  let waiting = true;
+  const showAfterDelay = () => {
+    waiting = false;
+    setTimeout(() => showBar(bar), delay);
+  };
+  document.addEventListener(
+    'play',
+    event => {
+      played.add(event.target);
+      if (playsInput) playsInput.value = played.size;
+      if (waiting && played.size >= plays) showAfterDelay();
+    },
+    true
+  );
+  if (plays <= 0) showAfterDelay();
   const closeButton = bar.querySelector('[data-experiment-bar-close]');
   if (closeButton) closeButton.addEventListener('click', () => hideBar(bar));
 };

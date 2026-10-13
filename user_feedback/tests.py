@@ -380,13 +380,14 @@ class CategoryFilterFeedbackTest(TestCase):
         return UserFeedback.objects.filter(experiment_id="category_filter_feedback")
 
     def test_overall_answer_saves(self):
-        # Check rating, comment and search info are saved
-        response = self._submit(kind="overall", rating="4", text="handy")
+        # Check rating, comment, sounds played and search info are saved
+        response = self._submit(kind="overall", rating="4", text="handy", plays="5")
         self.assertEqual(response.status_code, 200)
         data = self._rows().get().data
         self.assertEqual(data["kind"], "overall")
         self.assertEqual(data["rating"], 4)
         self.assertEqual(data["text"], "handy")
+        self.assertEqual(data["plays"], 5)
         self.assertEqual(data["category"], "Music")
         self.assertEqual(data["search_url"], self.SEARCH["search_url"])
         self.assertEqual(data["result_ids"], [sound.id for sound in self.sounds])

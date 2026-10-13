@@ -78,6 +78,7 @@ class CategoryFilterFeedbackForm(forms.Form):
         kind: which question is answered, "overall" or "result".
         rating: the user's 1-5 response. Required when kind is "overall".
         text: optional free-text comment.
+        plays: hidden field with the number of different sounds played in the page before rating.
         answer: the user's yes/no response. Required when kind is "result".
         sound_id: hidden field identifying the sound of the result.
         position: hidden field with the position of the sound in the page of results.
@@ -89,13 +90,14 @@ class CategoryFilterFeedbackForm(forms.Form):
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
     ANSWER_CHOICES = [("yes", "Yes"), ("no", "No")]
     # Fields used by each kind of answer.
-    KIND_FIELDS = {"overall": ["rating", "text"], "result": ["answer", "sound_id", "position"]}
-    OPTIONAL_FIELDS = ["text"]
+    KIND_FIELDS = {"overall": ["rating", "text", "plays"], "result": ["answer", "sound_id", "position"]}
+    OPTIONAL_FIELDS = ["text", "plays"]
 
     kind = forms.ChoiceField(choices=KIND_CHOICES)
 
     rating = forms.TypedChoiceField(choices=RATING_CHOICES, coerce=int, required=False, empty_value=None)
     text = forms.CharField(required=False, max_length=2000)
+    plays = forms.IntegerField(required=False, min_value=0)
 
     answer = forms.ChoiceField(choices=ANSWER_CHOICES, required=False)
     sound_id = forms.IntegerField(required=False)

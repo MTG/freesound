@@ -39,10 +39,51 @@ const collectSharedInputs = experimentId => {
   return shared ? collectNamedInputs(shared) : {};
 };
 
+// Sounds played in the page, when each was first played, and how many times.
+const playedSounds = new Map();
+const playCallbacks = [];
+const secondsInPage = () => Math.round(performance.now() / 1000);
+
+let trackingPlays = false;
+const trackPlays = () => {
+  if (trackingPlays) return;
+  trackingPlays = true;
+  document.addEventListener(
+    'play',
+    event => {
+      const player = event.target.closest('[data-sound-id]');
+      if (!player) return;
+      const soundId = player.dataset.soundId;
+      const sound = playedSounds.get(soundId);
+      if (sound) {
+        sound.times += 1;
+        return;
+      }
+      playedSounds.set(soundId, { seconds: secondsInPage(), times: 1 });
+      playCallbacks.forEach(callback => callback());
+    },
+    true
+  );
+};
+
+// Fills in the fields about the plays before an answer is sent.
+const fillPlayInputs = () => {
+  const fill = (selector, value) =>
+    document.querySelectorAll(selector).forEach(input => {
+      input.value = value;
+    });
+  fill(
+    '[data-experiment-played-sounds]',
+    [...playedSounds]
+      .map(([id, sound]) => `${id}:${sound.seconds}:${sound.times}`)
+      .join(',')
+  );
+  fill('[data-experiment-seconds-in-page]', secondsInPage());
+};
+
 // Boxes with [data-experiment-bar] are shown as a bar at the bottom of the page, with
 // the styles of the toast. The bar waits until [data-experiment-bar-plays] different
 // sounds are played in the page, and then [data-experiment-bar-delay] seconds.
-// The number of sounds played is kept in the [data-experiment-bar-plays-count] field.
 const BAR_ANIMATION_DURATION_MS = 260;
 const BAR_HIDE_AFTER_THANKS_MS = 3000;
 
@@ -65,24 +106,14 @@ const hideBar = bar => {
 const bindBar = bar => {
   const plays = Number(bar.dataset.experimentBarPlays || 0);
   const delay = Number(bar.dataset.experimentBarDelay || 0) * 1000;
-  // Field of the bar that sends the number of sounds played with the answer.
-  const playsInput = bar.querySelector('[data-experiment-bar-plays-count]');
-  const played = new Set();
   let waiting = true;
-  const showAfterDelay = () => {
+  const showIfEnoughPlays = () => {
+    if (!waiting || playedSounds.size < plays) return;
     waiting = false;
     setTimeout(() => showBar(bar), delay);
   };
-  document.addEventListener(
-    'play',
-    event => {
-      played.add(event.target);
-      if (playsInput) playsInput.value = played.size;
-      if (waiting && played.size >= plays) showAfterDelay();
-    },
-    true
-  );
-  if (plays <= 0) showAfterDelay();
+  playCallbacks.push(showIfEnoughPlays);
+  showIfEnoughPlays();
   const closeButton = bar.querySelector('[data-experiment-bar-close]');
   if (closeButton) closeButton.addEventListener('click', () => hideBar(bar));
 };
@@ -111,6 +142,7 @@ const bindFeedbackBox = box => {
     // Disabled until the reply arrives (double-click cannot save twice).
     sending = true;
     if (sendButton) sendButton.disabled = true;
+    fillPlayInputs();
     makePostRequest(
       `${box.dataset.submitUrl}?ajax=1`,
       {
@@ -197,6 +229,7 @@ const bindOnce = (selector, bind) =>
   });
 
 const prepareFeedbackExperiments = () => {
+  trackPlays();
   bindOnce('[data-experiment-box]', bindFeedbackBox);
   bindOnce('form[data-experiment-optout]', bindOptOut);
   bindOnce('[data-info-modal]', bindInfoButton);
@@ -222,6 +255,8 @@ const placePageItem = item => {
 const loadFeedbackExperiments = () => {
   // For now all the experiments need login, so not logged-in users skip the request.
   if (!userIsAuthenticated) return;
+  // Start counting plays before the experiments are loaded.
+  trackPlays();
   const soundIds = [...document.querySelectorAll('[data-sound-id]')].map(
     element => element.dataset.soundId
   );

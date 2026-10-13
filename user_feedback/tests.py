@@ -380,14 +380,13 @@ class CategoryFilterFeedbackTest(TestCase):
         return UserFeedback.objects.filter(experiment_id="category_filter_feedback")
 
     def test_overall_answer_saves(self):
-        # Check rating, comment, sounds played and search info are saved
-        response = self._submit(kind="overall", rating="4", text="handy", plays="5")
+        # Check rating, comment and search info are saved
+        response = self._submit(kind="overall", rating="4", text="handy")
         self.assertEqual(response.status_code, 200)
         data = self._rows().get().data
         self.assertEqual(data["kind"], "overall")
         self.assertEqual(data["rating"], 4)
         self.assertEqual(data["text"], "handy")
-        self.assertEqual(data["plays"], 5)
         self.assertEqual(data["category"], "Music")
         self.assertEqual(data["search_url"], self.SEARCH["search_url"])
         self.assertEqual(data["result_ids"], [sound.id for sound in self.sounds])
@@ -395,17 +394,34 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertNotIn("answer", data)
 
     def test_result_answer_saves(self):
-        # Check yes/no, sound and position are saved
+        # Check yes/no, sound, position and plays are saved
         sound = self.sounds[2]
-        response = self._submit(kind="result", answer="no", sound_id=sound.id, position=3)
+        response = self._submit(
+            kind="result",
+            answer="no",
+            sound_id=sound.id,
+            position=3,
+            played_sounds=f"{sound.id}:12:3",
+            seconds_in_page="30",
+        )
         self.assertEqual(response.status_code, 200)
         data = self._rows().get().data
         self.assertEqual(data["kind"], "result")
         self.assertEqual(data["answer"], "no")
         self.assertEqual(data["sound_id"], sound.id)
         self.assertEqual(data["position"], 3)
+        self.assertEqual(data["played_sounds"], [[sound.id, 12, 3]])
+        self.assertEqual(data["seconds_in_page"], 30)
         # Check "overall" fields are not saved
         self.assertNotIn("rating", data)
+
+    def test_wrong_played_sounds_do_not_lose_the_answer(self):
+        # Check the answer is saved, with the played sounds as not known
+        response = self._submit(kind="overall", rating="4", played_sounds="9:2")
+        self.assertEqual(response.status_code, 200)
+        data = self._rows().get().data
+        self.assertEqual(data["rating"], 4)
+        self.assertIsNone(data["played_sounds"])
 
     def test_incomplete_answers_are_rejected(self):
         # Try overall answer without rating

@@ -78,26 +78,27 @@ class CategoryFilterFeedbackForm(forms.Form):
         kind: which question is answered, "overall" or "result".
         rating: the user's 1-5 response. Required when kind is "overall".
         text: optional free-text comment.
-        plays: hidden field with the number of different sounds played in the page before rating.
         answer: the user's yes/no response. Required when kind is "result".
         sound_id: hidden field identifying the sound of the result.
         position: hidden field with the position of the sound in the page of results.
         category, subcategory, query, search_filter, sort, page, result_ids, search_url, search_id:
             hidden fields describing the search.
+        played_sounds: hidden field with the sounds played in the page before answering,
+            each with the second of its first play and its number of plays.
+        seconds_in_page: hidden field with the seconds from the page load to the answer.
     """
 
     KIND_CHOICES = [("overall", "Overall"), ("result", "Result")]
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
     ANSWER_CHOICES = [("yes", "Yes"), ("no", "No")]
     # Fields used by each kind of answer.
-    KIND_FIELDS = {"overall": ["rating", "text", "plays"], "result": ["answer", "sound_id", "position"]}
-    OPTIONAL_FIELDS = ["text", "plays"]
+    KIND_FIELDS = {"overall": ["rating", "text"], "result": ["answer", "sound_id", "position"]}
+    OPTIONAL_FIELDS = ["text"]
 
     kind = forms.ChoiceField(choices=KIND_CHOICES)
 
     rating = forms.TypedChoiceField(choices=RATING_CHOICES, coerce=int, required=False, empty_value=None)
     text = forms.CharField(required=False, max_length=2000)
-    plays = forms.IntegerField(required=False, min_value=0)
 
     answer = forms.ChoiceField(choices=ANSWER_CHOICES, required=False)
     sound_id = forms.IntegerField(required=False)
@@ -114,12 +115,30 @@ class CategoryFilterFeedbackForm(forms.Form):
     search_url = forms.CharField(required=False, max_length=4000)
     search_id = forms.CharField(max_length=32)
 
+    # Info about the plays filled by experiments.js
+    played_sounds = forms.CharField(required=False, max_length=2000)
+    seconds_in_page = forms.IntegerField(required=False, min_value=0)
+
     def clean_result_ids(self):
         # Sound IDs are sent as "9,99,1999" and saved as a list.
         try:
             return [int(sound_id) for sound_id in self.cleaned_data["result_ids"].split(",")]
         except ValueError:
             raise forms.ValidationError("Invalid list of results.")
+
+    def clean_played_sounds(self):
+        # Plays are sent as "2:9:8" and saved as a list of [sound id, seconds, times played].
+        # A wrong list is saved as None (not known).
+        played_sounds = self.cleaned_data["played_sounds"]
+        if not played_sounds:
+            return []
+        try:
+            plays = [[int(value) for value in play.split(":")] for play in played_sounds.split(",")]
+        except ValueError:
+            return None
+        if any(len(play) != 3 for play in plays):
+            return None
+        return plays
 
     def clean(self):
         cleaned_data = super().clean()

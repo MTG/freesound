@@ -6,6 +6,9 @@
     {% for name, value in search.items %}
         <input type="hidden" name="{{ name }}" value="{{ value }}">
     {% endfor %}
+    {# Sounds played in the page and seconds in it, filled in experiments.js if answer is sent. #}
+    <input type="hidden" name="played_sounds" data-experiment-played-sounds>
+    <input type="hidden" name="seconds_in_page" data-experiment-seconds-in-page>
 </div>
 
 {% if show_bar %}
@@ -14,8 +17,6 @@
          data-experiment-box data-experiment-bar data-experiment-bar-plays="{{ bar_plays }}" data-experiment-bar-delay="{{ bar_delay_seconds }}" data-experiment-answer-name="rating"
          data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}">
         <input type="hidden" name="kind" value="overall">
-        {# Number of different sounds played in the page, updated by experiments.js. #}
-        <input type="hidden" name="plays" value="0" data-experiment-bar-plays-count>
         {# Circled "i" that opens the info modal below. #}
         {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 10px; left: 12px; color: inherit;" %}
         <span data-experiment-bar-close class="cursor-pointer" title="Close" aria-label="Close" style="position: absolute; top: 8px; right: 12px;">{% bw_icon 'close' %}</span>

@@ -130,10 +130,24 @@ const hideBar = bar => {
   }, BAR_ANIMATION_DURATION_MS);
 };
 
+// A box with [data-experiment-closes-boxes] removes the other boxes of its experiment.
+const closeOtherBoxes = box => {
+  if (!box.hasAttribute('data-experiment-closes-boxes')) return;
+  document
+    .querySelectorAll(
+      `[data-experiment-box][data-experiment-id="${box.dataset.experimentId}"]`
+    )
+    .forEach(other => other !== box && other.remove());
+};
+
 const bindBar = bar => {
   afterPlays(bar, () => showBar(bar));
   const closeButton = bar.querySelector('[data-experiment-bar-close]');
-  if (closeButton) closeButton.addEventListener('click', () => hideBar(bar));
+  if (closeButton)
+    closeButton.addEventListener('click', () => {
+      hideBar(bar);
+      closeOtherBoxes(bar);
+    });
 };
 
 // One box: pick an answer (which may reveal extra fields), then Send posts it over
@@ -184,15 +198,7 @@ const bindFeedbackBox = box => {
         if (isBar) setTimeout(() => hideBar(box), HIDE_AFTER_THANKS_MS);
         else if (box.hasAttribute('data-experiment-hide-after-thanks'))
           setTimeout(() => box.remove(), HIDE_AFTER_THANKS_MS);
-        // A box with [data-experiment-closes-boxes] also removes the other boxes of its experiment.
-        if (box.hasAttribute('data-experiment-closes-boxes'))
-          setTimeout(() => {
-            document
-              .querySelectorAll(
-                `[data-experiment-box][data-experiment-id="${box.dataset.experimentId}"]`
-              )
-              .forEach(other => other !== box && other.remove());
-          }, HIDE_AFTER_THANKS_MS);
+        setTimeout(() => closeOtherBoxes(box), HIDE_AFTER_THANKS_MS);
       },
       responseText => {
         sending = false;

@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.utils.module_loading import import_string
 from django.utils.safestring import mark_safe
 
+from sounds.models import Sound
 from sounds.templatetags.bst_category import bst_taxonomy_category_names_to_category_key
 from user_feedback.forms import CategoryFilterFeedbackForm, CategoryValidationForm
 from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
@@ -144,6 +145,17 @@ class CategoryValidation(Experiment):
             "category_validation_form": self.form_class(initial={"sound_id": sound.id}),
             "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
         }
+
+    def save_response(self, user, data, ip=None):
+        # Save the category that was asked about and its source.
+        # "u" = user gave it, "a" = automatically added.
+        sound = Sound.objects.get(id=data["sound_id"])
+        data = {
+            **data,
+            "sound_category": sound.category_code,
+            "sound_category_source": "u" if sound.bst_category else "a",
+        }
+        return super().save_response(user, data, ip=ip)
 
     def is_throttled(self, request, sound=None, **kwargs):
         # Opt-out wins over everything: "don't ask again" hides the box on every sound.

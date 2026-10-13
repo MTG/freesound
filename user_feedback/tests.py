@@ -114,7 +114,17 @@ class SubmitViewTest(TestCase):
         row = self._rows().get()
         self.assertEqual(row.user, self.user)
         # cleaned_data of the whole form is stored; the two extras are empty for "yes".
-        self.assertEqual(row.data, {"answer": "yes", "sound_id": self.sound.id, "selected_category": "", "text": ""})
+        self.assertEqual(
+            row.data,
+            {
+                "answer": "yes",
+                "sound_id": self.sound.id,
+                "selected_category": "",
+                "text": "",
+                "sound_category": "fx-o",
+                "sound_category_source": "u",
+            },
+        )
 
     def test_yes_ajax_returns_json(self):
         response = self._submit(ajax=True, answer="yes")
@@ -355,6 +365,10 @@ class RenderInlineHtmlTest(TestCase):
         html = self.experiment.render_inline_html(self._request(), sound=self.sound)
         self.assertIn("Music > Solo percussion", html)
         self.assertIn(reverse("bst-info-page") + "#m-sp", html)
+        # Check the answer saves the automatic category that was asked about
+        row = self.experiment.save_response(self.user, {"answer": "yes", "sound_id": self.sound.id})
+        self.assertEqual(row.data["sound_category"], "m-sp")
+        self.assertEqual(row.data["sound_category_source"], "a")
 
     def test_empty_string_when_not_shown(self):
         set_sample_rate("category_validation", 0.0)

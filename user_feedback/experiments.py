@@ -130,8 +130,8 @@ class CategoryValidation(Experiment):
     inline_template = "user_feedback/inline_category_validation.html"
 
     def is_context_eligible(self, request, sound=None, **kwargs):
-        # Only ask about sounds that actually have a category to validate.
-        return bool(sound is not None and sound.bst_category)
+        # Only ask about sounds that have a category, given by the user or added automatically.
+        return bool(sound is not None and all(sound.category_names))
 
     def inline_context(self, request, sound=None, **kwargs):
         # The box shows which category is being judged and offers a correction form.

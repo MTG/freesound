@@ -5,6 +5,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
+from sounds.models import SoundAnalysis
 from user_feedback.experiments import EXPERIMENTS, CategoryFilterFeedback, CategoryValidation, Experiment
 from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 from utils.search.search_query_processor import SearchQueryProcessor
@@ -24,10 +25,10 @@ def set_sample_rate(experiment_id, sample_rate):
 
 
 class _FakeSound:
-    """Duck-typed stand-in: is_context_eligible only reads .bst_category, so a real Sound is not needed here."""
+    """Duck-typed stand-in: is_context_eligible only reads .category_names, so a real Sound is not needed here."""
 
-    def __init__(self, bst_category):
-        self.bst_category = bst_category
+    def __init__(self, category_names):
+        self.category_names = category_names
 
 
 class ExperimentBaseTest(TestCase):
@@ -82,8 +83,8 @@ class ExperimentBaseTest(TestCase):
         experiment = CategoryValidation()
         request = self._request(self.user)
         self.assertFalse(experiment.is_context_eligible(request, sound=None))
-        self.assertFalse(experiment.is_context_eligible(request, sound=_FakeSound("")))
-        self.assertTrue(experiment.is_context_eligible(request, sound=_FakeSound("music")))
+        self.assertFalse(experiment.is_context_eligible(request, sound=_FakeSound([None, None])))
+        self.assertTrue(experiment.is_context_eligible(request, sound=_FakeSound(["Music", "Solo percussion"])))
 
 
 class SubmitViewTest(TestCase):
@@ -326,6 +327,21 @@ class RenderInlineHtmlTest(TestCase):
         self.assertIn(reverse("bst-info-page") + "#fx-o", html)
         # Check the info modal has the name of the study, which is in the model
         self.assertIn("Validating Sound Categorization in Freesound", html)
+
+    def test_renders_box_for_automatic_category(self):
+        # Check a sound without a category from the user is asked about its automatic category
+        set_sample_rate("category_validation", 1.0)
+        self.sound.bst_category = None
+        self.sound.save()
+        SoundAnalysis.objects.create(
+            sound=self.sound,
+            analyzer=settings.CONSOLIDATED_ANALYZER_NAME,
+            analysis_status="OK",
+            analysis_data={"category": "Music", "subcategory": "Solo percussion"},
+        )
+        html = self.experiment.render_inline_html(self._request(), sound=self.sound)
+        self.assertIn("Music > Solo percussion", html)
+        self.assertIn(reverse("bst-info-page") + "#m-sp", html)
 
     def test_empty_string_when_not_shown(self):
         set_sample_rate("category_validation", 0.0)

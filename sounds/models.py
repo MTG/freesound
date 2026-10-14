@@ -86,6 +86,7 @@ from utils.cdn import delete_cdn_symlink
 from utils.locations import locations_decorator
 from utils.mail import send_mail_template
 from utils.search import SearchEngineException, get_search_engine
+from utils.search.filter_validation import quote_filter_value
 from utils.search.search_sounds import delete_sounds_from_search_engine
 from utils.sound_upload import bulk_describe_from_csv, get_csv_lines, validate_input_csv_file
 
@@ -2326,7 +2327,7 @@ class Pack(LicenseSummaryMixin, models.Model):
             return False
 
     def pack_filter_value(self):
-        return f'"{self.id}_{quote(self.name)}"'
+        return quote(quote_filter_value(f"{self.id}_{self.name}"), safe="")
 
     def browse_pack_tag_url(self, tag):
         return reverse("tags", args=[tag]) + f"?pack_flt={self.pack_filter_value()}"

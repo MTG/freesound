@@ -4,6 +4,8 @@ from collections.abc import Iterable
 import luqum.thread
 import luqum.tree
 
+from utils.search import escape_lucene_phrase_value
+
 FIELD_TYPES_MAP = {
     "samplerate": int,
     "bitrate": int,
@@ -18,6 +20,11 @@ FIELD_TYPES_MAP = {
     "timestamp_start": float,
     "timestamp_end": float,
 }
+
+
+def quote_filter_value(value: str) -> str:
+    """Quote a literal filter value, escaping backslashes and double quotes."""
+    return '"' + escape_lucene_phrase_value(value) + '"'
 
 
 def normalize_numeric_value(field_name: str, value: str) -> str:

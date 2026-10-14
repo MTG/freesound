@@ -89,6 +89,7 @@ from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import PreSlicedCountProvidedPaginator
+from utils.search import escape_lucene_phrase_value
 from utils.search_logging import archive_search
 from utils.tags import clean_and_split_tags
 
@@ -262,7 +263,7 @@ class Search(FreesoundAPIView):
                         sound["more_from_same_pack"] = search_form.construct_link(
                             reverse("apiv2-sound-search"),
                             page=1,
-                            filt='pack_grouping:"%i_%s"' % (int(pack_id), pack_name),
+                            filt='pack_grouping:"%i_%s"' % (int(pack_id), escape_lucene_phrase_value(pack_name)),
                             group_by_pack="0",
                         )
                         sound["n_from_same_pack"] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself

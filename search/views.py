@@ -51,6 +51,7 @@ from utils.search import (
     get_search_engine,
     search_query_processor,
 )
+from utils.search.filter_validation import quote_filter_value
 from utils.search.search_sounds import (
     allow_beta_search_features,
     get_empty_query_cache_key,
@@ -183,7 +184,9 @@ def search_view_helper(request):
                 for d in docs:
                     if d.get("n_more_in_group") and d["sound"].pack_id is not None:
                         d["more_from_this_pack_url"] = sqp.get_url(
-                            add_filters=[f'pack_grouping:"{d["sound"].pack_id}_{d["sound"].pack.name}"']
+                            add_filters=[
+                                "pack_grouping:" + quote_filter_value(f"{d['sound'].pack_id}_{d['sound'].pack.name}")
+                            ]
                         )
             else:
                 resultspackids = []
@@ -201,7 +204,7 @@ def search_view_helper(request):
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split("_")[0])]
                     d["more_from_this_pack_url"] = sqp.get_url(
-                        add_filters=[f'pack_grouping:"{d["pack"].id}_{d["pack"].name}"']
+                        add_filters=["pack_grouping:" + quote_filter_value(f"{d['pack'].id}_{d['pack'].name}")]
                     )
 
         search_logger.info(

@@ -25,6 +25,7 @@ from django.conf import settings
 from sounds.models import License
 from utils.search import search_query_processor_options
 from utils.search.backends.solr555pysolr import get_solr_fieldname_from_freesound_fieldname
+from utils.search.filter_validation import quote_filter_value
 from utils.tags import annotate_tags
 
 register = template.Library()
@@ -120,7 +121,7 @@ def display_facet(context, facet_name, facet_title=None, beta_facet=False):
                 filter_str = f"{solr_fieldname}:{element['value']}"
             else:
                 # Otherwise wrap in quotes
-                filter_str = f'{solr_fieldname}:"{element["value"]}"'
+                filter_str = f"{solr_fieldname}:{quote_filter_value(element['value'])}"
         else:
             # For facets of type range, the filter must be constructed as a range
             gap = sqp.facets[facet_name]["gap"]

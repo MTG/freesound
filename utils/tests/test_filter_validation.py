@@ -1,13 +1,15 @@
 import urllib.parse
 
+import luqum.tree
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 
-from utils.search import SearchEngineException
+from utils.search import SearchEngineException, escape_lucene_phrase_value
 from utils.search.filter_validation import (
     find_dropped_filters,
     parse_filter,
+    quote_filter_value,
     validate_numeric_filters,
 )
 from utils.search.search_query_processor import SearchQueryProcessor
@@ -141,6 +143,30 @@ def test_sqp_accepts_valid(url):
     assert not sqp.errors, f"Expected no errors for {url!r}, got {sqp.errors!r}"
 
 
+LUCENE_ESCAPE_CASES = [
+    pytest.param("Drum Kit", "Drum Kit", id="no-special-chars"),
+    pytest.param('a"b', 'a\\"b', id="double-quote"),
+    pytest.param("a\\b", "a\\\\b", id="backslash"),
+    pytest.param('23938_<a href="x">', '23938_<a href=\\"x\\">', id="sentry-pack-name-shape"),
+]
+
+
+@pytest.mark.parametrize("value, expected", LUCENE_ESCAPE_CASES)
+def test_escape_lucene_phrase_value(value, expected):
+    assert escape_lucene_phrase_value(value) == expected
+
+
+def test_pack_filter_value_escapes_quotes():
+    # A pack name containing a `"` must not break the `pack_grouping:"..."` phrase once the value is
+    # url-decoded by the SearchQueryProcessor. The decoded phrase must stay balanced with the inner
+    # quote escaped for Lucene.
+    from sounds.models import Pack
+
+    pack = Pack(id=23938, name='evil"name')
+    decoded = urllib.parse.unquote(pack.pack_filter_value())
+    assert decoded == '"23938_evil\\"name"'
+
+
 VALID_FILTERS = [
     pytest.param("samplerate:44100", id="bare-int-typed"),
     pytest.param('bitdepth:16 tag:"reverb" channels:1', id="multi-filter-all-valid"),
@@ -241,3 +267,38 @@ def test_search_reports_invalid_duration_without_querying_backend():
     assert "duration" in result["error_text"]
     assert "'e'" in result["error_text"]
     search.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        '<a href="http://OGsoundFX.com" rel="nofollow">OGsoundFX.com</a> Free Pack',
+        'A "quoted" pack with \\backslashes\\',
+    ],
+)
+def test_pack_facet_links_preserve_literal_names(name):
+    from search.templatetags.search import display_facet
+    from utils.search.backends.solr9pysolr import Solr9PySolrSearchEngine
+
+    value = f"23938_{name}"
+    sqp = _build_sqp("/browse/tags/?f=tag:%22warrior%22")
+    result = display_facet({"sqp": sqp, "facets": {"pack_grouping": [(value, 10)]}}, "pack_grouping")
+    url = result["facet"][0]["add_filter_url"]
+    linked_sqp = _build_sqp(url)
+    assert not linked_sqp.errors
+    node = next(node for node in linked_sqp.f_parsed if node.name == "pack_grouping")
+    literal = luqum.tree.Term.WORD_ESCAPED_CHARS.sub(r"\1", node.expr.value[1:-1])
+    assert literal == value
+    query = linked_sqp.as_query_params()["query_filter"]
+    assert Solr9PySolrSearchEngine().search_process_filter(query) == (
+        '+tag:"warrior" +pack_grouping:' + quote_filter_value(value)
+    )
+
+
+def test_pack_model_links_escape_name_before_url_encoding():
+    from sounds.models import Pack
+
+    pack = Pack(id=23938, name='<a href="http://OGsoundFX.com">OGsoundFX.com</a> Free Pack')
+    sqp = _build_sqp(pack.get_pack_sounds_in_search_url())
+    assert not sqp.errors
+    assert sqp.as_query_params()["query_filter"] == "pack_grouping:" + quote_filter_value(f"{pack.id}_{pack.name}")

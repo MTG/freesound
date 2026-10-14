@@ -579,7 +579,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 return f"+{match.group(1)}"
             return match.group(0)
 
-        query_filter = re.sub(r'"[^"]*"|\b([a-zA-Z_]+:)', add_plus, query_filter)
+        query_filter = re.sub(r'"(?:\\.|[^"\\])*"|\b([a-zA-Z_]+:)', add_plus, query_filter)
         query_filter = re.sub(
             r"(\+)\1+", r"\1", query_filter
         )  # This is to avoid having multiple + in a row if user already has added them

@@ -29,6 +29,16 @@ if TYPE_CHECKING:
     import sounds.models
 
 
+def escape_lucene_phrase_value(value):
+    """Escape a string for safe inclusion inside a Lucene phrase (`field:"<value>"`).
+
+    Values we build filters from (e.g. pack names) can contain `"` or `\\`, which would otherwise
+    terminate or corrupt the phrase and make Solr return a syntax-error 400. Backslash must be
+    escaped first so we don't double-escape the backslashes we add for quotes.
+    """
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def get_search_engine(
     backend_class=settings.SEARCH_ENGINE_BACKEND_CLASS, sounds_index_url=None, forum_index_url=None
 ) -> SearchEngineBase:

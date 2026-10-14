@@ -76,7 +76,7 @@ def search_view_helper(request):
     # Check if there was a filter parsing error and return error if so
     if sqp.errors:
         search_logger.info(f"Errors in SearchQueryProcessor: {sqp.errors}")
-        return {"error_text": "There was an error while searching, is your query correct?"}
+        return {"error_text": sqp.errors}
 
     # Update compact mode preference if user has explicitly specified a different value than the preference
     if request.user.is_authenticated:

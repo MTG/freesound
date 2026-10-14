@@ -38,7 +38,7 @@ from textencoder.client import TextEncoder
 from utils.clustering_utilities import get_clusters_for_query, get_ids_in_cluster
 from utils.encryption import create_hash
 from utils.search import SearchEngineException
-from utils.search.filter_validation import parse_filter, validate_filter_types
+from utils.search.filter_validation import parse_filter, validate_numeric_filters
 from utils.search.search_sounds import allow_beta_search_features
 
 if TYPE_CHECKING:
@@ -372,7 +372,7 @@ class SearchQueryProcessor:
         # Validate that values on filter fields are the correct type. Catches issues where incorrectly formatted
         # queries cause a solr exception (e.g. `samplerate:22050+tag:"x"` parses as "22050+tag" instead of 22050)
         if not self.errors:
-            type_error = validate_filter_types(self.f_parsed)
+            type_error = validate_numeric_filters(self.f_parsed)
             if type_error is not None:
                 self.errors = type_error
                 return
@@ -438,6 +438,9 @@ class SearchQueryProcessor:
         for option in self.options.values():
             option.set_search_query_processor(self)
             option.load_value()
+
+        if self.errors:
+            return
 
         # Do a second pass of loading values as some default values might depend on the values of other options, so we need to have all options
         # loaded before being able to load the value of some of them.

@@ -5,7 +5,11 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 
 from utils.search import SearchEngineException
-from utils.search.filter_validation import find_dropped_filters, parse_filter, validate_filter_types
+from utils.search.filter_validation import (
+    find_dropped_filters,
+    parse_filter,
+    validate_numeric_filters,
+)
 from utils.search.search_query_processor import SearchQueryProcessor
 
 
@@ -43,7 +47,7 @@ TYPE_CORRUPTION_URLS = [
 def test_url_type_corruption_detected(url_path, field):
     # badly encoded + makes the value of a field invalid
     nodes = parse_filter(_decode_f_from_url(url_path))
-    verdict = validate_filter_types(nodes)
+    verdict = validate_numeric_filters(nodes)
     assert verdict is not None and field in verdict
     assert find_dropped_filters(nodes) == []
 
@@ -90,7 +94,7 @@ def test_url_dropped_filters_reported(url_path, dropped, kept):
     # Plus-wrapped filters without telling the user. The remaining filters
     # are used for the search query.
     nodes = parse_filter(_decode_f_from_url(url_path))
-    assert validate_filter_types(nodes) is None
+    assert validate_numeric_filters(nodes) is None
     assert find_dropped_filters(nodes) == dropped
     assert _build_sqp(url_path).non_option_filters == kept
 
@@ -99,7 +103,7 @@ def test_url_legitimate_plus_not_flagged():
     # literal `+` between filters (decodes to space) and valid `+` inside a
     # Phrase ("Sampling+" is a real CC license): both accepted.
     nodes = parse_filter(_decode_f_from_url("/search/?f=tag%3A%22ducks%22+license%3A%22Sampling%2B%22"))
-    assert validate_filter_types(nodes) is None
+    assert validate_numeric_filters(nodes) is None
     assert find_dropped_filters(nodes) == []
 
 
@@ -157,11 +161,20 @@ VALID_FILTERS = [
 @pytest.mark.parametrize("filter_string", VALID_FILTERS)
 def test_valid_filters_accepted(filter_string):
     nodes = parse_filter(filter_string)
-    assert validate_filter_types(nodes) is None
+    assert validate_numeric_filters(nodes) is None
     assert find_dropped_filters(nodes) == []
 
 
 INVALID_FILTERS = [
+    pytest.param("duration:[e TO 10]", "duration", id="invalid-range-bound"),
+    pytest.param("samplerate:>=abc", "samplerate", id="invalid-inequality"),
+    pytest.param("samplerate:(44100 OR abc)", "samplerate", id="invalid-group-value"),
+    pytest.param("samplerate:abc^2", "samplerate", id="invalid-boosted-value"),
+    pytest.param("(channels:stereo OR channels:1)", "channels", id="invalid-nested-field"),
+    pytest.param("duration:NaN", "duration", id="not-finite"),
+    pytest.param("duration:1e999", "duration", id="overflow"),
+    pytest.param("channels:1,5", "channels", id="decimal-on-integer-field"),
+    pytest.param("avg_rating:bad", "avg_rating", id="invalid-rating"),
     pytest.param("samplerate:abc", "samplerate", id="non-numeric-samplerate"),
     pytest.param("channels:stereo", "channels", id="non-numeric-channels"),
     pytest.param("bitdepth:twentyfour", "bitdepth", id="non-numeric-bitdepth"),
@@ -172,6 +185,59 @@ INVALID_FILTERS = [
 
 @pytest.mark.parametrize("filter_string, must_mention", INVALID_FILTERS)
 def test_invalid_filters_rejected(filter_string, must_mention):
-    verdict = validate_filter_types(parse_filter(filter_string))
+    verdict = validate_numeric_filters(parse_filter(filter_string))
     assert verdict is not None, f"Expected error for {filter_string!r}"
     assert must_mention in verdict, f"Expected {must_mention!r} in verdict, got {verdict!r}"
+
+
+@pytest.mark.parametrize(
+    "filter_string, expected",
+    [
+        ("duration:[0,5 TO 1,5]", "duration:[0.5 TO 1.5]"),
+        ('avg_rating:"3,5"', 'avg_rating:"3.5"'),
+        ("avg_rating:(3,5 OR 4,5)", "avg_rating:(3.5 OR 4.5)"),
+        ("avg_rating:>=3,5", "avg_rating:>=3.5"),
+        ("avg_rating:3,5^2", "avg_rating:3.5^2"),
+        ('tag:"0,5"', 'tag:"0,5"'),
+    ],
+)
+def test_filter_decimal_normalization(filter_string, expected):
+    nodes = parse_filter(filter_string)
+    assert validate_numeric_filters(nodes) is None
+    assert str(nodes[0]) == expected
+
+
+@pytest.mark.parametrize("param", ["d0", "d1"])
+@pytest.mark.parametrize("value", ["e", "NaN", "Infinity", "0,5,2"])
+def test_sqp_rejects_invalid_duration_input(param, value):
+    sqp = _build_sqp("/search/?" + urllib.parse.urlencode({param: value}))
+    assert "duration" in sqp.errors
+    with pytest.raises(SearchEngineException):
+        sqp.as_query_params()
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"d0": "0,5", "d1": "1,5"},
+        {"f": "duration:[0,5 TO 1,5]"},
+    ],
+)
+def test_sqp_normalizes_duration_before_search(params):
+    sqp = _build_sqp("/search/?" + urllib.parse.urlencode(params))
+    assert not sqp.errors
+    assert sqp.as_query_params()["query_filter"] == "duration:[0.5 TO 1.5]"
+
+
+def test_search_reports_invalid_duration_without_querying_backend():
+    from unittest.mock import patch
+
+    from search.views import search_view_helper
+
+    request = RequestFactory().get("/search/", {"d0": "e"})
+    request.user = AnonymousUser()
+    with patch("search.views.perform_search_engine_query") as search:
+        result = search_view_helper(request)
+    assert "duration" in result["error_text"]
+    assert "'e'" in result["error_text"]
+    search.assert_not_called()

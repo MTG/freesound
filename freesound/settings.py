@@ -92,9 +92,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ("accounts.modelbackend.CustomModelBackend",)
 
-# Read JSON or legacy pickle; write JSON.
-SESSION_SERIALIZER = "utils.session_serializers.TransitionalPickleSerializer"
-
 TIME_ZONE = "Europe/Brussels"
 
 LANGUAGE_CODE = "en-us"

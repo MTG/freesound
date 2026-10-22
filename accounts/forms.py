@@ -547,7 +547,7 @@ class DeleteUserForm(forms.Form):
         if not data:
             raise PermissionDenied
         try:
-            user_id = unsign_with_timestamp(str(self.user_id), data, max_age=10)
+            user_id = unsign_with_timestamp(str(self.user_id), data, max_age=20)
         except SignatureExpired:
             raise forms.ValidationError("Sorry, you waited too long, ... try again?")
         except BadSignature:

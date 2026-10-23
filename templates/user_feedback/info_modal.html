@@ -25,7 +25,10 @@
                     <form method="post" action="{% url 'user-feedback-opt-out' %}" data-experiment-optout data-dismiss-modal="{{ config.experiment_id }}_info_modal" class="v-spacing-3">
                         {% csrf_token %}
                         <input type="hidden" name="experiment_id" value="{{ config.experiment_id }}">
-                        <button type="submit" class="btn-inverse" style="align-self: center;">Don't ask again</button>
+                        <div class="row center v-spacing-top-4 v-spacing-5">
+                        <button type="button" class="btn-primary h-spacing-2" data-dismiss="modal">Ok</button>
+                        <button type="submit" class="btn-inverse">Don't ask again</button>
+                        </div>
                     </form>
                 </div>
             </div>

@@ -193,7 +193,7 @@ const bindFeedbackBox = box => {
         [answerName]: chosenAnswer,
       },
       () => {
-        box.innerHTML = `<b>${box.dataset.thanks || 'Thanks for your feedback!'}</b>`;
+        box.innerHTML = `${box.dataset.thanks || 'Thanks for your feedback!'}`;
         // Hide the answered bar and boxes a bit after the thanks.
         if (isBar) setTimeout(() => hideBar(box), HIDE_AFTER_THANKS_MS);
         else if (box.hasAttribute('data-experiment-hide-after-thanks'))

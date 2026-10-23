@@ -19,13 +19,15 @@
      data-experiment-closes-boxes>
     <input type="hidden" name="kind" value="overall">
     {# Circled "i" that opens the info modal below. #}
-    {% include "user_feedback/info_button.html" with extra_style="position: absolute; top: 10px; left: 12px; color: inherit;" %}
-    <span data-experiment-bar-close class="cursor-pointer" title="Close" aria-label="Close" style="position: absolute; top: 8px; right: 12px;">{% bw_icon 'close' %}</span>
-    <div class="h-padding-4"><b>How useful was filtering by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</b></div>
+    <div class="text-right row" style="position: absolute; top: 10px; right: 25px; color: inherit;">
+        {% include "user_feedback/info_button.html" %}
+        <span data-experiment-bar-close class="h-spacing-left-1 cursor-pointer" title="Close" aria-label="Close">{% bw_icon 'close' %}</span>
+    </div>
+    <div class="h-padding-4">How useful was it in general to filter by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</div>
     <div class="v-spacing-top-2">
         <span class="text-14 h-spacing-2">Not useful</span>
         {% for value in "12345" %}
-            <a href="javascript:void(0)" class="btn-inverse text-14 display-inline-block" style="padding: 8px 14px; color: inherit;" data-experiment-answer="{{ value }}">{{ value }}</a>
+            <a href="javascript:void(0)" class="btn-inverse text-14 display-inline-block" style="padding: 8px 14px;" data-experiment-answer="{{ value }}">{{ value }}</a>
         {% endfor %}
         <span class="text-14 h-spacing-left-2">Very useful</span>
     </div>

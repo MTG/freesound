@@ -1,0 +1,45 @@
+{% load bw_templatetags %}
+{# Category filter experiment in the search page; rendered by CategoryFilterFeedback.render_page_items. #}
+
+{# Info about the search. experiments.js sends it with every answer of this experiment. #}
+<div data-experiment-shared="{{ experiment_id }}" style="display: none;">
+    {% for name, value in search.items %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    {# Sounds played in the page and seconds in it, filled in experiments.js if answer is sent. #}
+    <input type="hidden" name="played_sounds" data-experiment-played-sounds>
+    <input type="hidden" name="seconds_in_page" data-experiment-seconds-in-page>
+</div>
+
+{# Overall rating, shown as a bar at the bottom of the page. Clicking a number opens the comment and Send saves. #}
+{# After the rating is sent, the yes/no questions of the page are removed. #}
+<div class="toast" role="region" aria-label="Feedback question" style="z-index: 1040; font-weight: normal;"
+     data-experiment-box data-experiment-bar data-experiment-plays="{{ bar_plays }}" data-experiment-delay="{{ bar_delay_seconds }}" data-experiment-answer-name="rating"
+     data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}"
+     data-experiment-closes-boxes>
+    <input type="hidden" name="kind" value="overall">
+    {# Circled "i" that opens the info modal below. #}
+    <div class="text-right row" style="position: absolute; top: 10px; right: 25px; color: inherit;">
+        {% include "user_feedback/info_button.html" %}
+        <span data-experiment-bar-close class="h-spacing-left-1 cursor-pointer" title="Close" aria-label="Close">{% bw_icon 'close' %}</span>
+    </div>
+    <div class="h-padding-4">How useful was it in general to filter by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</div>
+    <div class="v-spacing-top-2">
+        <span class="text-14 h-spacing-2">Not useful</span>
+        {% for value in "12345" %}
+            <a href="javascript:void(0)" class="btn-inverse text-14 display-inline-block" style="padding: 8px 14px;" data-experiment-answer="{{ value }}">{{ value }}</a>
+        {% endfor %}
+        <span class="text-14 h-spacing-left-2">Very useful</span>
+    </div>
+    <div data-experiment-expand style="display: none;" class="v-spacing-top-1">
+        <textarea name="text" rows="2" placeholder="Anything else? (optional)"
+                  class="text-14" style="width: 100%; max-width: 500px; min-height: 0; background: transparent; color: inherit; border: 1px solid #999; border-radius: 5px; padding: 8px;"></textarea>
+        <div style="font-size: 12px; line-height: 1.2; margin-top: 2px; opacity: 0.7;"><i>Sending the overall rating also closes the per-sound questions.</i></div>
+        <div class="v-spacing-top-1">
+            <button type="button" data-experiment-send class="btn-primary text-14">Send</button>
+        </div>
+    </div>
+</div>
+
+{# Study information sheet + opt-out in "i" of the bar. #}
+{% include "user_feedback/info_modal.html" %}

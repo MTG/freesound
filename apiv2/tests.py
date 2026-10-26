@@ -966,13 +966,14 @@ class TestAPIExceptionHandlerIntegration(SimpleTestCase):
     def test_exception_handler_is_wired_into_drf(self):
         # End-to-end check that a real request that raises a LoggedAPIException is routed through
         # our configured EXCEPTION_HANDLER.
-        url = reverse("apiv2-download_from_token", args=["bogus"])
+        with (
+            mock.patch("apiv2.authentication.OAuth2Authentication.authenticate", side_effect=BadRequestException()),
+            self.assertLogs("api_errors", level="INFO") as logs,
+        ):
+            response = self.client.get("/apiv2/")
 
-        with self.assertLogs("api_errors", level="INFO") as logs:
-            response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid token."})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"detail": "Bad request"})
         self.assertEqual(len(logs.records), 1)
 
 

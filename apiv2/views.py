@@ -25,7 +25,6 @@ import os
 from collections import OrderedDict
 from urllib.parse import quote
 
-import jwt
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -40,7 +39,7 @@ from django.views.decorators.http import require_POST
 from oauth2_provider.models import AccessToken, Grant
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
-from rest_framework.decorators import api_view, authentication_classes, permission_classes, throttle_classes
+from rest_framework.decorators import api_view, authentication_classes, throttle_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
@@ -520,36 +519,6 @@ class DownloadSound(DownloadAPIView):
                 return HttpResponseRedirect(cdn_url)
 
         return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
-
-
-class DownloadLink(DownloadAPIView):
-    @classmethod
-    def get_description(cls):
-        return "Get a url to download a sound without authentication."
-
-    def get(self, request, *args, **kwargs):
-        sound_id = kwargs["pk"]
-        api_logger.info(self.log_message("sound:%i get_download_link" % (int(sound_id))))
-
-        try:
-            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
-        except Sound.DoesNotExist:
-            raise NotFoundException(resource=self)
-
-        download_token = jwt.encode(
-            {
-                "user_id": self.user.id,
-                "sound_id": sound.id,
-                "client_id": self.client_id,
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.API_DOWNLOAD_TOKEN_LIFETIME),
-            },
-            settings.SECRET_KEY,
-            algorithm="HS256",
-        )
-        download_link = prepend_base(
-            reverse("apiv2-download_from_token", args=[download_token]), request_is_secure=request.is_secure()
-        )
-        return Response({"download_link": download_link}, status=status.HTTP_200_OK)
 
 
 ############
@@ -1209,31 +1178,6 @@ class CommentSound(WriteRequiredGenericAPIView):
 #############
 # OTHER VIEWS
 #############
-
-
-@api_view(["GET"])
-@throttle_classes([])
-@authentication_classes([])
-@permission_classes([])
-def download_from_token(request, token):
-    try:
-        token_contents = jwt.decode(token, settings.SECRET_KEY, leeway=10)
-    except jwt.ExpiredSignatureError:
-        raise UnauthorizedException(msg="This token has expired.")
-    except jwt.InvalidTokenError:
-        raise UnauthorizedException(msg="Invalid token.")
-    try:
-        sound = Sound.objects.get(id=token_contents.get("sound_id", None))
-    except Sound.DoesNotExist:
-        raise NotFoundException
-    sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
-    if not os.path.exists(sound_path):
-        raise NotFoundException
-    if settings.USE_CDN_FOR_API_DOWNLOADS:
-        cdn_url = generate_cdn_download_url(sound)
-        if cdn_url is not None:
-            return HttpResponseRedirect(cdn_url)
-    return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
 
 
 class Me(OauthRequiredAPIView):

@@ -706,7 +706,6 @@ dependencies = [
     { name = "prometheus-client" },
     { name = "psutil" },
     { name = "psycopg" },
-    { name = "pyjwt" },
     { name = "pyparsing" },
     { name = "pysndfile" },
     { name = "pysolr" },
@@ -787,7 +786,6 @@ requires-dist = [
     { name = "prometheus-client", specifier = "==0.25.0" },
     { name = "psutil", specifier = "~=7.0.0" },
     { name = "psycopg", specifier = "~=3.2.4" },
-    { name = "pyjwt", specifier = "==2.6.0" },
     { name = "pyparsing", specifier = "==2.4.7" },
     { name = "pysndfile", specifier = "~=1.5.3" },
     { name = "pysolr", git = "https://github.com/django-haystack/pysolr.git?rev=6b8b1f973fbb00fd01ca520440d27cda6abcce55" },
@@ -1373,15 +1371,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
-]
-
-[[package]]
-name = "pyjwt"
-version = "2.6.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/75/65/db64904a7f23e12dbf0565b53de01db04d848a497c6c9b87e102f74c9304/PyJWT-2.6.0.tar.gz", hash = "sha256:69285c7e31fc44f68a1feb309e948e0df53259d579295e6cfe2b1792329f05fd", size = 72984, upload-time = "2022-10-20T01:09:12.296Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/40/46/505f0dd53c14096f01922bf93a7abb4e40e29a06f858abbaa791e6954324/PyJWT-2.6.0-py3-none-any.whl", hash = "sha256:d83c3d892a77bbb74d3e1a2cfa90afaadb60945205d1095d9221f04466f64c14", size = 20316, upload-time = "2022-10-20T01:09:09.802Z" },
 ]
 
 [[package]]

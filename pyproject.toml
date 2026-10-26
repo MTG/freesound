@@ -41,7 +41,6 @@ dependencies = [
     "pillow==9.5.0",
     "psutil~=7.0.0",
     "psycopg~=3.2.4",
-    "pyjwt==2.6.0",
     "pyparsing==2.4.7",
     "pysndfile~=1.5.3",
     "pysolr @ git+https://github.com/django-haystack/pysolr.git@6b8b1f973fbb00fd01ca520440d27cda6abcce55",

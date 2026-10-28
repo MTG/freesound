@@ -34,6 +34,7 @@ from django.test import RequestFactory, SimpleTestCase, TestCase, TransactionTes
 from django.urls import reverse
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
+from apiv2.apiv2_utils import FreesoundAPIViewMixin
 from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer, validate_tags
 from bookmarks.models import Bookmark
@@ -594,6 +595,53 @@ class TestMeResources(TestCase):
         )
         for sound, collection in zip(sounds[:4], [self.default_collection] * 2 + [self.category] * 2):
             collection.add_sound(sound, self.end_user)
+
+    def get_with_lifecycle_counts(self, url):
+        with (
+            mock.patch.object(
+                FreesoundAPIViewMixin,
+                "get_request_information",
+                autospec=True,
+                side_effect=FreesoundAPIViewMixin.get_request_information,
+            ) as information,
+            mock.patch.object(
+                FreesoundAPIViewMixin,
+                "store_monitor_usage",
+                autospec=True,
+                side_effect=FreesoundAPIViewMixin.store_monitor_usage,
+            ) as usage,
+            mock.patch.object(
+                FreesoundAPIViewMixin,
+                "redirect_if_needed",
+                autospec=True,
+                side_effect=FreesoundAPIViewMixin.redirect_if_needed,
+            ) as redirect,
+        ):
+            response = self.client.get(url, secure=True, **self.auth_headers)
+        information.assert_called_once()
+        usage.assert_called_once()
+        redirect.assert_called_once()
+        return response
+
+    def test_bookmark_categories_run_lifecycle_once(self):
+        response = self.get_with_lifecycle_counts(reverse("apiv2-me-bookmark-categories"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.category.id, [category["id"] for category in response.json()["results"]])
+
+    def test_bookmark_sounds_run_lifecycle_once(self):
+        response = self.get_with_lifecycle_counts(
+            reverse("apiv2-me-bookmark-category-sounds", args=[self.category.id]),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({sound["id"] for sound in response.json()["results"]}, {s.id for s in self.sounds[2:4]})
+
+    def test_bookmark_options_describes_post_fields(self):
+        self.client.force_login(self.end_user)
+        response = self.client.options(reverse("apiv2-user-create-bookmark", args=[self.sounds[0].id]), secure=True)
+        self.assertEqual(response.status_code, 200)
+        category = response.json()["actions"]["POST"]["category"]
+        self.assertEqual(category["type"], "string")
+        self.assertFalse(category["required"])
 
     def test_me_resource(self):
         # 200 response on me resource

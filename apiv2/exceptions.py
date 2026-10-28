@@ -65,12 +65,6 @@ class UnauthorizedException(LoggedAPIException):
     default_detail = "Not authorized"
 
 
-class RequiresHttpsException(LoggedAPIException):
-    status_code = status.HTTP_403_FORBIDDEN
-    summary_label = "Requires Https"
-    default_detail = "This resource requires a secure connection (https)"
-
-
 class ServerErrorException(LoggedAPIException):
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     summary_label = "Server error"

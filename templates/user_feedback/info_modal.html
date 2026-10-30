@@ -17,7 +17,7 @@
                     {# The description is edited in the admin and can have HTML links. #}
                     <p>{{ config.description|safe }}</p>
 
-                    <p><b>Participation:</b> Taking part is voluntary, and the "Don't ask again" button below will permanently stop these questions.</p>
+                    <p><b>Participation:</b> Taking part is voluntary, and the "Opt out" button below will permanently stop these questions.</p>
 
                     <p><b>Contact:</b> If you would like further information about this research, please contact us through the <a href="{% url 'contact' %}">contact page</a>.</p>
 
@@ -27,7 +27,7 @@
                         <input type="hidden" name="experiment_id" value="{{ config.experiment_id }}">
                         <div class="row center v-spacing-top-4 v-spacing-5">
                         <button type="button" class="btn-primary h-spacing-2" data-dismiss="modal">Ok</button>
-                        <button type="submit" class="btn-inverse">Don't ask again</button>
+                        <button type="submit" class="btn-inverse">Opt out</button>
                         </div>
                     </form>
                 </div>

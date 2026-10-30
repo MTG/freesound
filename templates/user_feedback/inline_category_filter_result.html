@@ -3,12 +3,12 @@
 {# It is hidden until its sound is played, or until the rating bar is shown. It is removed a bit after the thanks. #}
 <div data-experiment-box data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}" data-thanks="Thanks for your feedback!"
      data-experiment-show-on-play="{{ sound_id }}" data-experiment-plays="{{ bar_plays }}" data-experiment-delay="{{ bar_delay_seconds }}" data-experiment-hide-after-thanks
-     class="text-grey text-14 text-right v-spacing-2 center" style="display: none;">
+     class="text-grey text-14 text-right v-spacing-2 center inline-experiment-small-box" style="display: none;">
     <input type="hidden" name="kind" value="result">
     <input type="hidden" name="sound_id" value="{{ sound_id }}">
     <input type="hidden" name="position" value="{{ position }}">
     {# Soft grey background behind the question. #}
-    <span class="display-inline-block inline-experiment-small-box">
+    <span class="display-inline-block">
         <span class="h-spacing-1">Is this what you were looking for?</span>
         {# Thumbs up and down icons. #}
         <a href="javascript:void(0)" class="btn-inverse display-inline-block" style="padding: 3px 8px; line-height: 0;" data-experiment-answer="yes" title="Yes" aria-label="Yes">

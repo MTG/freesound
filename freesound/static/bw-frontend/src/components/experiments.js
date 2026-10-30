@@ -7,10 +7,6 @@ import { prepareCategoryFormFields } from './bstCategoryFormField';
 // experiment-specific lives here: every box declares its own behaviour with data-
 // attributes in its template, so a new experiment needs no changes to this file.
 
-// URL of the view that returns the experiments of the page, set in base.html only in the
-// pages that load experiments after they load (see page_loads_experiments).
-/* global feedbackExperimentsPageItemsUrl */
-
 // First field-error message out of the submit view's JSON 400 body.
 const firstFormError = responseText => {
   try {
@@ -303,24 +299,19 @@ const placePageItem = item => {
   block.insertAdjacentHTML('afterend', item.html);
 };
 
-// Loads the experiments of a page that does not have them in its template. The server gets
-// the parameters of the page and the sounds shown in it, and returns the HTML to place.
-const fetchPageFeedbackExperiments = () => {
-  // Only the pages with experiments to load make the request.
-  if (
-    typeof feedbackExperimentsPageItemsUrl === 'undefined' ||
-    !feedbackExperimentsPageItemsUrl
-  )
-    return;
-  // Start counting plays before the experiments are loaded.
+// Loads an experiment that adds its HTML after the page loads. Its element is placed in the
+// template with the {% feedback_experiment %} tag. The server gets the parameters of the page
+// and the sounds shown in it, and returns the HTML to place.
+const loadPageFeedbackExperiment = element => {
+  // Start counting plays before the experiment is loaded.
   trackPlays();
   const soundIds = [...document.querySelectorAll('[data-sound-id]')].map(
-    element => element.dataset.soundId
+    soundElement => soundElement.dataset.soundId
   );
   const params = new URLSearchParams(window.location.search);
-  params.set('experiment_path', window.location.pathname);
+  params.set('experiment_id', element.dataset.experimentLoad);
   params.set('experiment_sound_ids', [...new Set(soundIds)].join(','));
-  fetch(`${feedbackExperimentsPageItemsUrl}?${params}`)
+  fetch(`${element.dataset.experimentLoadUrl}?${params}`)
     .then(response => response.json())
     .then(data => {
       data.items.forEach(placePageItem);
@@ -330,5 +321,8 @@ const fetchPageFeedbackExperiments = () => {
       // The page works the same without the experiments.
     });
 };
+
+const fetchPageFeedbackExperiments = () =>
+  bindOnce('[data-experiment-load]', loadPageFeedbackExperiment);
 
 export { bindFeedbackExperimentBoxes, fetchPageFeedbackExperiments };

@@ -2,6 +2,8 @@ import hashlib
 
 from django import forms
 from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from sounds.models import Sound
@@ -21,7 +23,7 @@ class Experiment:
     form_class = None  # form the generic submit view validates for this experiment
     # Optional inline box, placed in a template with {% feedback_experiment "<experiment_id>" ... %}
     inline_template = None
-    page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
+    loads_after_page = False  # True if experiments.js loads the HTML of the experiment after the page loads
 
     @property
     def config(self):
@@ -64,6 +66,20 @@ class Experiment:
         so the host page does not need to know what any experiment renders."""
         return {}
 
+    def render_tag_html(self, request, **kwargs):
+        """HTML that the {% feedback_experiment %} tag places in the template: the inline box or,
+        if the experiment loads after the page, an element that makes experiments.js load it."""
+        if not self.loads_after_page:
+            return self.render_inline_html(request, **kwargs)
+        # Whether it is shown is decided when it is loaded; here only the checks that need no context.
+        if not request.user.is_authenticated or self.has_opted_out(request.user):
+            return ""
+        return format_html(
+            '<div data-experiment-load="{}" data-experiment-load-url="{}" hidden></div>',
+            self.experiment_id,
+            reverse("user-feedback-page-items"),
+        )
+
     def render_inline_html(self, request, **kwargs):
         """Rendered inline box for this request, or "" when it should not show now.
         The host page just outputs the string; all the wiring stays in here."""
@@ -74,7 +90,7 @@ class Experiment:
         )
 
     def render_page_items(self, request, sound_ids):
-        """Returns the pieces of HTML to add to a page that shows `sound_ids` (see page_url_name).
+        """Returns the pieces of HTML to add to a page that shows `sound_ids` (see loads_after_page).
         Each piece is a dict with "html" and, optionally, the "target" and "container" to place it."""
         return []
 

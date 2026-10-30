@@ -396,7 +396,7 @@ class CategoryFilterFeedbackTest(TestCase):
         params = {
             "q": "piano",
             "f": 'category:"Music"',
-            "experiment_path": reverse("sounds-search"),
+            "experiment_id": "category_filter_feedback",
             "experiment_sound_ids": ",".join(str(sound.id) for sound in self.sounds),
             **params,
         }
@@ -492,8 +492,8 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(self._items(f=""), [])
         # Anonymous user
         self.assertEqual(self._items(client=Client()), [])
-        # Page that has no experiment
-        self.assertEqual(self._items(experiment_path=reverse("front-page")), [])
+        # Experiment that does not load after the page
+        self.assertEqual(self._items(experiment_id="category_validation"), [])
         # User opted out
         self.experiment.opt_out(self.user)
         self.assertEqual(self._items(), [])
@@ -522,6 +522,22 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(self._items(), [])
         # Check the bar is shown again for another search in the same category
         self.assertIn("data-experiment-bar", self._items(q="guitar")[-1]["html"])
+
+    def test_tag_places_the_element_that_loads_it(self):
+        def render(user):
+            request = RequestFactory().get(reverse("sounds-search"))
+            request.user = user
+            template = Template('{% load feedback_experiments %}{% feedback_experiment "category_filter_feedback" %}')
+            return template.render(Context({"request": request}))
+
+        # Check the element has the experiment and the URL to load it
+        html = render(self.user)
+        self.assertIn('data-experiment-load="category_filter_feedback"', html)
+        self.assertIn(reverse("user-feedback-page-items"), html)
+        # Check it is not placed for anonymous users or users that opted out
+        self.assertEqual(render(AnonymousUser()), "")
+        self.experiment.opt_out(self.user)
+        self.assertEqual(render(self.user), "")
 
     def test_sampling_is_per_search(self):
         def key(**params):

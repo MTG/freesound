@@ -109,7 +109,7 @@ class CategoryFilterFeedback(Experiment):
     form_class = CategoryFilterFeedbackForm
     inline_template = "user_feedback/inline_category_filter_feedback.html"
     result_template = "user_feedback/inline_category_filter_result.html"
-    page_url_name = "sounds-search"
+    loads_after_page = True
     result_container = "[data-score]"  # Element of the search page that wraps one result
     # The overall rating bar is shown after X different sounds are played, and then Y seconds.
     # The question of a result is shown when its sound is played, or with the bar.

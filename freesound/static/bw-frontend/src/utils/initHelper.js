@@ -62,11 +62,12 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
   bindFollowTagsButtons(container);
   prepareAsyncSections(container);
 
-  // Feedback experiments: bind the boxes already in the container, and when the page loads,
-  // load the experiments that the page adds after it loads (only in the pages that have them)
+  // Feedback experiments: bind the boxes in the container, and load the experiments that
+  // add their HTML after the page loads (each is loaded once)
   if (container.querySelector('[data-experiment-box]'))
     bindFeedbackExperimentBoxes();
-  if (container === document) fetchPageFeedbackExperiments();
+  if (container.querySelector('[data-experiment-load]'))
+    fetchPageFeedbackExperiments();
 
   bindConfirmationModalElements(container); // Confirmation modals are also binded as they can work inside another modal
 

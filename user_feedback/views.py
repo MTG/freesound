@@ -1,9 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect, JsonResponse
-from django.urls import Resolver404, resolve
 from django.views.decorators.http import require_POST
 
-from user_feedback.experiments import EXPERIMENTS, get_experiment
+from user_feedback.experiments import get_experiment
 from utils.logging_filters import get_client_ip
 
 
@@ -52,24 +51,17 @@ def opt_out(request):
 
 
 def page_items(request):
-    """Returns the HTML of the experiments of a page, as pieces that experiments.js places in the page.
-    It is requested after the page loads, so the template of the page does not need to change.
+    """Returns the HTML of an experiment that loads after the page loads (see Experiment.loads_after_page),
+    as pieces that experiments.js places in the page.
 
-    The request has the same GET parameters as the page, plus the path of the page
-    (``experiment_path``) and the sounds shown in it (``experiment_sound_ids``).
+    The request has the same GET parameters as the page, plus the experiment (``experiment_id``)
+    and the sounds shown in the page (``experiment_sound_ids``).
     """
+    experiment = get_experiment(request.GET.get("experiment_id", ""))
     # Experiments are only shown to logged-in users.
-    if not request.user.is_authenticated:
-        return JsonResponse({"items": []})
-    try:
-        url_name = resolve(request.GET.get("experiment_path", "")).url_name
-    except Resolver404:
+    if experiment is None or not experiment.loads_after_page or not request.user.is_authenticated:
         return JsonResponse({"items": []})
     sound_ids = [
         int(sound_id) for sound_id in request.GET.get("experiment_sound_ids", "").split(",") if sound_id.isdigit()
     ]
-    items = []
-    for experiment in EXPERIMENTS.values():
-        if experiment.page_url_name == url_name:
-            items += experiment.render_page_items(request, sound_ids)
-    return JsonResponse({"items": items})
+    return JsonResponse({"items": experiment.render_page_items(request, sound_ids)})

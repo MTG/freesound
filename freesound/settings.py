@@ -483,11 +483,11 @@ BST_SUBCATEGORY_CHOICES: list = [
 # -------------------------------------------------------------------------------
 # User feedback experiments (user_feedback app)
 
-# Registry of feedback experiments: each experiment_id maps to its class (resolved in user_feedback/experiments.py).
+# Registry of feedback experiments: each experiment_id maps to its class (resolved in user_feedback/experiments/__init__.py).
 # The sample rate and the texts of each experiment are in the FeedbackExperiment model, and are edited in the admin.
 FEEDBACK_EXPERIMENTS = {
-    "category_validation": {"class": "user_feedback.experiments.CategoryValidation"},
-    "category_filter_feedback": {"class": "user_feedback.experiments.CategoryFilterFeedback"},
+    "category_validation": {"class": "user_feedback.experiments.category_validation.CategoryValidation"},
+    "category_filter_feedback": {"class": "user_feedback.experiments.category_filter_feedback.CategoryFilterFeedback"},
 }
 
 # -------------------------------------------------------------------------------

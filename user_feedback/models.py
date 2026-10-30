@@ -58,7 +58,7 @@ class FeedbackOptOut(models.Model):
 class FeedbackExperiment(models.Model):
     """Configuration of one experiment that can be changed in the admin.
 
-    The code of each experiment is in experiments.py (see settings.FEEDBACK_EXPERIMENTS).
+    The code of each experiment is in the experiments package (see settings.FEEDBACK_EXPERIMENTS).
     This model has what does not need a code change: how often it is shown and the texts of its information modal.
     """
 

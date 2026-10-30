@@ -6,7 +6,10 @@ from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from sounds.models import SoundAnalysis
-from user_feedback.experiments import EXPERIMENTS, CategoryFilterFeedback, CategoryValidation, Experiment
+from user_feedback.experiments import EXPERIMENTS
+from user_feedback.experiments.base import Experiment
+from user_feedback.experiments.category_filter_feedback import CategoryFilterFeedback
+from user_feedback.experiments.category_validation import CategoryValidation
 from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.test_helpers import create_user_and_sounds
@@ -520,7 +523,7 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check the last piece has the bar, with the info modal and the opt-out
         html = self._items()[-1]["html"]
         self.assertIn("data-experiment-bar", html)
-        self.assertIn("How useful was filtering by the", html)
+        self.assertIn('How useful was it for the query "piano" to filter by the', html)
         self.assertIn("Music</a> category?", html)
         self.assertIn("data-experiment-optout", html)
         self.assertIn("Evaluating Category Filters in Freesound Search", html)

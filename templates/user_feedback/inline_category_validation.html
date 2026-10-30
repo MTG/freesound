@@ -3,7 +3,7 @@
 {# Neither answer saves on click: it expands the box and only Send confirms it, so a misclick costs nothing. #}
 {# Bound by the generic components/experiments.js via the data-experiment-* attributes below; no per-experiment JS. #}
 <div data-experiment-box data-experiment-id="category_validation" data-submit-url="{% url 'user-feedback-submit' %}"
-     class="inline-experiment-box">
+     class="inline-experiment-box" data-experiment-hide-after-thanks>
     {# sound_id travels as a named input so the generic binder posts it without knowing this experiment's fields. #}
     <input type="hidden" name="sound_id" value="{{ sound.id }}">
     {# Circled "i" pinned top-right; opens the info + opt-out modal below (binder -> activateModal). #}
@@ -48,7 +48,7 @@
                   class="text-14" style="width: 100%; color: inherit; border: 1px solid #999; border-radius: 5px; padding: 8px;"></textarea>
         </div>
         <div class="v-spacing-top-2 row center">
-            <button type="button" data-experiment-send class="btn-secondary text-14">Submit feedback</button>
+            <button type="button" data-experiment-send class="btn-primary text-14">Submit feedback</button>
         </div>
     </div>
 </div>

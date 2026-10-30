@@ -21,7 +21,7 @@
     <div data-experiment-expand style="display: none;" class="v-spacing-top-3">
         {# Category picker: mirrors molecules/bst_category_form_field.html; the binder wires it via .bst-category-field. #}
         <div data-experiment-answer-extra="no" class="bst-category-field" style="display: none;">
-            {{ category_validation_form.selected_category.as_hidden }}
+            {{ form.selected_category.as_hidden }}
             <div class="v-spacing-2"><label>Would another category be a better fit?</label></div>
             <div class="top-buttons line-height-50">
                 {% for value, label in bst_top_level_categories %}
@@ -34,7 +34,7 @@
             <div class="subcategory-buttons v-spacing-top-2 display-none">
                 <div class="v-spacing-2"><label>Please choose a subcategory as well...</label></div>
                 <div class="line-height-50">
-                    {% for value, label in category_validation_form.fields.selected_category.choices %}
+                    {% for value, label in form.fields.selected_category.choices %}
                         <button type="button" class="btn no-hover btn-inverse btn-subcategory tooltip_top" top_level="{{ value|get_bst_taxonomy_top_level_category_key }}" data_value="{{ value }}">
                             {{ label }}
                             <span class="tooltiptext">{{ value|get_bst_taxonomy_description|safe }}</span>

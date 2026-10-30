@@ -1,8 +1,10 @@
 import hashlib
 
+from django import forms
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
+from sounds.models import Sound
 from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 
 
@@ -17,9 +19,8 @@ class Experiment:
 
     experiment_id = None  # unique id, also stored on each UserFeedback row
     form_class = None  # form the generic submit view validates for this experiment
-    inline_template = (
-        None  # optional inline box, placed in a template with {% feedback_experiment "<experiment_id>" ... %}
-    )
+    # Optional inline box, placed in a template with {% feedback_experiment "<experiment_id>" ... %}
+    inline_template = None
     page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
 
     @property
@@ -108,3 +109,58 @@ class Experiment:
     def opt_out(self, user):
         """Record a permanent 'don't ask again' for this experiment."""
         FeedbackOptOut.objects.get_or_create(user=user, experiment_id=self.experiment_id)
+
+
+class SingleSoundFeedbackForm(forms.Form):
+    """Base form of the experiments about a single sound (see SingleSoundExperiment).
+
+    Fields:
+        sound_id: hidden field identifying the sound.
+    """
+
+    # Sound ID filled in by the server
+    sound_id = forms.IntegerField(widget=forms.HiddenInput)
+
+    def clean_sound_id(self):
+        # A hidden field can be edited by the user, so confirm it is a real sound.
+        sound_id = self.cleaned_data["sound_id"]
+        if not Sound.objects.filter(id=sound_id).exists():
+            raise forms.ValidationError("Unknown sound.")
+        return sound_id
+
+
+class SingleSoundExperiment(Experiment):
+    """Base class for an experiment about a single sound, shown in an inline box placed with
+    {% feedback_experiment "<experiment_id>" sound=sound %}. A user is asked about each sound at
+    most once, and sampling is per sound, so every user can be asked about some of the sounds."""
+
+    form_class = SingleSoundFeedbackForm
+
+    def is_context_eligible(self, request, sound=None, **kwargs):
+        return sound is not None
+
+    def inline_context(self, request, sound=None, **kwargs):
+        # The box gets the sound and the form of the experiment, with the sound filled in.
+        return {
+            "config": self.config,
+            "sound": sound,
+            "form": self.form_class(initial={"sound_id": sound.id}),
+        }
+
+    def is_throttled(self, request, sound=None, **kwargs):
+        # Opt-out wins over everything: "don't ask again" hides the box on every sound.
+        if self.has_opted_out(request.user):
+            return True
+        # Otherwise once per sound per user: match on user + the sound_id saved in data,
+        # so a user answers each sound at most once but is still asked about other sounds.
+        if sound is None:
+            return True
+        return UserFeedback.objects.filter(
+            user=request.user, experiment_id=self.experiment_id, data__sound_id=sound.id
+        ).exists()
+
+    def sampling_key(self, request, sound=None, **kwargs):
+        # Sample per (user, sound), not per user: the rate gates each sound a user
+        # opens, so every user can be asked (on ~rate of the sounds they open),
+        # rather than a fixed cohort seeing it on all their sounds.
+        return f"{request.user.id}:{sound.id}" if sound else ""

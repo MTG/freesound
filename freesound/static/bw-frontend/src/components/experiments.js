@@ -106,7 +106,7 @@ const bindShowOnPlay = box => {
   };
   playCallbacks.push(showIfPlayed);
   showIfPlayed();
-  afterPlays(box, show);
+  // afterPlays(box, show);  // Do not show all "was this useful" quesions after X plays from other sounds, only after a sound is played
 };
 
 // Boxes with [data-experiment-bar] are shown as a bar at the bottom of the page, with
@@ -198,7 +198,7 @@ const bindFeedbackBox = box => {
         if (isBar) setTimeout(() => hideBar(box), HIDE_AFTER_THANKS_MS);
         else if (box.hasAttribute('data-experiment-hide-after-thanks'))
           setTimeout(() => box.remove(), HIDE_AFTER_THANKS_MS);
-        setTimeout(() => closeOtherBoxes(box), HIDE_AFTER_THANKS_MS);
+        //setTimeout(() => closeOtherBoxes(box), HIDE_AFTER_THANKS_MS);  // No need to close individual sound boxes after the general feedback is provided
       },
       responseText => {
         sending = false;

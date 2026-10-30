@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
+from django.template import Context, Template
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
@@ -360,6 +361,11 @@ class RenderInlineHtmlTest(TestCase):
     def test_empty_string_when_not_shown(self):
         set_sample_rate("category_validation", 0.0)
         self.assertEqual(self.experiment.render_inline_html(self._request(), sound=self.sound), "")
+
+    def test_tag_of_unknown_experiment_renders_nothing(self):
+        # Check a template that places an experiment that is not in the settings still renders
+        template = Template('{% load feedback_experiments %}{% feedback_experiment "does-not-exist" sound=sound %}')
+        self.assertEqual(template.render(Context({"request": self._request(), "sound": self.sound})), "")
 
 
 class CategoryFilterFeedbackTest(TestCase):

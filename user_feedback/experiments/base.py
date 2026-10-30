@@ -17,8 +17,9 @@ class Experiment:
 
     experiment_id = None  # unique id, also stored on each UserFeedback row
     form_class = None  # form the generic submit view validates for this experiment
-    inline_template = None  # optional inline box rendered on a host page
-    inline_page = None  # name of the host page of the inline box, used in its {% feedback_experiments %} tag
+    inline_template = (
+        None  # optional inline box, placed in a template with {% feedback_experiment "<experiment_id>" ... %}
+    )
     page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
 
     @property

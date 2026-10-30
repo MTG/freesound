@@ -80,7 +80,6 @@ class CategoryValidation(Experiment):
     experiment_id = "category_validation"
     form_class = CategoryValidationForm
     inline_template = "user_feedback/inline_category_validation.html"
-    inline_page = "sound_page"
 
     def is_context_eligible(self, request, sound=None, **kwargs):
         # Only ask about sounds that have a category, given by the user or added automatically.

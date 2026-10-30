@@ -7,7 +7,7 @@ import { prepareCategoryFormFields } from './bstCategoryFormField';
 // experiment-specific lives here: every box declares its own behaviour with data-
 // attributes in its template, so a new experiment needs no changes to this file.
 
-/* global userIsAuthenticated */
+/* global pageLoadsFeedbackExperiments */
 
 // View that returns the experiments of a page that loads them after the page loads.
 const PAGE_ITEMS_URL = '/user-feedback/page-items/';
@@ -282,7 +282,7 @@ const bindOnce = (selector, bind) =>
     bind(element);
   });
 
-const prepareFeedbackExperiments = () => {
+const bindFeedbackExperimentBoxes = () => {
   trackPlays();
   bindOnce('[data-experiment-box]', bindFeedbackBox);
   bindOnce('form[data-experiment-optout]', bindOptOut);
@@ -306,9 +306,13 @@ const placePageItem = item => {
 
 // Loads the experiments of a page that does not have them in its template. The server gets
 // the parameters of the page and the sounds shown in it, and returns the HTML to place.
-const loadFeedbackExperiments = () => {
-  // For now all the experiments need login, so not logged-in users skip the request.
-  if (!userIsAuthenticated) return;
+const fetchPageFeedbackExperiments = () => {
+  // Only the pages with experiments to load make the request (see page_loads_experiments).
+  if (
+    typeof pageLoadsFeedbackExperiments === 'undefined' ||
+    !pageLoadsFeedbackExperiments
+  )
+    return;
   // Start counting plays before the experiments are loaded.
   trackPlays();
   const soundIds = [...document.querySelectorAll('[data-sound-id]')].map(
@@ -321,11 +325,11 @@ const loadFeedbackExperiments = () => {
     .then(response => response.json())
     .then(data => {
       data.items.forEach(placePageItem);
-      prepareFeedbackExperiments();
+      bindFeedbackExperimentBoxes();
     })
     .catch(() => {
       // The page works the same without the experiments.
     });
 };
 
-export { prepareFeedbackExperiments, loadFeedbackExperiments };
+export { bindFeedbackExperimentBoxes, fetchPageFeedbackExperiments };

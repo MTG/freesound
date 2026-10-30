@@ -1,11 +1,6 @@
 import './page-polyfills';
 import throttle from 'lodash.throttle';
 import navbar from '../components/navbar';
-import { loadFeedbackExperiments } from '../components/experiments';
-
-// Feedback experiments behaviour
-loadFeedbackExperiments();
-
 // Main search input box behaviour
 const searchInputBrowse = document.getElementById('search-input-browse');
 const searchInputBrowsePlaceholder =

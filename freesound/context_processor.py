@@ -27,6 +27,7 @@ from accounts.forms import FsAuthenticationForm, ProblemsLoggingInForm
 from forum.models import Post
 from messages.models import Message
 from tickets.views import new_sound_tickets_count
+from user_feedback.experiments import page_loads_experiments
 
 
 def context_extra(request):
@@ -87,6 +88,7 @@ def context_extra(request):
                 "system_prefers_dark_theme": request.COOKIES.get("systemPrefersDarkTheme", "no")
                 == "yes",  # Determine the user's system preference for dark/light theme (for non authenticated users, always use light theme)
                 "enable_collections": settings.ENABLE_COLLECTIONS,
+                "page_loads_feedback_experiments": page_loads_experiments(request),
             }
         )
 

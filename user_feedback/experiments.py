@@ -305,3 +305,13 @@ EXPERIMENTS = {
 
 def get_experiment(experiment_id):
     return EXPERIMENTS.get(experiment_id)
+
+
+def page_loads_experiments(request):
+    """True if some experiment is loaded in the page of the request after it loads (see page_url_name)."""
+    url_name = request.resolver_match.url_name if request.resolver_match else None
+    return any(
+        experiment.page_url_name == url_name and (request.user.is_authenticated or not experiment.requires_login)
+        for experiment in EXPERIMENTS.values()
+        if experiment.page_url_name
+    )

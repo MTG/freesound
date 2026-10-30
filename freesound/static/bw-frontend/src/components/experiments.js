@@ -130,6 +130,16 @@ const hideBar = bar => {
   }, BAR_ANIMATION_DURATION_MS);
 };
 
+// Fades a box out and collapses its height, then removes it.
+const removeBox = box => {
+  // Start from the current height so max-height can transition to 0.
+  box.style.maxHeight = `${box.scrollHeight}px`;
+  void box.offsetWidth;
+  box.classList.add('experiment-box--hiding');
+  // Hidden boxes never fire transitionend, so also remove them after a timeout.
+  setTimeout(() => box.remove(), BAR_ANIMATION_DURATION_MS + 100);
+};
+
 // A box with [data-experiment-closes-boxes] removes the other boxes of its experiment.
 const closeOtherBoxes = box => {
   if (!box.hasAttribute('data-experiment-closes-boxes')) return;
@@ -137,7 +147,7 @@ const closeOtherBoxes = box => {
     .querySelectorAll(
       `[data-experiment-box][data-experiment-id="${box.dataset.experimentId}"]`
     )
-    .forEach(other => other !== box && other.remove());
+    .forEach(other => other !== box && removeBox(other));
 };
 
 const bindBar = bar => {
@@ -197,7 +207,7 @@ const bindFeedbackBox = box => {
         // Hide the answered bar and boxes a bit after the thanks.
         if (isBar) setTimeout(() => hideBar(box), HIDE_AFTER_THANKS_MS);
         else if (box.hasAttribute('data-experiment-hide-after-thanks'))
-          setTimeout(() => box.remove(), HIDE_AFTER_THANKS_MS);
+          setTimeout(() => removeBox(box), HIDE_AFTER_THANKS_MS);
         //setTimeout(() => closeOtherBoxes(box), HIDE_AFTER_THANKS_MS);  // No need to close individual sound boxes after the general feedback is provided
       },
       responseText => {

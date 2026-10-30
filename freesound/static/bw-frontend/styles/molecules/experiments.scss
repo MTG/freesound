@@ -14,3 +14,16 @@
     background: rgb(255, 245, 227);
     border: 1px solid rgb(249, 203, 116);
 }
+
+.experiment-box--hiding {
+    overflow: hidden;
+    opacity: 0;
+    max-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-width: 0 !important;
+    transition: opacity 0.25s ease, max-height 0.3s ease, padding 0.3s ease,
+        margin 0.3s ease, border-width 0.3s ease;
+}

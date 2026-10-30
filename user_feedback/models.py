@@ -16,8 +16,8 @@ class UserFeedback(models.Model):
     """
 
     experiment_id = models.CharField(max_length=100, db_index=True)
-    # Optional, so anonymous users can leave feedback too.
-    # SET_NULL keeps the feedback row even if the account is later deleted.
+    # Feedback is only given by logged-in users, but SET_NULL keeps the feedback row even if
+    # the account is later deleted.
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -33,7 +33,7 @@ class UserFeedback(models.Model):
         ordering = ("-created",)
 
     def __str__(self):
-        who = self.user or self.ip or "anonymous"
+        who = self.user or self.ip or "deleted user"
         return f"{who} / {self.experiment_id} @ {self.created:%Y-%m-%d}"
 
 

@@ -20,7 +20,6 @@ class Experiment:
     inline_template = None  # optional inline box rendered on a host page
     inline_page = None  # name of the host page of the inline box, used in its {% feedback_experiments %} tag
     page_url_name = None  # optional URL name of a page that loads the experiment after the page loads
-    requires_login = True  # set to False to also show the experiment to not logged-in users
 
     @property
     def config(self):
@@ -37,8 +36,7 @@ class Experiment:
         """What we sample on. Default = the user (stable per user). Override to
         sample per session, per sound, etc.; kwargs carry the context passed to
         should_show (e.g. the sound)."""
-        # Users that are not logged in have no id, so such experiments override this.
-        return str(request.user.id) if request.user.is_authenticated else ""
+        return str(request.user.id)
 
     def is_sampled_in(self, request, **kwargs):
         """True if this key falls inside the sample_rate slice. Deterministic:
@@ -83,14 +81,12 @@ class Experiment:
         Default: don't show again once the user has opted out or answered."""
         if self.has_opted_out(request.user):
             return True
-        # We can't know if a user that is not logged in already answered.
-        if not request.user.is_authenticated:
-            return False
         return UserFeedback.objects.filter(user=request.user, experiment_id=self.experiment_id).exists()
 
     def should_show(self, request, **kwargs):
         """Determines whether it should be shown to the user at this moment."""
-        if self.requires_login and not request.user.is_authenticated:
+        # Experiments are only shown to logged-in users.
+        if not request.user.is_authenticated:
             return False
         if not self.is_context_eligible(request, **kwargs):
             return False
@@ -106,9 +102,6 @@ class Experiment:
 
     def has_opted_out(self, user):
         """True if this user has permanently opted out of this experiment."""
-        # Users that are not logged in can't opt out.
-        if not user.is_authenticated:
-            return False
         return FeedbackOptOut.objects.filter(user=user, experiment_id=self.experiment_id).exists()
 
     def opt_out(self, user):

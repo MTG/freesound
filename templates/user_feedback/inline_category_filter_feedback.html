@@ -23,7 +23,7 @@
         {% include "user_feedback/info_button.html" %}
         <span data-experiment-bar-close class="h-spacing-left-1 cursor-pointer" title="Close" aria-label="Close">{% bw_icon 'close' %}</span>
     </div>
-    <div class="h-padding-4">How useful was it in general to filter by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</div>
+    <div class="h-padding-4">How useful was it for the query "{{ search.query }}" to filter by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ search.category }}{% if search.subcategory %} > {{ search.subcategory }}{% endif %}</a> category?</div>
     <div class="v-spacing-top-2">
         <span class="text-14 h-spacing-2">Not useful</span>
         {% for value in "12345" %}
@@ -32,11 +32,11 @@
         <span class="text-14 h-spacing-left-2">Very useful</span>
     </div>
     <div data-experiment-expand style="display: none;" class="v-spacing-top-1">
-        <textarea name="text" rows="2" placeholder="Anything else? (optional)"
+        <textarea name="text" rows="2" placeholder="Anything to add? (optional)"
                   class="text-14" style="width: 100%; max-width: 500px; min-height: 0; background: transparent; color: inherit; border: 1px solid #999; border-radius: 5px; padding: 8px;"></textarea>
-        <div style="font-size: 12px; line-height: 1.2; margin-top: 2px; opacity: 0.7;"><i>Sending the overall rating also closes the per-sound questions.</i></div>
+        <div style="font-size: 12px; line-height: 1.2; margin-top: 2px; opacity: 0.7;"><i>After submitting, we won't ask again for this query/category pair.</i></div>
         <div class="v-spacing-top-1">
-            <button type="button" data-experiment-send class="btn-primary text-14">Send</button>
+            <button type="button" data-experiment-send class="btn-primary text-14">Submit feedback</button>
         </div>
     </div>
 </div>

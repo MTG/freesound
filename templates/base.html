@@ -71,7 +71,7 @@
         document.cookie = "disallowSimultaneousAudioPlayback=no;path=/"
         {% endif %}
         const userIsAuthenticated = {{ request.user.is_authenticated|yesno:'true,false' }};
-        const pageLoadsFeedbackExperiments = {{ page_loads_feedback_experiments|yesno:'true,false' }};
+        const feedbackExperimentsPageItemsUrl = {% if page_loads_feedback_experiments %}"{% url 'user-feedback-page-items' %}"{% else %}null{% endif %};
     </script>
     <script src="{% static 'bw-frontend/dist/index.js' %}"></script>
     {% block extrabody %}

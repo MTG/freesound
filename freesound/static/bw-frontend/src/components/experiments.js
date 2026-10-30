@@ -7,10 +7,9 @@ import { prepareCategoryFormFields } from './bstCategoryFormField';
 // experiment-specific lives here: every box declares its own behaviour with data-
 // attributes in its template, so a new experiment needs no changes to this file.
 
-/* global pageLoadsFeedbackExperiments */
-
-// View that returns the experiments of a page that loads them after the page loads.
-const PAGE_ITEMS_URL = '/user-feedback/page-items/';
+// URL of the view that returns the experiments of the page, set in base.html only in the
+// pages that load experiments after they load (see page_loads_experiments).
+/* global feedbackExperimentsPageItemsUrl */
 
 // First field-error message out of the submit view's JSON 400 body.
 const firstFormError = responseText => {
@@ -307,10 +306,10 @@ const placePageItem = item => {
 // Loads the experiments of a page that does not have them in its template. The server gets
 // the parameters of the page and the sounds shown in it, and returns the HTML to place.
 const fetchPageFeedbackExperiments = () => {
-  // Only the pages with experiments to load make the request (see page_loads_experiments).
+  // Only the pages with experiments to load make the request.
   if (
-    typeof pageLoadsFeedbackExperiments === 'undefined' ||
-    !pageLoadsFeedbackExperiments
+    typeof feedbackExperimentsPageItemsUrl === 'undefined' ||
+    !feedbackExperimentsPageItemsUrl
   )
     return;
   // Start counting plays before the experiments are loaded.
@@ -321,7 +320,7 @@ const fetchPageFeedbackExperiments = () => {
   const params = new URLSearchParams(window.location.search);
   params.set('experiment_path', window.location.pathname);
   params.set('experiment_sound_ids', [...new Set(soundIds)].join(','));
-  fetch(`${PAGE_ITEMS_URL}?${params}`)
+  fetch(`${feedbackExperimentsPageItemsUrl}?${params}`)
     .then(response => response.json())
     .then(data => {
       data.items.forEach(placePageItem);

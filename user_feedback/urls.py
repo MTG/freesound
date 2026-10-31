@@ -6,5 +6,4 @@ from user_feedback import views
 urlpatterns = [
     path("submit/", views.submit, name="user-feedback-submit"),
     path("opt-out/", views.opt_out, name="user-feedback-opt-out"),
-    path("page-items/", views.page_items, name="user-feedback-page-items"),
 ]

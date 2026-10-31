@@ -314,7 +314,7 @@
                                         </div>
                                     {% endfor %}
                                 {% endif %}
-                                {% feedback_experiment "category_filter_feedback" %}
+                                {% feedback_experiment "category_filter_feedback" docs=docs sqp=sqp %}
                             {% else %}
                                 {% include "search/_no_results.html" %}
                             {% endif %}

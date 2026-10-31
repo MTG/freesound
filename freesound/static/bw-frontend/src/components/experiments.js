@@ -155,10 +155,29 @@ const bindBar = bar => {
     });
 };
 
+// Boxes with [data-experiment-place-after] are moved right after the sound with that id, inside the
+// element of the page that wraps the sound ([data-experiment-place-in]). Without it, they are removed.
+// Returns whether the box was placed.
+const placeAfterSound = box => {
+  const sound = document.querySelector(
+    `[data-sound-id="${box.dataset.experimentPlaceAfter}"]`
+  );
+  const container = sound && sound.closest(box.dataset.experimentPlaceIn);
+  if (!container) {
+    box.remove();
+    return false;
+  }
+  let block = sound;
+  while (block.parentElement !== container) block = block.parentElement;
+  block.insertAdjacentElement('afterend', box);
+  return true;
+};
+
 // One box: pick an answer (which may reveal extra fields), then Send posts it over
 // AJAX. A box without a Send button is saved when an answer is clicked.
 // Validation is left to the server, which replies with a JSON 400 we surface.
 const bindFeedbackBox = box => {
+  if (box.dataset.experimentPlaceAfter && !placeAfterSound(box)) return;
   // Wire the two-level category picker if this experiment's box uses one.
   if (box.querySelector('.bst-category-field')) {
     prepareCategoryFormFields(box);
@@ -284,45 +303,4 @@ const bindFeedbackExperimentBoxes = () => {
   bindOnce('[data-info-modal]', bindInfoButton);
 };
 
-// Places a piece of HTML in the page. With a target, it goes right after the block that
-// has the target element inside its container. Without a target, at the end of the page.
-const placePageItem = item => {
-  if (!item.target) {
-    document.body.insertAdjacentHTML('beforeend', item.html);
-    return;
-  }
-  const target = document.querySelector(item.target);
-  const container = target && target.closest(item.container);
-  if (!container) return;
-  let block = target;
-  while (block.parentElement !== container) block = block.parentElement;
-  block.insertAdjacentHTML('afterend', item.html);
-};
-
-// Loads an experiment that adds its HTML after the page loads. Its element is placed in the
-// template with the {% feedback_experiment %} tag. The server gets the parameters of the page
-// and the sounds shown in it, and returns the HTML to place.
-const loadPageFeedbackExperiment = element => {
-  // Start counting plays before the experiment is loaded.
-  trackPlays();
-  const soundIds = [...document.querySelectorAll('[data-sound-id]')].map(
-    soundElement => soundElement.dataset.soundId
-  );
-  const params = new URLSearchParams(window.location.search);
-  params.set('experiment_id', element.dataset.experimentLoad);
-  params.set('experiment_sound_ids', [...new Set(soundIds)].join(','));
-  fetch(`${element.dataset.experimentLoadUrl}?${params}`)
-    .then(response => response.json())
-    .then(data => {
-      data.items.forEach(placePageItem);
-      bindFeedbackExperimentBoxes();
-    })
-    .catch(() => {
-      // The page works the same without the experiments.
-    });
-};
-
-const fetchPageFeedbackExperiments = () =>
-  bindOnce('[data-experiment-load]', loadPageFeedbackExperiment);
-
-export { bindFeedbackExperimentBoxes, fetchPageFeedbackExperiments };
+export { bindFeedbackExperimentBoxes };

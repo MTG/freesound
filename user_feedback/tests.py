@@ -1,7 +1,9 @@
+import re
+
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.template import Context, Template
-from django.test import Client, RequestFactory, TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from sounds.models import SoundAnalysis
@@ -390,18 +392,21 @@ class CategoryFilterFeedbackTest(TestCase):
         self.client.force_login(self.user)
         self.experiment = CategoryFilterFeedback()
 
-    def _items(self, client=None, **params):
-        # Get the HTML pieces of the experiment for a search page that shows the sounds.
+    def _render(self, user=None, **params):
+        # Render the experiment with the tag of the search page, for a search that shows the sounds.
         # By default the search is "piano" filtered by the Music category
-        params = {
-            "q": "piano",
-            "f": 'category:"Music"',
-            "experiment_id": "category_filter_feedback",
-            "experiment_sound_ids": ",".join(str(sound.id) for sound in self.sounds),
-            **params,
-        }
-        response = (client or self.client).get(reverse("user-feedback-page-items"), params)
-        return response.json()["items"]
+        request = RequestFactory().get(reverse("sounds-search"), {"q": "piano", "f": 'category:"Music"', **params})
+        request.user = user or self.user
+        template = Template(
+            '{% load feedback_experiments %}{% feedback_experiment "category_filter_feedback" docs=docs sqp=sqp %}'
+        )
+        docs = [{"id": sound.id, "sound": sound} for sound in self.sounds]
+        return template.render(Context({"request": request, "docs": docs, "sqp": SearchQueryProcessor(request)}))
+
+    @staticmethod
+    def _question_sound_ids(html):
+        # Sounds that get the yes/no question, in order
+        return [int(sound_id) for sound_id in re.findall(r'data-experiment-place-after="(\d+)"', html)]
 
     def _submit(self, **data):
         data = {
@@ -471,47 +476,44 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(self._rows().count(), 0)
 
     def test_results_get_the_question(self):
-        items = self._items()
-        # Check all the results of the page get the question
-        questions = [item for item in items if "target" in item]
-        self.assertEqual(len(questions), len(self.sounds))
+        html = self._render()
+        # Check all the results of the page get the question, placed after them in the results
+        self.assertEqual(self._question_sound_ids(html), [sound.id for sound in self.sounds])
+        self.assertIn('data-experiment-place-in="[data-score]"', html)
+        self.assertIn("Is this what you were looking for?", html)
         # Check the question has the sound and its position
-        self.assertEqual(questions[0]["target"], f'[data-sound-id="{self.sounds[0].id}"]')
-        self.assertIn(f'name="sound_id" value="{self.sounds[0].id}"', questions[0]["html"])
-        self.assertIn('name="position" value="1"', questions[0]["html"])
-        # Check the last piece has the search info
-        self.assertIn('name="category" value="Music"', items[-1]["html"])
-        self.assertIn('name="query" value="piano"', items[-1]["html"])
+        self.assertIn(f'name="sound_id" value="{self.sounds[0].id}"', html)
+        self.assertIn('name="position" value="1"', html)
+        # Check the search info is sent with the answers
+        self.assertIn('name="category" value="Music"', html)
+        self.assertIn('name="query" value="piano"', html)
         # Check the results of another page get the question too
-        items = self._items(page=2)
-        self.assertEqual(len(items), len(self.sounds) + 1)
-        self.assertIn('name="page" value="2"', items[-1]["html"])
+        html = self._render(page=2)
+        self.assertEqual(len(self._question_sound_ids(html)), len(self.sounds))
+        self.assertIn('name="page" value="2"', html)
 
     def test_no_question_when_it_should_not_show(self):
         # Search without category filter
-        self.assertEqual(self._items(f=""), [])
+        self.assertEqual(self._render(f=""), "")
         # Anonymous user
-        self.assertEqual(self._items(client=Client()), [])
-        # Experiment that does not load after the page
-        self.assertEqual(self._items(experiment_id="category_validation"), [])
+        self.assertEqual(self._render(user=AnonymousUser()), "")
         # User opted out
         self.experiment.opt_out(self.user)
-        self.assertEqual(self._items(), [])
+        self.assertEqual(self._render(), "")
 
     def test_answered_result_is_not_asked_again(self):
-        answered = f'[data-sound-id="{self.sounds[2].id}"]'
-        self._submit(kind="result", answer="yes", sound_id=self.sounds[2].id, position=3)
+        answered = self.sounds[2].id
+        self._submit(kind="result", answer="yes", sound_id=answered, position=3)
         # Check the answered result has no question, but the others do
-        targets = [item.get("target") for item in self._items()]
-        self.assertNotIn(answered, targets)
-        self.assertEqual(len(targets), len(self.sounds))
+        sound_ids = self._question_sound_ids(self._render())
+        self.assertNotIn(answered, sound_ids)
+        self.assertEqual(len(sound_ids), len(self.sounds) - 1)
         # Check it is asked again for a different query
-        targets = [item.get("target") for item in self._items(q="guitar")]
-        self.assertIn(answered, targets)
+        self.assertIn(answered, self._question_sound_ids(self._render(q="guitar")))
 
     def test_rated_search_is_not_asked_again(self):
-        # Check the last piece has the bar, with the info modal and the opt-out
-        html = self._items()[-1]["html"]
+        # Check the bar is shown, with the info modal and the opt-out
+        html = self._render()
         self.assertIn("data-experiment-bar", html)
         self.assertIn('How useful was it for the query "piano" to filter by the', html)
         self.assertIn("Music</a> category?", html)
@@ -519,25 +521,9 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertIn("Evaluating Category Filters in Freesound Search", html)
         # Check the bar and the questions are not shown again after rating this search
         self._submit(kind="overall", rating="4")
-        self.assertEqual(self._items(), [])
+        self.assertEqual(self._render(), "")
         # Check the bar is shown again for another search in the same category
-        self.assertIn("data-experiment-bar", self._items(q="guitar")[-1]["html"])
-
-    def test_tag_places_the_element_that_loads_it(self):
-        def render(user):
-            request = RequestFactory().get(reverse("sounds-search"))
-            request.user = user
-            template = Template('{% load feedback_experiments %}{% feedback_experiment "category_filter_feedback" %}')
-            return template.render(Context({"request": request}))
-
-        # Check the element has the experiment and the URL to load it
-        html = render(self.user)
-        self.assertIn('data-experiment-load="category_filter_feedback"', html)
-        self.assertIn(reverse("user-feedback-page-items"), html)
-        # Check it is not placed for anonymous users or users that opted out
-        self.assertEqual(render(AnonymousUser()), "")
-        self.experiment.opt_out(self.user)
-        self.assertEqual(render(self.user), "")
+        self.assertIn("data-experiment-bar", self._render(q="guitar"))
 
     def test_sampling_is_per_search(self):
         def key(**params):
@@ -554,7 +540,7 @@ class CategoryFilterFeedbackTest(TestCase):
     def test_subcategory_is_asked_separately(self):
         subcategory_filter = 'category:"Music" subcategory:"Solo percussion"'
         # Check the bar names the subcategory when it is selected
-        html = self._items(f=subcategory_filter)[-1]["html"]
+        html = self._render(f=subcategory_filter)
         self.assertIn("Music > Solo percussion</a> category?", html)
         # Check it links to the subcategory in the taxonomy page
         self.assertIn(reverse("bst-info-page") + "#m-sp", html)
@@ -562,9 +548,9 @@ class CategoryFilterFeedbackTest(TestCase):
         self._submit(kind="overall", rating="4")
         self._submit(kind="result", answer="yes", sound_id=self.sounds[0].id, position=1)
         # Check the bar and all the results are still asked with the subcategory
-        items = self._items(f=subcategory_filter)
-        self.assertIn("data-experiment-bar", items[-1]["html"])
-        self.assertEqual(len(items), len(self.sounds) + 1)
+        html = self._render(f=subcategory_filter)
+        self.assertIn("data-experiment-bar", html)
+        self.assertEqual(len(self._question_sound_ids(html)), len(self.sounds))
 
 
 class FeedbackExperimentTest(TestCase):

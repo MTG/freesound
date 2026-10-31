@@ -1,0 +1,19 @@
+{# Experiment about a list of sounds (see SoundListExperiment); rendered by its inline_context. #}
+
+{# Yes/no question of each sound not answered yet. experiments.js places each one after its sound. #}
+{% for question in questions %}
+    {% include result_template with sound_id=question.sound_id position=question.position %}
+{% endfor %}
+
+{# Info about the list. experiments.js sends it with every answer of the experiment. #}
+<div data-experiment-shared="{{ experiment_id }}" style="display: none;">
+    {% for name, value in info.items %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    {# Sounds played in the page and seconds in it, filled in experiments.js if answer is sent. #}
+    <input type="hidden" name="played_sounds" data-experiment-played-sounds>
+    <input type="hidden" name="seconds_in_page" data-experiment-seconds-in-page>
+</div>
+
+{# Overall question bar of the experiment. #}
+{% include bar_template %}

@@ -48,20 +48,3 @@ def opt_out(request):
     if request.GET.get("ajax"):
         return JsonResponse({"success": True})
     return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
-
-
-def page_items(request):
-    """Returns the HTML of an experiment that loads after the page loads (see Experiment.loads_after_page),
-    as pieces that experiments.js places in the page.
-
-    The request has the same GET parameters as the page, plus the experiment (``experiment_id``)
-    and the sounds shown in the page (``experiment_sound_ids``).
-    """
-    experiment = get_experiment(request.GET.get("experiment_id", ""))
-    # Experiments are only shown to logged-in users.
-    if experiment is None or not experiment.loads_after_page or not request.user.is_authenticated:
-        return JsonResponse({"items": []})
-    sound_ids = [
-        int(sound_id) for sound_id in request.GET.get("experiment_sound_ids", "").split(",") if sound_id.isdigit()
-    ]
-    return JsonResponse({"items": experiment.render_page_items(request, sound_ids)})

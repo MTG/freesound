@@ -50,6 +50,7 @@ class ApiV2Client(models.Model):
     description = models.TextField(blank=True)
     accepted_tos = models.BooleanField(default=False)
     allow_oauth_password_grant = models.BooleanField(default=False)
+    require_pkce = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
     throttling_level = models.IntegerField(default=1)
 

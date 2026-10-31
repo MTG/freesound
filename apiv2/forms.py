@@ -60,7 +60,7 @@ class ApiV2ClientForm(forms.Form):
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
             In this way your application can be automatically notified when users have given the permissions to access their data.
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
-            introduce the following url: <span style="font-family: 'Courier'">http://freesound.org/home/app_permissions/permission_granted/</span>.
+            introduce the following url: <span style="font-family: 'Courier'">https://freesound.org/home/app_permissions/permission_granted/</span>.
             <br>See the <a href="/docs/api/" target="_blank">API documentation</a> for more information.</div>""",
     )
     description = forms.CharField(

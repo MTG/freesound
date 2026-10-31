@@ -17,15 +17,20 @@
 # Authors:
 #     See AUTHORS file.
 #
+import base64
+import hashlib
 import json
 from unittest import mock
+from urllib.parse import parse_qs, urlsplit
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 from django.http import Http404, HttpResponse
-from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.test import RequestFactory, SimpleTestCase, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
@@ -679,6 +684,27 @@ class TestMeResources(TestCase):
         self.assertEqual([s["id"] for s in response.json()["results"]], [self.sounds[2].id])
 
 
+class PKCERegistrationMigrationTestCase(TransactionTestCase):
+    def test_existing_registrations_are_optional_and_new_registrations_require_pkce(self):
+        previous = [("apiv2", "0008_rename_allow_oauth_passoword_grant_apiv2client_allow_oauth_password_grant")]
+        current = [("apiv2", "0009_apiv2client_require_pkce")]
+        executor = MigrationExecutor(connection)
+        executor.migrate(previous)
+        try:
+            old_apps = executor.loader.project_state(previous).apps
+            user = old_apps.get_model("auth", "User").objects.create(username="legacy_developer")
+            legacy = old_apps.get_model("apiv2", "ApiV2Client").objects.create(user_id=user.pk, name="Legacy app")
+            executor = MigrationExecutor(connection)
+            executor.migrate(current)
+            self.assertFalse(ApiV2Client.objects.get(pk=legacy.pk).require_pkce)
+            new_client = ApiV2Client.objects.create(user_id=user.pk, name="New app")
+            self.assertTrue(new_client.require_pkce)
+            new_client.refresh_from_db()
+            self.assertTrue(new_client.require_pkce)
+        finally:
+            MigrationExecutor(connection).migrate(current)
+
+
 class APIAuthenticationTestCase(TestCase):
     def setUp(self):
         # Create users
@@ -696,7 +722,81 @@ class APIAuthenticationTestCase(TestCase):
             name="AuthorizationCodeClient",
             user=self.dev_user,
             allow_oauth_password_grant=False,
+            require_pkce=False,  # Model an application registered before PKCE enforcement.
         )
+
+    def test_new_registration_requires_s256_on_authorization_get_and_post(self):
+        client = ApiV2Client.objects.create(name="PKCE client", user=self.dev_user)
+        self.assertTrue(client.require_pkce)
+        self.client.force_login(self.end_user)
+        for pkce_params in [
+            {},  # Missing PKCE challenge and method.
+            {"code_challenge": "a" * 43},  # Missing method defaults to plain.
+            {"code_challenge": "a" * 43, "code_challenge_method": "plain"},  # S256 is required.
+            {"code_challenge_method": "S256"},  # Missing challenge.
+        ]:
+            for method in [self.client.get, self.client.post]:
+                with self.subTest(pkce_params=pkce_params, method=method.__name__):
+                    response = method(
+                        reverse("oauth2_provider:authorize"),
+                        {
+                            "client_id": client.client_id,
+                            "response_type": "code",
+                            "redirect_uri": client.redirect_uri,
+                            "scope": "read",
+                            "allow": "Authorize",
+                            **pkce_params,
+                        },
+                        secure=True,
+                    )
+                    self.assertEqual(response.status_code, 302)
+                    self.assertEqual(parse_qs(urlsplit(response.url).query)["error"], ["invalid_request"])
+                    self.assertFalse(client.oauth_client.grant_set.exists())
+
+    def test_new_registration_s256_exchange_and_refresh_without_client_secret(self):
+        self.client.force_login(self.end_user)
+        verifier = "a" * 43
+        challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest()).rstrip(b"=").decode()
+        client = ApiV2Client.objects.create(name="PKCE client", user=self.dev_user)
+        authorization = {
+            "client_id": client.client_id,
+            "response_type": "code",
+            "redirect_uri": client.redirect_uri,
+            "scope": "read",
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+        }
+        self.assertEqual(
+            self.client.get(reverse("oauth2_provider:authorize"), authorization, secure=True).status_code, 200
+        )
+        response = self.client.post(
+            reverse("oauth2_provider:authorize"), {**authorization, "allow": "Authorize"}, secure=True
+        )
+        self.assertEqual(response.status_code, 302)
+        code = parse_qs(urlsplit(response.url).query)["code"][0]
+        token_url = reverse("oauth2_provider:access_token")
+        response = self.client.post(
+            token_url,
+            {
+                "client_id": client.client_id,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": client.redirect_uri,
+                "code_verifier": verifier,
+            },
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(
+            token_url,
+            {
+                "client_id": client.client_id,
+                "grant_type": "refresh_token",
+                "refresh_token": response.json()["refresh_token"],
+            },
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 200)
 
     @staticmethod
     def get_params_from_url(url):

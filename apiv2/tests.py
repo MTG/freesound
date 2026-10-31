@@ -498,12 +498,21 @@ class TestApiV2Client(TestCase):
         for route in ["apiv2-edit-credential", "apiv2-monitor-credential", "apiv2-delete-credential"]:
             with self.subTest(route=route):
                 request = self.client.post if route == "apiv2-delete-credential" else self.client.get
-                self.assertEqual(request(reverse(route, args=[credential.key])).status_code, 404)
+                self.assertEqual(request(reverse(route, args=[credential.pk])).status_code, 404)
         credential.refresh_from_db()
         credential.oauth_client.refresh_from_db()
         self.client.force_login(owner)
-        self.assertEqual(self.client.get(reverse("apiv2-edit-credential", args=[credential.key])).status_code, 200)
-        delete_url = reverse("apiv2-delete-credential", args=[credential.key])
+        self.assertEqual(self.client.get(reverse("apiv2-edit-credential", args=[credential.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("apiv2-monitor-credential", args=[credential.pk])).status_code, 200)
+        credentials_page = self.client.get(reverse("apiv2-apply"))
+        for action in ["edit", "monitor", "delete"]:
+            with self.subTest(action=action):
+                self.assertContains(credentials_page, reverse(f"apiv2-{action}-credential", args=[credential.pk]))
+                old_url = f"/apiv2/apply/credentials/{credential.key}/{action}/"
+                self.assertNotContains(credentials_page, old_url)
+                request = self.client.post if action == "delete" else self.client.get
+                self.assertEqual(request(old_url).status_code, 404)
+        delete_url = reverse("apiv2-delete-credential", args=[credential.pk])
         self.assertEqual(self.client.get(delete_url).status_code, 405)
         credential.refresh_from_db()
         oauth_client = credential.oauth_client

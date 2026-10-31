@@ -1579,8 +1579,8 @@ def create_apiv2_key(request):
 
 
 @login_required
-def edit_api_credential(request, key):
-    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+def edit_api_credential(request, pk):
+    client = get_object_or_404(ApiV2Client, pk=pk, user=request.user)
 
     if request.method == "POST":
         form = ApiV2ClientForm(request.POST)
@@ -1617,8 +1617,8 @@ def edit_api_credential(request, key):
 
 
 @login_required
-def monitor_api_credential(request, key):
-    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+def monitor_api_credential(request, pk):
+    client = get_object_or_404(ApiV2Client, pk=pk, user=request.user)
     level = int(client.throttling_level)
     limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
     try:
@@ -1644,8 +1644,8 @@ def monitor_api_credential(request, key):
 
 @login_required
 @require_POST
-def delete_api_credential(request, key):
-    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+def delete_api_credential(request, pk):
+    client = get_object_or_404(ApiV2Client, pk=pk, user=request.user)
     name = client.name
     client.delete()
     messages.add_message(request, messages.INFO, f"Credentials with name {name} have been deleted.")

@@ -73,13 +73,9 @@ urlpatterns = [
     # Client management
     # use apply[/]* for backwards compatibility with links to /apiv2/apply
     re_path(r"^apply[/]*$", views.create_apiv2_key, name="apiv2-apply"),
-    re_path(
-        r"^apply/credentials/(?P<key>[^//]+)/monitor/$", views.monitor_api_credential, name="apiv2-monitor-credential"
-    ),
-    re_path(
-        r"^apply/credentials/(?P<key>[^//]+)/delete/$", views.delete_api_credential, name="apiv2-delete-credential"
-    ),
-    re_path(r"^apply/credentials/(?P<key>[^//]+)/edit/$", views.edit_api_credential, name="apiv2-edit-credential"),
+    path("apply/credentials/<int:pk>/monitor/", views.monitor_api_credential, name="apiv2-monitor-credential"),
+    path("apply/credentials/<int:pk>/delete/", views.delete_api_credential, name="apiv2-delete-credential"),
+    path("apply/credentials/<int:pk>/edit/", views.edit_api_credential, name="apiv2-edit-credential"),
     # Oauth2
     path("oauth2/", include("apiv2.oauth2_urls", namespace="oauth2_provider")),
     path(

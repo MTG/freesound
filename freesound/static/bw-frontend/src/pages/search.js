@@ -1,7 +1,6 @@
 import './page-polyfills';
 import throttle from 'lodash.throttle';
 import navbar from '../components/navbar';
-
 // Main search input box behaviour
 const searchInputBrowse = document.getElementById('search-input-browse');
 const searchInputBrowsePlaceholder =

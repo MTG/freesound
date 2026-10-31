@@ -1,0 +1,23 @@
+{# Sound question: yes/no question about one sound of a list (see SoundListExperiment); included by sound_list.html. #}
+{# experiments.js places it after its sound, inside the element that wraps the sound in the page (sound_container). #}
+{# It has no Send button, so experiments.js saves it when an answer is clicked. #}
+{# It is hidden until its sound is played, or until the overall question is shown. It is removed a bit after the thanks. #}
+<div data-experiment-box data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}" data-thanks="Thanks for your feedback!"
+     data-experiment-place-after="{{ sound_id }}" data-experiment-place-in="{{ sound_container }}"
+     data-experiment-show-on-play="{{ sound_id }}" data-experiment-plays="{{ overall_question_plays }}" data-experiment-delay="{{ overall_question_delay_seconds }}" data-experiment-hide-after-thanks
+     class="text-grey text-14 text-right v-spacing-2 center inline-experiment-small-box" style="display: none;">
+    <input type="hidden" name="kind" value="sound">
+    <input type="hidden" name="sound_id" value="{{ sound_id }}">
+    <input type="hidden" name="position" value="{{ position }}">
+    {# Soft grey background behind the question. #}
+    <span class="display-inline-block">
+        <span class="h-spacing-1">{{ sound_question }}</span>
+        {# Thumbs up and down icons. #}
+        <a href="javascript:void(0)" class="btn-inverse display-inline-block" style="padding: 3px 8px; line-height: 0;" data-experiment-answer="yes" title="Yes" aria-label="Yes">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10H6V20H3Z M9 10L12 3L14 4.5L13 9.5H20L18.5 20H9Z"/></svg>
+        </a>
+        <a href="javascript:void(0)" class="btn-inverse display-inline-block" style="padding: 3px 8px; line-height: 0;" data-experiment-answer="no" title="No" aria-label="No">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(180 12 12)"><path d="M3 10H6V20H3Z M9 10L12 3L14 4.5L13 9.5H20L18.5 20H9Z"/></g></svg>
+        </a>
+    </span>
+</div>

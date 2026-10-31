@@ -1,0 +1,36 @@
+{% load bw_templatetags %}
+{# Experiment about a list of sounds (see SoundListExperiment); rendered by its inline_context. #}
+
+{# Sound question (yes/no) of each sound not answered yet. experiments.js places each one after its sound. #}
+{% for question in sound_questions %}
+    {% include sound_question_template with sound_id=question.sound_id position=question.position %}
+{% endfor %}
+
+{# Info about the list. experiments.js sends it with every answer of the experiment. #}
+<div data-experiment-shared="{{ experiment_id }}" style="display: none;">
+    {% for name, value in info.items %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    {# Sounds played in the page and seconds in it, filled in experiments.js if answer is sent. #}
+    <input type="hidden" name="played_sounds" data-experiment-played-sounds>
+    <input type="hidden" name="seconds_in_page" data-experiment-seconds-in-page>
+</div>
+
+{# Overall question, in a toast at the bottom of the page shown after some sounds are played (data-experiment-toast). #}
+{# Its content (question and inputs) is the template of the experiment. Closing it removes the sound questions. #}
+<div class="toast" role="region" aria-label="Feedback question" style="z-index: 1040; font-weight: normal;"
+     data-experiment-box data-experiment-toast data-experiment-plays="{{ overall_question_plays }}" data-experiment-delay="{{ overall_question_delay_seconds }}"
+     {% if overall_answer_field %}data-experiment-answer-name="{{ overall_answer_field }}"{% endif %}
+     data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}"
+     data-experiment-closes-boxes>
+    <input type="hidden" name="kind" value="overall">
+    {# Circled "i" that opens the info modal below, and close button. #}
+    <div class="text-right row" style="position: absolute; top: 10px; right: 25px; color: inherit;">
+        {% include "user_feedback/info_button.html" %}
+        <span data-experiment-toast-close class="h-spacing-left-1 cursor-pointer" title="Close" aria-label="Close">{% bw_icon 'close' %}</span>
+    </div>
+    {% include overall_question_template %}
+</div>
+
+{# Study information sheet + opt-out in "i" of the toast. #}
+{% include "user_feedback/info_modal.html" %}

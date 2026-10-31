@@ -7,6 +7,7 @@
 {% load display_sound %}
 {% load display_pack %}
 {% load tags %}
+{% load feedback_experiments %}
 
 {% block title %}Search{% endblock %}
 
@@ -313,6 +314,7 @@
                                         </div>
                                     {% endfor %}
                                 {% endif %}
+                                {% feedback_experiment "category_filter_feedback" docs=docs sqp=sqp %}
                             {% else %}
                                 {% include "search/_no_results.html" %}
                             {% endif %}

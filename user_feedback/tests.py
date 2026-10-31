@@ -411,7 +411,7 @@ class CategoryFilterFeedbackTest(TestCase):
     def _submit(self, **data):
         data = {
             "experiment_id": "category_filter_feedback",
-            "result_ids": ",".join(str(sound.id) for sound in self.sounds),
+            "list_sound_ids": ",".join(str(sound.id) for sound in self.sounds),
             **self.SEARCH,
             **data,
         }
@@ -430,15 +430,15 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(data["text"], "handy")
         self.assertEqual(data["category"], "Music")
         self.assertEqual(data["search_url"], self.SEARCH["search_url"])
-        self.assertEqual(data["result_ids"], [sound.id for sound in self.sounds])
-        # Check "result" fields are not saved
+        self.assertEqual(data["list_sound_ids"], [sound.id for sound in self.sounds])
+        # Check sound question fields are not saved
         self.assertNotIn("answer", data)
 
     def test_result_answer_saves(self):
         # Check yes/no, sound, position and plays are saved
         sound = self.sounds[2]
         response = self._submit(
-            kind="result",
+            kind="sound",
             answer="no",
             sound_id=sound.id,
             position=3,
@@ -447,7 +447,7 @@ class CategoryFilterFeedbackTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = self._rows().get().data
-        self.assertEqual(data["kind"], "result")
+        self.assertEqual(data["kind"], "sound")
         self.assertEqual(data["answer"], "no")
         self.assertEqual(data["sound_id"], sound.id)
         self.assertEqual(data["position"], 3)
@@ -468,9 +468,9 @@ class CategoryFilterFeedbackTest(TestCase):
         # Try overall answer without rating
         self.assertIn("rating", self._submit(kind="overall").json()["errors"])
         # Try result answer without yes/no
-        self.assertIn("answer", self._submit(kind="result", sound_id=self.sounds[0].id, position=1).json()["errors"])
+        self.assertIn("answer", self._submit(kind="sound", sound_id=self.sounds[0].id, position=1).json()["errors"])
         # Try result answer for unknown sound
-        errors = self._submit(kind="result", answer="yes", sound_id=999999999, position=1).json()["errors"]
+        errors = self._submit(kind="sound", answer="yes", sound_id=999999999, position=1).json()["errors"]
         self.assertIn("sound_id", errors)
         # Check nothing was saved
         self.assertEqual(self._rows().count(), 0)
@@ -487,6 +487,10 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check the search info is sent with the answers
         self.assertIn('name="category" value="Music"', html)
         self.assertIn('name="query" value="piano"', html)
+        # Check the overall question is in the toast, and its buttons set the rating
+        self.assertIn("data-experiment-toast", html)
+        self.assertIn('data-experiment-answer-name="rating"', html)
+        self.assertIn("How useful was it for the query", html)
         # Check the results of another page get the question too
         html = self._render(page=2)
         self.assertEqual(len(self._question_sound_ids(html)), len(self.sounds))
@@ -503,7 +507,7 @@ class CategoryFilterFeedbackTest(TestCase):
 
     def test_answered_result_is_not_asked_again(self):
         answered = self.sounds[2].id
-        self._submit(kind="result", answer="yes", sound_id=answered, position=3)
+        self._submit(kind="sound", answer="yes", sound_id=answered, position=3)
         # Check the answered result has no question, but the others do
         sound_ids = self._question_sound_ids(self._render())
         self.assertNotIn(answered, sound_ids)
@@ -512,18 +516,18 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertIn(answered, self._question_sound_ids(self._render(q="guitar")))
 
     def test_rated_search_is_not_asked_again(self):
-        # Check the bar is shown, with the info modal and the opt-out
+        # Check the toast is shown, with the info modal and the opt-out
         html = self._render()
-        self.assertIn("data-experiment-bar", html)
+        self.assertIn("data-experiment-toast", html)
         self.assertIn('How useful was it for the query "piano" to filter by the', html)
         self.assertIn("Music</a> category?", html)
         self.assertIn("data-experiment-optout", html)
         self.assertIn("Evaluating Category Filters in Freesound Search", html)
-        # Check the bar and the questions are not shown again after rating this search
+        # Check the toast and the questions are not shown again after rating this search
         self._submit(kind="overall", rating="4")
         self.assertEqual(self._render(), "")
-        # Check the bar is shown again for another search in the same category
-        self.assertIn("data-experiment-bar", self._render(q="guitar"))
+        # Check the toast is shown again for another search in the same category
+        self.assertIn("data-experiment-toast", self._render(q="guitar"))
 
     def test_sampling_is_per_search(self):
         def key(**params):
@@ -539,17 +543,17 @@ class CategoryFilterFeedbackTest(TestCase):
 
     def test_subcategory_is_asked_separately(self):
         subcategory_filter = 'category:"Music" subcategory:"Solo percussion"'
-        # Check the bar names the subcategory when it is selected
+        # Check the toast names the subcategory when it is selected
         html = self._render(f=subcategory_filter)
         self.assertIn("Music > Solo percussion</a> category?", html)
         # Check it links to the subcategory in the taxonomy page
         self.assertIn(reverse("bst-info-page") + "#m-sp", html)
         # Rate the category and answer one result, without subcategory
         self._submit(kind="overall", rating="4")
-        self._submit(kind="result", answer="yes", sound_id=self.sounds[0].id, position=1)
-        # Check the bar and all the results are still asked with the subcategory
+        self._submit(kind="sound", answer="yes", sound_id=self.sounds[0].id, position=1)
+        # Check the toast and all the results are still asked with the subcategory
         html = self._render(f=subcategory_filter)
-        self.assertIn("data-experiment-bar", html)
+        self.assertIn("data-experiment-toast", html)
         self.assertEqual(len(self._question_sound_ids(html)), len(self.sounds))
 
 

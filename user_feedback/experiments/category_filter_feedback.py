@@ -7,9 +7,14 @@ from user_feedback.experiments.base import SoundListExperiment, SoundListFeedbac
 
 
 class CategoryFilterFeedbackForm(SoundListFeedbackForm):
-    """Form of the category filter experiment: the questions of SoundListFeedbackForm, plus
-    category, subcategory, query, search_filter, sort, page, search_url and search_id, the
-    hidden fields describing the search."""
+    """Form of the category filter experiment: the sound questions of SoundListFeedbackForm, plus
+    the overall question (rating and text) and the hidden fields describing the search."""
+
+    # Overall question: how useful was the category filter, 1-5, with an optional comment
+    OVERALL_FIELDS = ["rating", "text"]
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
+    rating = forms.TypedChoiceField(choices=RATING_CHOICES, coerce=int)
+    text = forms.CharField(required=False, max_length=2000)
 
     # Search info filled in by the server
     category = forms.CharField(max_length=200)
@@ -24,14 +29,15 @@ class CategoryFilterFeedbackForm(SoundListFeedbackForm):
 
 class CategoryFilterFeedback(SoundListExperiment):
     """Experiment in the search page, shown when the results are filtered by category.
-    It asks how useful the category filter was (1-5 rating with an optional comment),
-    and whether each result of the page is what the user was looking for (yes/no).
+    It asks whether each result of the page is what the user was looking for (sound question),
+    and how useful the category filter was, 1-5 with an optional comment (overall question).
     The search page places it with {% feedback_experiment "category_filter_feedback" docs=docs sqp=sqp %}."""
 
     experiment_id = "category_filter_feedback"
     form_class = CategoryFilterFeedbackForm
-    bar_template = "user_feedback/category_filter_feedback_bar.html"
-    result_container = "[data-score]"  # Element of the search page that wraps one result
+    sound_container = "[data-score]"  # Element of the search page that wraps one result
+    overall_question_template = "user_feedback/category_filter_feedback_overall_question.html"
+    overall_answer_field = "rating"
 
     @staticmethod
     def _filter_value(sqp, field_name):

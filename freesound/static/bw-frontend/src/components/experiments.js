@@ -104,25 +104,25 @@ const bindShowOnPlay = box => {
   // afterPlays(box, show);  // Do not show all "was this useful" quesions after X plays from other sounds, only after a sound is played
 };
 
-// Boxes with [data-experiment-bar] are shown as a bar at the bottom of the page, with
-// the styles of the toast. The bar waits for the plays and the delay of afterPlays.
-const BAR_ANIMATION_DURATION_MS = 260;
+// Boxes with [data-experiment-toast] are shown as a toast at the bottom of the page.
+// The toast waits for the plays and the delay of afterPlays.
+const TOAST_ANIMATION_DURATION_MS = 260;
 const HIDE_AFTER_THANKS_MS = 3000;
 
-const showBar = bar => {
-  bar.style.display = 'block';
+const showToastBox = toast => {
+  toast.style.display = 'block';
   // Force reflow so the show animation runs.
-  void bar.offsetWidth;
-  bar.classList.add('toast--visible');
+  void toast.offsetWidth;
+  toast.classList.add('toast--visible');
 };
 
-const hideBar = bar => {
-  bar.classList.remove('toast--visible');
-  bar.classList.add('toast--hiding');
+const hideToastBox = toast => {
+  toast.classList.remove('toast--visible');
+  toast.classList.add('toast--hiding');
   setTimeout(() => {
-    bar.classList.remove('toast--hiding');
-    bar.style.display = 'none';
-  }, BAR_ANIMATION_DURATION_MS);
+    toast.classList.remove('toast--hiding');
+    toast.style.display = 'none';
+  }, TOAST_ANIMATION_DURATION_MS);
 };
 
 // Fades a box out and collapses its height, then removes it.
@@ -132,7 +132,7 @@ const removeBox = box => {
   void box.offsetWidth;
   box.classList.add('experiment-box--hiding');
   // Hidden boxes never fire transitionend, so also remove them after a timeout.
-  setTimeout(() => box.remove(), BAR_ANIMATION_DURATION_MS + 100);
+  setTimeout(() => box.remove(), TOAST_ANIMATION_DURATION_MS + 100);
 };
 
 // A box with [data-experiment-closes-boxes] removes the other boxes of its experiment.
@@ -145,13 +145,13 @@ const closeOtherBoxes = box => {
     .forEach(other => other !== box && removeBox(other));
 };
 
-const bindBar = bar => {
-  afterPlays(bar, () => showBar(bar));
-  const closeButton = bar.querySelector('[data-experiment-bar-close]');
+const bindToastBox = toast => {
+  afterPlays(toast, () => showToastBox(toast));
+  const closeButton = toast.querySelector('[data-experiment-toast-close]');
   if (closeButton)
     closeButton.addEventListener('click', () => {
-      hideBar(bar);
-      closeOtherBoxes(bar);
+      hideToastBox(toast);
+      closeOtherBoxes(toast);
     });
 };
 
@@ -182,8 +182,8 @@ const bindFeedbackBox = box => {
   if (box.querySelector('.bst-category-field')) {
     prepareCategoryFormFields(box);
   }
-  const isBar = box.hasAttribute('data-experiment-bar');
-  if (isBar) bindBar(box);
+  const isToast = box.hasAttribute('data-experiment-toast');
+  if (isToast) bindToastBox(box);
   if (box.dataset.experimentShowOnPlay) bindShowOnPlay(box);
   const expand = box.querySelector('[data-experiment-expand]');
   const answerButtons = [...box.querySelectorAll('[data-experiment-answer]')];
@@ -194,8 +194,8 @@ const bindFeedbackBox = box => {
   let chosenAnswer = null;
   let sending = false;
 
-  // Click out of the bar to minimize it, click in to open it.
-  if (isBar && expand) {
+  // Click out of the toast to minimize it, click in to open it.
+  if (isToast && expand) {
     document.addEventListener('click', event => {
       if (!box.contains(event.target)) expand.style.display = 'none';
       else if (chosenAnswer) expand.style.display = '';
@@ -218,8 +218,8 @@ const bindFeedbackBox = box => {
       },
       () => {
         box.innerHTML = `${box.dataset.thanks || 'Thanks for your feedback!'}`;
-        // Hide the answered bar and boxes a bit after the thanks.
-        if (isBar) setTimeout(() => hideBar(box), HIDE_AFTER_THANKS_MS);
+        // Hide the answered toast and boxes a bit after the thanks.
+        if (isToast) setTimeout(() => hideToastBox(box), HIDE_AFTER_THANKS_MS);
         else if (box.hasAttribute('data-experiment-hide-after-thanks'))
           setTimeout(() => removeBox(box), HIDE_AFTER_THANKS_MS);
         //setTimeout(() => closeOtherBoxes(box), HIDE_AFTER_THANKS_MS);  // No need to close individual sound boxes after the general feedback is provided

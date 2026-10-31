@@ -161,49 +161,61 @@ class SingleSoundExperiment(Experiment):
 
 
 class SoundListFeedbackForm(forms.Form):
-    """Base form of the experiments about a list of sounds (see SoundListExperiment).
-    Experiments add the fields of the info about their list (see SoundListExperiment.list_info).
+    """Base form of the experiments about a list of sounds (see SoundListExperiment). An answer is
+    either to the yes/no question of one sound (kind "sound") or to the overall question (kind "overall").
+
+    Experiments add the fields of their overall question, listed in OVERALL_FIELDS, and the fields of
+    the info about their list (see SoundListExperiment.list_key and list_info). The fields of the other
+    kind of answer are removed, so they are neither validated nor saved.
 
     Fields:
-        kind: which question is answered, "overall" or "result".
-        rating: the user's 1-5 response. Required when kind is "overall".
-        text: optional free-text comment.
-        answer: the user's yes/no response. Required when kind is "result".
-        sound_id: hidden field identifying the sound of the result.
+        kind: which question is answered, "sound" (question of one sound) or "overall".
+        answer: the user's yes/no answer to the question of one sound.
+        sound_id: hidden field identifying the sound.
         position: hidden field with the position of the sound in the list.
-        result_ids: hidden field with the sounds of the list.
+        list_sound_ids: hidden field with the sounds of the list.
         played_sounds: hidden field with the sounds played in the page before answering,
             each with the second of its first play and its number of plays.
         seconds_in_page: hidden field with the seconds from the page load to the answer.
     """
 
-    KIND_CHOICES = [("overall", "Overall"), ("result", "Result")]
-    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
+    KIND_CHOICES = [("sound", "Sound question"), ("overall", "Overall question")]
     ANSWER_CHOICES = [("yes", "Yes"), ("no", "No")]
-    # Fields used by each kind of answer.
-    KIND_FIELDS = {"overall": ["rating", "text"], "result": ["answer", "sound_id", "position"]}
-    OPTIONAL_FIELDS = ["text"]
+    SOUND_QUESTION_FIELDS = ["answer", "sound_id", "position"]
+    OVERALL_FIELDS = []  # Fields of the overall question, defined by each experiment
 
     kind = forms.ChoiceField(choices=KIND_CHOICES)
 
-    rating = forms.TypedChoiceField(choices=RATING_CHOICES, coerce=int, required=False, empty_value=None)
-    text = forms.CharField(required=False, max_length=2000)
-
-    answer = forms.ChoiceField(choices=ANSWER_CHOICES, required=False)
-    sound_id = forms.IntegerField(required=False)
-    position = forms.IntegerField(required=False, min_value=1)
+    # Yes/no question of one sound
+    answer = forms.ChoiceField(choices=ANSWER_CHOICES)
+    sound_id = forms.IntegerField()
+    position = forms.IntegerField(min_value=1)
 
     # Sounds of the list filled in by the server
-    result_ids = forms.CharField(max_length=2000)
+    list_sound_ids = forms.CharField(max_length=2000)
 
     # Info about the plays filled by experiments.js
     played_sounds = forms.CharField(required=False, max_length=2000)
     seconds_in_page = forms.IntegerField(required=False, min_value=0)
 
-    def clean_result_ids(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Keep only the fields of the question that is answered.
+        kind = self.data.get("kind")
+        other_fields = {"sound": self.OVERALL_FIELDS, "overall": self.SOUND_QUESTION_FIELDS}.get(kind, [])
+        for field in other_fields:
+            del self.fields[field]
+
+    def clean_sound_id(self):
+        sound_id = self.cleaned_data["sound_id"]
+        if not Sound.objects.filter(id=sound_id).exists():
+            raise forms.ValidationError("Unknown sound.")
+        return sound_id
+
+    def clean_list_sound_ids(self):
         # Sound IDs are sent as "9,99,1999" and saved as a list.
         try:
-            return [int(sound_id) for sound_id in self.cleaned_data["result_ids"].split(",")]
+            return [int(sound_id) for sound_id in self.cleaned_data["list_sound_ids"].split(",")]
         except ValueError:
             raise forms.ValidationError("Invalid list of results.")
 
@@ -221,34 +233,18 @@ class SoundListFeedbackForm(forms.Form):
             return None
         return plays
 
-    def clean(self):
-        cleaned_data = super().clean()
-        kind = cleaned_data.get("kind")
-        if kind is None:
-            return cleaned_data
-        # Required fields of this kind.
-        for field in self.KIND_FIELDS[kind]:
-            if field not in self.OPTIONAL_FIELDS and cleaned_data.get(field) in (None, ""):
-                self.add_error(field, "This field is required.")
-        # Check that the sound exists.
-        sound_id = cleaned_data.get("sound_id")
-        if kind == "result" and sound_id and not Sound.objects.filter(id=sound_id).exists():
-            self.add_error("sound_id", "Unknown sound.")
-        # Do not save the fields of the other kind.
-        other_kind = "result" if kind == "overall" else "overall"
-        for field in self.KIND_FIELDS[other_kind]:
-            cleaned_data.pop(field, None)
-            self.errors.pop(field, None)
-        return cleaned_data
-
 
 class SoundListExperiment(Experiment):
     """Base class for an experiment about a list of sounds shown in a page, placed with
-    {% feedback_experiment "<experiment_id>" sounds=sounds ... %}. It asks:
-      - for each sound of the list, a yes/no question, placed after the sound by experiments.js.
-        It is shown when its sound is played, or with the overall question.
-      - an overall 1-5 rating with an optional comment, in a bar at the bottom of the page shown
-        after some sounds are played. Rating a list closes its questions and it is not asked again.
+    {% feedback_experiment "<experiment_id>" sounds=sounds ... %}. It asks two kinds of questions:
+      - Sound question: a yes/no question (sound_question) after the player of each sound of the list.
+        experiments.js places it after the sound, and shows it when the sound is played. It is not
+        asked again for a sound already answered in the same list.
+      - Overall question: a question about the whole list, shown in a toast at the bottom of the page
+        after overall_question_plays sounds of the list are played (and overall_question_delay_seconds).
+        Each experiment writes it: its fields (in the form, see SoundListFeedbackForm.OVERALL_FIELDS)
+        and its template (overall_question_template). Answering it closes the questions of the list,
+        and the same list is not asked again.
 
     The arguments of the tag are passed to the hooks below, so the page gives the experiment what
     it needs to know about the list (e.g. the search), and the experiment knows nothing about pages.
@@ -256,13 +252,21 @@ class SoundListExperiment(Experiment):
 
     form_class = SoundListFeedbackForm
     inline_template = "user_feedback/sound_list.html"
-    bar_template = None  # overall question bar, rendered with the context of inline_context
-    result_template = "user_feedback/sound_list_result.html"  # question of one sound
-    result_question = "Is this what you were looking for?"
-    result_container = None  # selector of the element of the page that wraps one sound of the list
-    # The overall rating bar is shown after X different sounds are played, and then Y seconds.
-    bar_plays = 2
-    bar_delay_seconds = 2
+
+    # Sound question
+    sound_question = "Is this what you were looking for?"
+    sound_question_template = "user_feedback/sound_list_sound_question.html"
+    # Selector of the element of the page that wraps each sound of the list. The sound question is placed after it.
+    sound_container = None
+
+    # Overall question, shown in a toast. Its template has the question and the inputs of the overall
+    # fields of the form, and is rendered with the context of inline_context (see overall_context).
+    overall_question_template = None
+    # Name of the field of the overall question set by the buttons with [data-experiment-answer].
+    overall_answer_field = None
+    # The toast is shown after X different sounds of the page are played, and then Y seconds.
+    overall_question_plays = 2
+    overall_question_delay_seconds = 2
 
     def get_sounds(self, sounds=None, **kwargs):
         """Returns the sounds of the list, in the order of the page. Default: the `sounds` argument."""
@@ -278,15 +282,15 @@ class SoundListExperiment(Experiment):
         return {}
 
     def overall_context(self, info, **kwargs):
-        """Returns extra template context for the overall question bar."""
+        """Returns extra template context for the overall question."""
         return {}
 
     def is_context_eligible(self, request, **kwargs):
         return bool(self.get_sounds(**kwargs))
 
     def is_throttled(self, request, **kwargs):
-        # Opt-out hides everything, and rating a list closes its questions. Sounds already
-        # answered are skipped in inline_context.
+        # Opt-out hides everything, and answering the overall question closes the questions of the
+        # list. Sounds already answered are skipped in inline_context.
         if self.has_opted_out(request.user):
             return True
         return self._answers(request.user, self.list_key(**kwargs), "overall").exists()
@@ -306,11 +310,11 @@ class SoundListExperiment(Experiment):
         info = {
             **key,
             **self.list_info(**kwargs),
-            "result_ids": ",".join(str(sound.id) for sound in sounds),
+            "list_sound_ids": ",".join(str(sound.id) for sound in sounds),
         }
-        # The sounds of the list that are not answered yet get the yes/no question.
-        answered_sound_ids = set(self._answers(request.user, key, "result").values_list("data__sound_id", flat=True))
-        questions = [
+        # The sounds of the list that are not answered yet get the sound question.
+        answered_sound_ids = set(self._answers(request.user, key, "sound").values_list("data__sound_id", flat=True))
+        sound_questions = [
             {"sound_id": sound.id, "position": position}
             for position, sound in enumerate(sounds, start=1)
             if sound.id not in answered_sound_ids
@@ -319,12 +323,13 @@ class SoundListExperiment(Experiment):
             "experiment_id": self.experiment_id,
             "config": self.config,
             "info": info,
-            "questions": questions,
-            "result_template": self.result_template,
-            "result_question": self.result_question,
-            "result_container": self.result_container,
-            "bar_template": self.bar_template,
-            "bar_plays": self.bar_plays,
-            "bar_delay_seconds": self.bar_delay_seconds,
+            "sound_questions": sound_questions,
+            "sound_question": self.sound_question,
+            "sound_question_template": self.sound_question_template,
+            "sound_container": self.sound_container,
+            "overall_question_template": self.overall_question_template,
+            "overall_answer_field": self.overall_answer_field,
+            "overall_question_plays": self.overall_question_plays,
+            "overall_question_delay_seconds": self.overall_question_delay_seconds,
             **self.overall_context(info, **kwargs),
         }

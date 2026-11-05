@@ -1,0 +1,18 @@
+{# Overall question of the category filter experiment in the search page; included in the toast of sound_list.html. #}
+{# Clicking a number (the rating) opens the comment, and Send saves. #}
+<div class="h-padding-4">How useful was it for the query "{{ info.query }}" to filter by the <a href="{% url 'bst-info-page' %}#{{ category_key }}" target="_blank" rel="noopener noreferrer">{{ info.category }}{% if info.subcategory %} > {{ info.subcategory }}{% endif %}</a> category?</div>
+<div class="v-spacing-top-2">
+    <span class="text-14 h-spacing-2">Not useful</span>
+    {% for value in "12345" %}
+        <a href="javascript:void(0)" class="btn-inverse text-14 display-inline-block" style="padding: 8px 14px;" data-experiment-answer="{{ value }}">{{ value }}</a>
+    {% endfor %}
+    <span class="text-14 h-spacing-left-2">Very useful</span>
+</div>
+<div data-experiment-expand style="display: none;" class="v-spacing-top-1">
+    <textarea name="text" rows="2" placeholder="Anything to add? (optional)"
+              class="text-14" style="width: 100%; max-width: 500px; min-height: 0; background: transparent; color: inherit; border: 1px solid #999; border-radius: 5px; padding: 8px;"></textarea>
+    <div style="font-size: 12px; line-height: 1.2; margin-top: 2px; opacity: 0.7;"><i>After submitting, we won't ask again for this query/category pair.</i></div>
+    <div class="v-spacing-top-1">
+        <button type="button" data-experiment-send class="btn-primary text-14">Submit feedback</button>
+    </div>
+</div>

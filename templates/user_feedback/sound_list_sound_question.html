@@ -5,7 +5,7 @@
 <div data-experiment-box data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}" data-thanks="Thanks for your feedback!"
      data-experiment-place-after="{{ sound_id }}" data-experiment-place-in="{{ sound_container }}"
      data-experiment-show-on-play="{{ sound_id }}" data-experiment-plays="{{ overall_question_plays }}" data-experiment-delay="{{ overall_question_delay_seconds }}" data-experiment-hide-after-thanks
-     class="text-grey text-14 text-right v-spacing-2 center inline-experiment-small-box" style="display: none;">
+     class="text-14 v-spacing-2 center inline-experiment-small-box" style="display: none;">
     <input type="hidden" name="kind" value="sound">
     <input type="hidden" name="sound_id" value="{{ sound_id }}">
     <input type="hidden" name="position" value="{{ position }}">

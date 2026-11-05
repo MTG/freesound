@@ -110,6 +110,7 @@ const TOAST_ANIMATION_DURATION_MS = 260;
 const HIDE_AFTER_THANKS_MS = 3000;
 
 const showToastBox = toast => {
+  toast.classList.add('toast-experiment');
   toast.style.display = 'block';
   // Force reflow so the show animation runs.
   void toast.offsetWidth;
@@ -121,6 +122,7 @@ const hideToastBox = toast => {
   toast.classList.add('toast--hiding');
   setTimeout(() => {
     toast.classList.remove('toast--hiding');
+    toast.classList.remove('toast-experiment');
     toast.style.display = 'none';
   }, TOAST_ANIMATION_DURATION_MS);
 };

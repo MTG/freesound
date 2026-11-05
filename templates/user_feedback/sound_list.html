@@ -17,12 +17,11 @@
 </div>
 
 {# Overall question, in a toast at the bottom of the page shown after some sounds are played (data-experiment-toast). #}
-{# Its content (question and inputs) is the template of the experiment. Closing it removes the sound questions. #}
+{# Its content (question and inputs) is the template of the experiment. #}
 <div class="toast" role="region" aria-label="Feedback question" style="z-index: 1040; font-weight: normal;"
      data-experiment-box data-experiment-toast data-experiment-plays="{{ overall_question_plays }}" data-experiment-delay="{{ overall_question_delay_seconds }}"
      {% if overall_answer_field %}data-experiment-answer-name="{{ overall_answer_field }}"{% endif %}
-     data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}"
-     data-experiment-closes-boxes>
+     data-experiment-id="{{ experiment_id }}" data-submit-url="{% url 'user-feedback-submit' %}">
     <input type="hidden" name="kind" value="overall">
     {# Circled "i" that opens the info modal below, and close button. #}
     <div class="text-right row" style="position: absolute; top: 10px; right: 25px; color: inherit;">

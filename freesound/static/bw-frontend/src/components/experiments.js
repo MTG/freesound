@@ -135,24 +135,11 @@ const removeBox = box => {
   setTimeout(() => box.remove(), TOAST_ANIMATION_DURATION_MS + 100);
 };
 
-// A box with [data-experiment-closes-boxes] removes the other boxes of its experiment.
-const closeOtherBoxes = box => {
-  if (!box.hasAttribute('data-experiment-closes-boxes')) return;
-  document
-    .querySelectorAll(
-      `[data-experiment-box][data-experiment-id="${box.dataset.experimentId}"]`
-    )
-    .forEach(other => other !== box && removeBox(other));
-};
-
 const bindToastBox = toast => {
   afterPlays(toast, () => showToastBox(toast));
   const closeButton = toast.querySelector('[data-experiment-toast-close]');
   if (closeButton)
-    closeButton.addEventListener('click', () => {
-      hideToastBox(toast);
-      closeOtherBoxes(toast);
-    });
+    closeButton.addEventListener('click', () => hideToastBox(toast));
 };
 
 // Boxes with [data-experiment-place-after] are moved right after the sound with that id, inside the
@@ -222,7 +209,6 @@ const bindFeedbackBox = box => {
         if (isToast) setTimeout(() => hideToastBox(box), HIDE_AFTER_THANKS_MS);
         else if (box.hasAttribute('data-experiment-hide-after-thanks'))
           setTimeout(() => removeBox(box), HIDE_AFTER_THANKS_MS);
-        //setTimeout(() => closeOtherBoxes(box), HIDE_AFTER_THANKS_MS);  // No need to close individual sound boxes after the general feedback is provided
       },
       responseText => {
         sending = false;

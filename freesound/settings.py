@@ -159,6 +159,9 @@ LOGOUT_URL = "/home/logout/"
 LOGIN_REDIRECT_URL = "/home/"
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTOCOL", "https")
+# Send the origin as Referer on cross-origin requests (Django default is "same-origin", which sends none).
+# Needed because the Mapbox access token is URL-restricted and Mapbox validates it against the Referer header.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 IGNORABLE_404_URLS = (
     # for each <prefix> in IGNORABLE_404_STARTS

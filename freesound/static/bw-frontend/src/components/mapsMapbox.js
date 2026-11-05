@@ -4,8 +4,8 @@ import { stopAllPlayers } from '../components/player/utils';
 var FREESOUND_SATELLITE_STYLE_ID = 'cjgxefqkb00142roas6kmqneq';
 var FREESOUND_STREETS_STYLE_ID = 'cjkmk0h7p79z32spe9j735hrd';
 var MIN_INPUT_CHARACTERS_FOR_GEOCODER = 3; // From mapbox docs: "Minimum number of characters to enter before [geocoder] results are shown"
-var MAP_MARKER_URL = '/static/bw-frontend/public/map_marker_v2.png';
-var MAP_MARKER_2X_URL = '/static/bw-frontend/public/map_marker_v2_2x.png';
+var MAP_MARKER_URL = '/static/bw-frontend/public/map_marker_pin_s@2x.png'; // Mapbox's built-in 'pin-s' marker, same as in static maps
+var STATIC_MAP_PIN_COLOR = 'c92a2a'; // Same color as MAP_MARKER_URL
 
 function setMaxZoomCenter(lat, lng, zoom) {
   window.map.flyTo({ center: [lng, lat], zoom: zoom - 1 }); // Subtract 1 for compatibility with gmaps zoom levels
@@ -422,7 +422,7 @@ function makeSoundsMap(
       map.on('style.load', function () {
         // Triggered when `setStyle` is called, add all data layers
         map.loadImage(MAP_MARKER_URL, function (error, image) {
-          map.addImage('custom-marker', image);
+          map.addImage('custom-marker', image, { pixelRatio: 2 });
 
           // Setup clustering
           if (cluster === undefined) {
@@ -608,7 +608,7 @@ function makeGeotagEditMap(
   map.on('style.load', function () {
     // Triggered when `setStyle` is called, add all data layers
     map.loadImage(MAP_MARKER_URL, function (error, image) {
-      map.addImage('custom-marker', image);
+      map.addImage('custom-marker', image, { pixelRatio: 2 });
 
       // Add position marker
       map.addLayer({
@@ -653,9 +653,9 @@ const makeStaticMap = (mapWrapperElementId, width, height, onclick) => {
   const padding = 40;
   const pins = [];
   JSON.parse(mapWrapperElement.dataset.pins).forEach(pin => {
-    pins.push(
-      `url-https://freesound.org${MAP_MARKER_2X_URL}(${pin.lon},${pin.lat})`
-    );
+    // Use a built-in Mapbox pin (rendered server-side by Mapbox) instead of a custom marker image, as the
+    // latter requires Mapbox servers to fetch the image from freesound.org
+    pins.push(`pin-s+${STATIC_MAP_PIN_COLOR}(${pin.lon},${pin.lat})`);
   });
   const imageUrl = `https://api.mapbox.com/styles/v1/freesound/${FREESOUND_SATELLITE_STYLE_ID}/static/${encodeURIComponent(pins.join(','))}/auto/${width}x${height}@2x?padding=${padding}%2C${padding}%2C${padding}%2C${padding}&access_token=${token}`;
   mapWrapperElement.style.background = `url("${imageUrl}")`;

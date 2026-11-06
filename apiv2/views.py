@@ -89,7 +89,6 @@ from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import PreSlicedCountProvidedPaginator
-from utils.search.search_sounds import save_record_of_search_query
 from utils.search_logging import archive_search
 from utils.tags import clean_and_split_tags
 
@@ -283,15 +282,6 @@ class Search(GenericAPIView):
             query_time=q_time,
             ip=self.end_user_ip,
         )
-
-        if settings.SEARCH_SAVE_QUERY_RECORDS:
-            save_record_of_search_query(
-                url=search_form.construct_link(base_url="/apiv2/search/", include_domain=False),
-                num_results=non_grouped_count or paginator.count,  # Return non grouped number of results if available
-                query_time=q_time,
-                ip=self.end_user_ip,
-                user_id=self.user.id if self.user is not None else None,
-            )
 
         if note:
             response_data["note"] = note

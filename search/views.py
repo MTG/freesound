@@ -55,7 +55,6 @@ from utils.search.search_sounds import (
     allow_beta_search_features,
     get_empty_query_cache_key,
     perform_search_engine_query,
-    save_record_of_search_query,
 )
 from utils.search_logging import archive_search
 
@@ -231,16 +230,6 @@ def search_view_helper(request):
             query_time=results.q_time,
             ip=get_client_ip(request),
         )
-
-        if settings.SEARCH_SAVE_QUERY_RECORDS:
-            save_record_of_search_query(
-                url=sqp.get_url(),
-                num_results=results.non_grouped_number_of_results
-                or results.num_found,  # Return non grouped number of results if available
-                query_time=results.q_time,
-                ip=get_client_ip(request),
-                user_id=request.user.id if request.user.is_authenticated else None,
-            )
 
         # If the requested page is beyond the last page of a non-empty result set, the search
         # engine returns no docs for it; show an explicit "no more results" state and clamp the

@@ -218,7 +218,15 @@ def _raise_search_engine_exception(error: BaseException) -> None:
     if status_code is not None and 400 <= status_code < 500:
         if "undefined field" in reason:
             raise SearchEngineUndefinedFieldException(error) from error
-        if "invalid number" in reason:
+        if any(
+            message in reason
+            for message in (
+                "invalid number",
+                "invalid date string",
+                "invalid date in date math string",
+                "invalid date math string",
+            )
+        ):
             raise SearchEngineInvalidValueException(error) from error
         if "cannot parse" in reason or "syntaxerror" in reason:
             raise SearchEngineSyntaxErrorException(error) from error

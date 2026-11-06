@@ -65,6 +65,11 @@ class TestTransportErrors:
 
 class TestErrorMessageClassification:
     # Solr returns a text message based on an error from solr, we categorise it correctly
+    def test_invalid_date_is_invalid_value(self):
+        error = pysolr.SolrError("Solr responded with an error (HTTP 400): [Reason: Invalid Date String:'yesterday']")
+        with pytest.raises(SearchEngineInvalidValueException):
+            _raise_search_engine_exception(error)
+
     def test_solr_side_timeout_is_not_a_timeout_exception(self):
         # An HTTP 500 mentioning a timeout is still a server error.
         error = pysolr.SolrError("Solr responded with an error (HTTP 500): [Reason: search timed out]")

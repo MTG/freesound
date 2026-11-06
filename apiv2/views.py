@@ -90,6 +90,7 @@ from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.search.search_sounds import save_record_of_search_query
+from utils.search_logging import archive_search
 from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import (
@@ -274,6 +275,14 @@ class Search(GenericAPIView):
                 # In that case sounds are set to null
                 sounds.append(None)
         response_data["results"] = sounds
+
+        archive_search(
+            source="api",
+            params=request.query_params,
+            num_results=non_grouped_count or paginator.count,
+            query_time=q_time,
+            ip=self.end_user_ip,
+        )
 
         if settings.SEARCH_SAVE_QUERY_RECORDS:
             save_record_of_search_query(

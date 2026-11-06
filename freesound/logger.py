@@ -9,9 +9,15 @@ LOGGING = {
         "generic_data_filter": {"()": "utils.logging_filters.GenericDataFilter"},
     },
     "handlers": {
+        "search_archive": {"class": "utils.search_logging.SearchArchiveHandler"},
         "stdout": {"class": "logging.StreamHandler", "formatter": "standard"},
     },
     "loggers": {
+        "search_archive": {
+            "handlers": ["search_archive"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "console": {
             "handlers": ["stdout"],
             "level": "INFO",

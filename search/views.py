@@ -57,6 +57,7 @@ from utils.search.search_sounds import (
     perform_search_engine_query,
     save_record_of_search_query,
 )
+from utils.search_logging import archive_search
 
 search_logger = logging.getLogger("search")
 
@@ -221,6 +222,14 @@ def search_view_helper(request):
                     "query_time": results.q_time,
                 }
             )
+        )
+
+        archive_search(
+            source="tags" if sqp.tags_mode_active() else "web",
+            params=request.GET,
+            num_results=results.non_grouped_number_of_results or results.num_found,
+            query_time=results.q_time,
+            ip=get_client_ip(request),
         )
 
         if settings.SEARCH_SAVE_QUERY_RECORDS:

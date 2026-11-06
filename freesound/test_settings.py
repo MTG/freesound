@@ -1,5 +1,7 @@
 from .settings import *  # noqa: F403
 
+SEARCH_ARCHIVE_ENABLED = False
+
 postgres_username = os.getenv("FS_TEST_PG_USERNAME", None)
 if postgres_username is not None:
     DATABASES["default"]["NAME"] = "freesound"

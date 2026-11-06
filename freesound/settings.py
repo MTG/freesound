@@ -685,6 +685,9 @@ SEARCH_EMPTY_QUERY_CACHE_TIME = (
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
 SEARCH_SAVE_QUERY_RECORDS = True
+SEARCH_ARCHIVE_ENABLED = False
+SEARCH_ARCHIVE_HOST = os.environ.get("SEARCH_ARCHIVE_HOST", "search-archive")
+SEARCH_ARCHIVE_PORT = int(os.environ.get("SEARCH_ARCHIVE_PORT", "5515"))
 SEARCH_SAVE_QUERY_RECORDS_CACHE_EXPIRATION = (
     3600 * 5
 )  # Save queries for that period of time. An async process should run before expiration time to collect data and save to disk

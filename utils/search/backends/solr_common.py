@@ -28,6 +28,36 @@ from utils.search import SearchEngineException, SearchEngineTimeoutException
 
 search_logger = logging.getLogger("search")
 
+# Boolean operators and lone punctuation that dismax rejects when dangling at the start or end of a
+# query. A token made up entirely of these punctuation chars (e.g. "+", "--", "\\") is also junk.
+_DISMAX_BOOLEAN_OPERATORS = {"AND", "OR", "NOT"}
+_DISMAX_OPERATOR_CHARS = set("+-\\&|!")
+
+
+def sanitize_dismax_query(query):
+    """Make a user-entered dismax query safe to send to Solr without a syntax error.
+
+    Dismax is meant for simple phrases, but scraper and SQLi noise (unbalanced quotes, dangling
+    boolean operators) makes the Solr parser return a 400. We remove just enough to parse: drop all
+    double quotes when they are unbalanced, and trim leading/trailing boolean operators and lone
+    operator punctuation. Balanced phrases, apostrophes and hyphenated or "+"-suffixed terms are
+    left untouched. A fully-stripped query becomes empty and degrades to match-all via q.alt.
+    """
+    if not query:
+        return query
+    if query.count('"') % 2:
+        query = query.replace('"', "")
+
+    def is_junk(token):
+        return token in _DISMAX_BOOLEAN_OPERATORS or set(token) <= _DISMAX_OPERATOR_CHARS
+
+    tokens = query.split()
+    while tokens and is_junk(tokens[0]):
+        tokens.pop(0)
+    while tokens and is_junk(tokens[-1]):
+        tokens.pop()
+    return " ".join(tokens)
+
 
 class SolrQuery:
     """A wrapper around a lot of Solr query functionality."""
@@ -80,6 +110,7 @@ class SolrQuery:
         boost_query: see docs...
         boost_functions: see docs...
         """
+        query = sanitize_dismax_query(query)
         self.params["q"] = query
         self.params["defType"] = "dismax"
         self.params["q.alt"] = "*:*"

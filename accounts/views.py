@@ -47,7 +47,7 @@ from django.core.cache import caches
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, F, Q, Sum
 from django.db.models.expressions import Value
 from django.db.models.fields import CharField
 from django.http import (
@@ -1025,22 +1025,29 @@ def attribution(request):
         .filter(user=request.user)
     )
     qs_packs = (
-        PackDownload.objects.annotate(download_type=Value("pack", CharField()))
+        PackDownload.objects.annotate(
+            download_type=Value("pack", CharField()),
+            pack_name_pad_1=F("pack__name"),
+            pack_name_pad_2=F("pack__name"),
+            pack_name_pad_3=F("pack__name"),
+            pack_name_pad_4=F("pack__name"),
+        )
         .values(
             "download_type",
             "pack_id",
             "pack__user__username",
             "pack__name",
-            "pack__name",
-            "pack__name",
-            "pack__name",
-            "pack__name",
+            "pack_name_pad_1",
+            "pack_name_pad_2",
+            "pack_name_pad_3",
+            "pack_name_pad_4",
             "created",
         )
         .filter(user=request.user)
     )
-    # NOTE: in the query above we duplicate 'pack__name' so that qs_packs has same num columns than qs_sounds. This is
-    # a requirement for doing QuerySet.union below. Also as a result of using QuerySet.union, the names of the columns
+    # NOTE: in the query above we pad qs_packs with 'pack_name_pad_N' aliases so that it has the same num columns as
+    # qs_sounds. This is a requirement for doing QuerySet.union below.
+    # Also as a result of using QuerySet.union, the names of the columns
     # (keys in each dictionary element) are unified and taken from the main query set. This means that after the union,
     # queryset entries corresponding to PackDownload will have corresponding field names from entries corresponding to
     # Download. Therefore to access the pack_id (which is the second value in the list), you'll need to do
@@ -1072,16 +1079,22 @@ def download_attribution(request):
         .filter(user=request.user)
     )
     qs_packs = (
-        PackDownload.objects.annotate(download_type=Value("pack", CharField()))
+        PackDownload.objects.annotate(
+            download_type=Value("pack", CharField()),
+            pack_name_pad_1=F("pack__name"),
+            pack_name_pad_2=F("pack__name"),
+            pack_name_pad_3=F("pack__name"),
+            pack_name_pad_4=F("pack__name"),
+        )
         .values(
             "download_type",
             "pack_id",
             "pack__user__username",
             "pack__name",
-            "pack__name",
-            "pack__name",
-            "pack__name",
-            "pack__name",
+            "pack_name_pad_1",
+            "pack_name_pad_2",
+            "pack_name_pad_3",
+            "pack_name_pad_4",
             "created",
         )
         .filter(user=request.user)

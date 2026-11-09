@@ -8,7 +8,6 @@ from .models import Collection, CollectionSound
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
     fields = ["user", "name", "num_sounds", "public", "featured_sound_ids", "description"]
-    filter_horizontal = ["sounds"]
     list_display = ("name", "user", "num_sounds", "public")
     readonly_fields = ["created"]
     actions = ["make_public", "make_private"]

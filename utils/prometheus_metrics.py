@@ -14,6 +14,22 @@ from prometheus_client import (
 from prometheus_client.core import GaugeMetricFamily
 from prometheus_client.multiprocess import MultiProcessCollector
 
+SERVICE_DURATION_BUCKETS_SECONDS: tuple[float, ...] = (
+    0.005,
+    0.01,
+    0.025,
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    1,
+    2,
+    3,
+    4,
+    5,
+    10,
+)
+
 logger = logging.getLogger("commands")
 
 

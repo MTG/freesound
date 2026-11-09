@@ -45,6 +45,7 @@ from utils.search import (
     SearchResults,
 )
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
+from utils.search_metrics import random_queries
 from utils.text import remove_control_chars
 
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
@@ -1009,6 +1010,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             _raise_search_engine_exception(e)
 
     def get_random_sound_id(self):
+        random_queries.inc()
         query = SolrQuery()
         rand_key = random.randint(1, 10000000)  # noqa: S311
         sort = ["random_%d asc" % rand_key]

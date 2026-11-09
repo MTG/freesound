@@ -58,8 +58,10 @@ from utils.search.search_sounds import (
     perform_search_engine_query,
 )
 from utils.search_logging import archive_search
+from utils.search_metrics import record_search
 
 search_logger = logging.getLogger("search")
+graylog_search_logger = logging.getLogger("graylog.search")
 
 
 def is_empty_query(request):
@@ -118,7 +120,7 @@ def search_view_helper(request):
     # Anti-abuse: reject pages beyond the hard limit before sending a request to solr
     page = sqp.get_option_value_to_apply("page")
     if is_over_hard_page_limit(page):
-        search_logger.info(
+        graylog_search_logger.info(
             "Search pagination blocked (%s)"
             % json.dumps(
                 {
@@ -129,6 +131,14 @@ def search_view_helper(request):
                     "enforced": True,
                 }
             )
+        )
+        search_logger.info(
+            "Search pagination blocked",
+            extra={
+                "page": page,
+                "query": sqp.get_option_value_to_apply("query"),
+                "reason": RequestLimitReason.SEARCH_PAGE_LIMIT.value,
+            },
         )
         count_request_limit_event(request, RequestLimitReason.SEARCH_PAGE_LIMIT, enforced=True)
         raise PaginationAbuseBlocked()
@@ -207,7 +217,7 @@ def search_view_helper(request):
                         add_filters=["pack_grouping:" + quote_filter_value(f"{d['pack'].id}_{d['pack'].name}")]
                     )
 
-        search_logger.info(
+        graylog_search_logger.info(
             "Search (%s)"
             % json.dumps(
                 {
@@ -226,6 +236,11 @@ def search_view_helper(request):
             )
         )
 
+        record_search(
+            "tags" if sqp.tags_mode_active() else "web",
+            similar_to=query_params["similar_to"],
+            query_time_ms=results.q_time,
+        )
         archive_search(
             source="tags" if sqp.tags_mode_active() else "web",
             params=request.GET,
@@ -265,7 +280,7 @@ def search_view_helper(request):
         }
 
     except SearchEngineTimeoutException as e:
-        search_logger.info(
+        graylog_search_logger.info(
             "SearchTimeout (%s)"
             % json.dumps(
                 {
@@ -281,6 +296,22 @@ def search_view_helper(request):
                     "tags_mode": sqp.tags_mode_active(),
                 }
             )
+        )
+        record_search(
+            "tags" if sqp.tags_mode_active() else "web",
+            similar_to=query_params.get("similar_to"),
+            outcome="timeout",
+        )
+        search_logger.info(
+            "Search timeout",
+            extra={
+                "url": sqp.get_url(),
+                "query": query_params["textual_query"],
+                "filter": query_params["query_filter"],
+                "page": query_params["current_page"],
+                "sort": query_params["sort"],
+                "error": str(e),
+            },
         )
         return {"error_text": "Search is overloaded, please try again later."}
     except SearchEngineInternalErrorException as e:
@@ -423,6 +454,7 @@ def search_forum(request):
                 current_page=current_page,
                 group_by_thread=False,
             )
+            record_search("forum", query_time_ms=results.q_time)
 
             paginator = PreSlicedCountProvidedPaginator(results.docs, settings.FORUM_POSTS_PER_PAGE, results.num_found)
             num_results = paginator.count
@@ -431,7 +463,7 @@ def search_forum(request):
             current_page = page.number  # clamp the pager to the real last page on overflow
             error = False
         except SearchEngineTimeoutException as e:
-            search_logger.info(
+            graylog_search_logger.info(
                 "SearchTimeout (%s)"
                 % json.dumps(
                     {
@@ -443,6 +475,18 @@ def search_forum(request):
                         "url": request.get_full_path(),
                     }
                 )
+            )
+            record_search("forum", outcome="timeout")
+            search_logger.info(
+                "Forum search timeout",
+                extra={
+                    "query": search_query,
+                    "filter": filter_query,
+                    "page": current_page,
+                    "sort": sort,
+                    "url": request.get_full_path(),
+                    "error": str(e),
+                },
             )
             error = True
             error_text = "Search is overloaded, please try again later."

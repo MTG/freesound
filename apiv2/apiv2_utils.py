@@ -63,10 +63,12 @@ from utils.search import (
     get_search_engine,
 )
 from utils.search.search_sounds import parse_weights_parameter
+from utils.search_metrics import record_search
 
 from .examples import examples
 
 search_logger = logging.getLogger("search")
+graylog_search_logger = logging.getLogger("graylog.search")
 cache_api_monitoring = caches["api_monitoring"]
 
 
@@ -289,6 +291,7 @@ def api_search(search_form, target_file=None, resource=None):
                 int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
             }
 
+        record_search("api", similar_to=search_form.cleaned_data["similar_to"], query_time_ms=result.q_time)
         return (
             ids_score,
             result.num_found,
@@ -302,11 +305,11 @@ def api_search(search_form, target_file=None, resource=None):
         )
 
     except SearchEngineTimeoutException as e:
-        search_logger.info(
+        graylog_search_logger.info(
             "SearchTimeout (%s)"
             % json.dumps(
                 {
-                    "ip": resource.end_user_ip,
+                    "ip": getattr(resource, "end_user_ip", None),
                     "query": search_form.cleaned_data["query"],
                     "filter": search_form.cleaned_data["filter"],
                     "page": search_form.cleaned_data["page"],
@@ -314,6 +317,17 @@ def api_search(search_form, target_file=None, resource=None):
                     "api_version": "v2",
                 }
             )
+        )
+        record_search("api", similar_to=search_form.cleaned_data["similar_to"], outcome="timeout")
+        search_logger.info(
+            "API search timeout",
+            extra={
+                "query": search_form.cleaned_data["query"],
+                "filter": search_form.cleaned_data["filter"],
+                "page": search_form.cleaned_data["page"],
+                "sort": search_form.cleaned_data["sort"],
+                "error": str(e),
+            },
         )
         raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource) from e
     except SearchEngineInternalErrorException as e:

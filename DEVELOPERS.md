@@ -356,9 +356,20 @@ The command has a number of options that can be set to skip some of the steps if
 
 ### Prometheus metrics
 
-From freesound you can count metrics by defining a `prometheus_client.Counter` and then calling `.inc()` on it.
-We prefer to define metrics close to the location where they are defined, especially if they are only emitted
-in that one place. A metric incremented from several modules should be defined in a generic "domain" module
+Record metrics (Counters, Histograms) by sending data to prometheus. 
+Define Prometheus metrics once at module level.  If a metric is used in only one place then
+define it where it's used, e.g. `MONITOR_HOME_VIEWS` in `monitor/views.py`.
+If a metric is used in more than one place, then store all metrics in a single place, e.g.
+`utils/search_metrics.py`. If a metric is used in only one place but conceptually groups
+with others, then you can also put it in a different module (e.g. `random_queries.inc()`).
+
+Simple metrics can be imported and updated directly at the call site, for example `random_queries.inc()`.
+Use a helper function when callers share behavior, such as updating several metrics or using a consistent
+set of labels.
+
+When measuring a Histogram, use consistent bucket sizes across Freesound. See for example  
+`SERVICE_DURATION_BUCKETS_SECONDS` from `utils.prometheus_metrics` which is used to record
+query times from Freesound to any external service (solr, redis, database).
 
 Metrics are periodically pulled from freesound by Prometheus. Freesound automatically serves an internal /metrics
 endpoint when running in production. 

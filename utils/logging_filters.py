@@ -25,9 +25,27 @@ import urllib.parse
 
 import sentry_sdk
 from django.conf import settings
+from django.http import HttpRequest
+
+_standard_record_fields = logging.makeLogRecord({}).__dict__.keys() | {"message", "asctime"}
 
 
-def get_client_ip(request):
+class ExtraFormatter(logging.Formatter):
+    """Render logging's extra fields as key=value alongside the stdout message.
+
+    The OTel handler exports the same record attributes to Loki as structured
+    fields independently of this formatter.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        message = super().format(record)
+        fields = " ".join(
+            f"{key}={value!r}" for key, value in vars(record).items() if key not in _standard_record_fields
+        )
+        return f"{message} {fields}" if fields else message
+
+
+def get_client_ip(request: HttpRequest) -> str:
     """
     This method returns the IP of the current request by retrieving it from the HTTP_X_FORWARDED_FOR header (which
     is added by nginx). If in DEBUG mode, a fake test IP will be returned.

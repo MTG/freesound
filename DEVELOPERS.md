@@ -371,8 +371,8 @@ When measuring a Histogram, use consistent bucket sizes across Freesound. See fo
 `SERVICE_DURATION_BUCKETS_SECONDS` from `utils.prometheus_metrics` which is used to record
 query times from Freesound to any external service (solr, redis, database).
 
-Metrics are periodically pulled from freesound by Prometheus. Freesound automatically serves an internal /metrics
-endpoint when running in production. 
+Django serves an internal /metrics endpoint in production and Prometheus periodically polls it.
+Celery runs an HTTP server with a /metrics endpoint in production and Prometheus periodically polls it.
 
 ### Considerations when updating Django version
 

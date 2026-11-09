@@ -184,7 +184,7 @@ SILENCED_SYSTEM_CHECKS = ["urls.W002"]
 
 INTERNAL_IPS = ["127.0.0.1"]
 
-# Bearer token to pull data from /metrics. If empty, the endpoint returns 404
+# Shared bearer token for web and worker metrics. Empty disables both endpoints.
 PROMETHEUS_METRICS_TOKEN = ""
 # Management commands push stats to a pushgateway if this value is set
 PROMETHEUS_PUSHGATEWAY_URL = ""
@@ -966,6 +966,8 @@ CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{CELERY_BROKER_REDIS
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_WORKER_SEND_TASK_EVENTS = True
+CELERY_TASK_SEND_SENT_EVENT = True
 CELERY_ASYNC_TASKS_QUEUE_NAME = "async_tasks_queue"
 CELERY_SOUND_PROCESSING_QUEUE_NAME = "sound_processing_queue"
 CELERY_CLUSTERING_TASK_QUEUE_NAME = "clustering_queue"

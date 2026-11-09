@@ -34,12 +34,15 @@ logger = logging.getLogger("commands")
 
 
 def _authorized(request):
+    return metrics_authorized(request.META.get("HTTP_AUTHORIZATION", ""))
+
+
+def metrics_authorized(header):
     expected = getattr(settings, "PROMETHEUS_METRICS_TOKEN", None)
-    header = request.META.get("HTTP_AUTHORIZATION", "")
     prefix = "Bearer "
-    if not header.startswith(prefix):
+    if not expected or not header.startswith(prefix):
         return False
-    return hmac.compare_digest(header[len(prefix) :], expected)
+    return hmac.compare_digest(header[len(prefix) :].encode(), expected.encode())
 
 
 @require_GET

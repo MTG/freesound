@@ -108,6 +108,20 @@ $navbar-height-mobile: 64px;
   }
 }
 
+.bw-nav__logout {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: $red;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
 .bw-nav__menu {
   display: flex;
   width: 18px;

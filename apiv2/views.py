@@ -23,7 +23,6 @@ import json
 import logging
 import os
 from collections import OrderedDict
-from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -1743,11 +1742,4 @@ def permission_granted(request):
         app_name = grant.application.apiv2_client.name
     except Grant.DoesNotExist:
         grant = None
-    logout_next = request.GET.get("original_path", None)
-    if logout_next:
-        logout_next = quote(logout_next)
-    else:
-        logout_next = reverse("api-login")
-    return render(
-        request, "oauth2_provider/app_authorized.html", {"code": code, "app_name": app_name, "logout_next": logout_next}
-    )
+    return render(request, "oauth2_provider/app_authorized.html", {"code": code, "app_name": app_name})

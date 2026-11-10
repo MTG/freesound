@@ -119,17 +119,6 @@ permission to your application to access their data (Fig. 2).
    Fig 2. Permission request (Step 1)
 
 
-In some situations it might be desirable that users had to log in to Freesound (i.e. type their user and password) even if they are already logged in.
-If you want to implement this behaviour, you can use an alternative url for Step 1 of the OAuth2 flow which forces a user logout before proceeding to the authorization process.
-Therefore, instead of pointing users to ``https://freesound.org/apiv2/oauth2/authorize/`` (and adding the appropriate request parameters),
-you should point users to:
-
-::
-
-  https://freesound.org/apiv2/oauth2/logout_and_authorize/?...
-
-
-
 Step 2
 ------
 
@@ -277,7 +266,7 @@ If the authorization process is well implemented (e.g. using iframes to embed th
 redirect call in your application), the process can be very fast and really transparent to the user, only having to log
 in Freesound and clicking the 'Authorize!' button (Fig. 2).
 If the user has already a valid session opened in Freesound, she won't even need to log in and will be directly redirected
-to the permission request page (unless you use the alternative ``logout_and_authorize`` url in step 1, see above).
+to the permission request page.
 And even more, if the user had previously granted permission to your application (if we see that
 there exists an either active or expired access token relating your application and the Freesound account), the permissions
 will be automatically granted and OAuth2 flow will go directly to the redirection step (Step 2), making the process even faster.

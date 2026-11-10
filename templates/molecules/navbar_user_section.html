@@ -1,8 +1,6 @@
-{% load cache %}
 {% load bw_templatetags %}
 
 {% if request.user.is_authenticated %}
-    {% cache 3600 bw_user_header request.user.id %}
         <li class="bw-nav__action dropdown">
             <a class="bw-link--grey avatar bw-nav__menu--avatar-with{% if not num_messages %}out{% else %}-message{% endif %}-notifications dropdown-toggle no-hover cursor-pointer" aria-label="User menu" id="avatar-menu"
                data-toggle="dropdown" tabindex="0">
@@ -55,7 +53,11 @@
                     <a class="bw-link--grey" href="{% url 'accounts-edit' %}">Account settings</a>
                 </li>
                 <li class="bw-nav__action dropdown-item">
-                    <a class="bw-link--red" href="{% url 'logout' %}?next=/">Logout</a>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="/">
+                        <button type="submit" class="bw-nav__logout">Logout</button>
+                    </form>
                 </li>
             </ul>
         </li>
@@ -65,7 +67,6 @@
         <li class="bw-nav__action d-none d-lg-flex">
             <a class="btn-primary no-hover" href="{% url 'accounts-upload' %}" role="menuitem">Upload sounds</a>
         </li>
-    {% endcache %}
 {% else %}
     <li class="bw-nav__action">
         <button class="btn-secondary" data-toggle="login-modal" data-target="#loginModal" role="menuitem">Log in</button>

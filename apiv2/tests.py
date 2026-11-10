@@ -27,6 +27,7 @@ from unittest import mock
 from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
@@ -118,8 +119,8 @@ class TestAPiViews(TestCase):
         resp = self.client.get(reverse("apiv2-apply"), secure=True)
         self.assertEqual(resp.status_code, 200)
 
-        # 302 response on logout page
-        resp = self.client.get(reverse("api-logout"), secure=True)
+        # 302 response on logout submission
+        resp = self.client.post(reverse("api-logout"), secure=True)
         self.assertEqual(resp.status_code, 302)
 
     def test_user_views_response_ok(self):
@@ -864,6 +865,48 @@ class APIAuthenticationTestCase(TestCase):
             allow_oauth_password_grant=False,
             require_pkce=False,  # Model an application registered before PKCE enforcement.
         )
+
+    def test_oauth_account_switch_preserves_authorization_parameters(self):
+        application = ApiV2Client.objects.create(
+            user=self.dev_user, name="Account switch", redirect_uri="https://example.com/callback?mode=one&other=two"
+        )
+        challenge = base64.urlsafe_b64encode(hashlib.sha256(b"a" * 43).digest()).rstrip(b"=").decode()
+        parameters = {
+            "client_id": application.client_id,
+            "response_type": "code",
+            "redirect_uri": application.redirect_uri,
+            "scope": "read write",
+            "state": 'state&next="quoted"+value',
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+        }
+
+        def form_data(response, action):
+            self.assertEqual(response.status_code, 200)
+            form = BeautifulSoup(response.content, "html.parser").find("form", action=action)
+            self.assertIsNotNone(form)
+            self.assertEqual(form["method"], "post")
+            return {field["name"]: field.get("value", "") for field in form.find_all("input", attrs={"name": True})}
+
+        self.client = Client(enforce_csrf_checks=True)
+        self.client.force_login(self.end_user)
+        response = self.client.get(reverse("oauth2_provider:authorize"), parameters, secure=True)
+        action = reverse("api-logout")
+        fields = form_data(response, action)
+        next_url = fields["next"]
+        self.assertEqual(urlsplit(next_url).path, reverse("oauth2_provider:authorize"))
+        returned = parse_qs(urlsplit(next_url).query)
+        for key, value in parameters.items():
+            self.assertEqual(returned[key], [value])
+        self.assertNotIn("allow", returned)
+        self.assertNotIn("csrfmiddlewaretoken", returned)
+        self.assertRedirects(self.client.post(action, fields), next_url, fetch_redirect_response=False)
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.client.force_login(self.dev_user)
+        consent = self.client.get(next_url, secure=True)
+        consent_fields = form_data(consent, reverse("oauth2_provider:authorize"))
+        self.assertEqual(consent_fields["code_challenge"], parameters["code_challenge"])
+        self.assertEqual(consent_fields["state"], parameters["state"])
 
     def test_new_registration_requires_s256_on_authorization_get_and_post(self):
         client = ApiV2Client.objects.create(name="PKCE client", user=self.dev_user)

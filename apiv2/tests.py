@@ -25,6 +25,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 from urllib.parse import parse_qs, urlsplit
+from uuid import uuid4
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
@@ -34,10 +35,10 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.http import Http404, HttpResponse
-from django.test import RequestFactory, SimpleTestCase, TestCase, TransactionTestCase, override_settings
+from django.test import Client, RequestFactory, SimpleTestCase, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
-from oauth2_provider.models import AccessToken
+from oauth2_provider.models import AccessToken, Grant, RefreshToken
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apiv2.apiv2_utils import FreesoundAPIViewMixin
@@ -1208,6 +1209,117 @@ class APIAuthenticationTestCase(TestCase):
         )
         resp = self.client.get(f"/apiv2/?token={c.key}", secure=True)
         self.assertEqual(resp.status_code, 401)
+
+
+class PermissionRevocationTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("authorized_user", email="authorized@example.com")
+        self.other_user = User.objects.create_user("other_user", email="other@example.com")
+        self.application = ApiV2Client.objects.create(user=self.other_user, name="Application", require_pkce=False)
+        self.access, self.refresh = self.create_tokens(self.user, self.application)
+        self.api = Client()
+        self.client.force_login(self.user)
+
+    def create_tokens(self, user, application):
+        access = AccessToken.objects.create(
+            user=user,
+            application=application.oauth_client,
+            token=uuid4().hex,
+            expires=timezone.now() + timedelta(hours=1),
+            scope="read",
+        )
+        refresh = RefreshToken.objects.create(
+            user=user, application=application.oauth_client, access_token=access, token=uuid4().hex
+        )
+        return access, refresh
+
+    def revoke(self):
+        response = self.client.get(reverse("revoke-permission", args=[self.application.client_id]))
+        self.assertRedirects(response, reverse("access-tokens"), fetch_redirect_response=False)
+
+    def refresh_token(self, token, application=None):
+        return self.api.post(
+            reverse("oauth2_provider:access_token"),
+            {
+                "grant_type": "refresh_token",
+                "client_id": (application or self.application).client_id,
+                "refresh_token": token,
+            },
+            secure=True,
+        )
+
+    def test_all_refresh_tokens_are_rejected_after_revocation(self):
+        _, second_refresh = self.create_tokens(self.user, self.application)
+        self.revoke()
+        self.assertFalse(
+            RefreshToken.objects.filter(user=self.user, application=self.application.oauth_client).exists()
+        )
+        response = self.refresh_token(self.refresh.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "invalid_grant")
+        self.assertEqual(self.refresh_token(second_refresh.token).json()["error"], "invalid_grant")
+
+    def test_access_token_is_rejected_after_revocation(self):
+        self.revoke()
+        response = self.api.get("/apiv2/me/", secure=True, HTTP_AUTHORIZATION=f"Bearer {self.access.token}")
+        self.assertEqual(response.status_code, 401)
+
+    def test_pending_authorization_code_is_rejected_after_revocation(self):
+        grant = Grant.objects.create(
+            user=self.user,
+            application=self.application.oauth_client,
+            code=uuid4().hex,
+            expires=timezone.now() + timedelta(minutes=5),
+            redirect_uri=self.application.redirect_uri,
+            scope="read",
+        )
+        self.revoke()
+        response = self.api.post(
+            reverse("oauth2_provider:access_token"),
+            {
+                "grant_type": "authorization_code",
+                "client_id": self.application.client_id,
+                "code": grant.code,
+                "redirect_uri": self.application.redirect_uri,
+            },
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "invalid_grant")
+
+    def test_refresh_token_without_access_token_is_removed(self):
+        self.access.delete()
+        self.refresh.refresh_from_db()
+        self.assertIsNone(self.refresh.access_token_id)
+        self.revoke()
+        self.assertFalse(RefreshToken.objects.filter(pk=self.refresh.pk).exists())
+        self.assertEqual(self.refresh_token(self.refresh.token).json()["error"], "invalid_grant")
+
+    @override_settings(OAUTH2_PROVIDER={"REFRESH_TOKEN_GRACE_PERIOD_SECONDS": 3600})
+    def test_revocation_is_immediate_with_refresh_grace_period(self):
+        self.revoke()
+        response = self.refresh_token(self.refresh.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "invalid_grant")
+
+    def test_other_users_authorization_remains_valid(self):
+        access, refresh = self.create_tokens(self.other_user, self.application)
+        self.revoke()
+        self.assertEqual(
+            self.api.get("/apiv2/me/", secure=True, HTTP_AUTHORIZATION=f"Bearer {access.token}").status_code, 200
+        )
+        self.assertEqual(self.refresh_token(refresh.token).status_code, 200)
+
+    def test_users_other_application_remains_authorized(self):
+        other_application = ApiV2Client.objects.create(
+            user=self.other_user, name="Other application", require_pkce=False
+        )
+        access, refresh = self.create_tokens(self.user, other_application)
+        self.revoke()
+        self.assertEqual(
+            self.api.get("/apiv2/me/", secure=True, HTTP_AUTHORIZATION=f"Bearer {access.token}").status_code, 200
+        )
+        self.assertEqual(self.refresh_token(refresh.token, other_application).status_code, 200)
 
 
 class TestAPIExceptionHandlerIntegration(SimpleTestCase):

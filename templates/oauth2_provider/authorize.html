@@ -35,6 +35,16 @@
             font-style: italic;
         }
 
+        .switch-account { display: inline; }
+        .switch-account button {
+            background: none;
+            border: 0;
+            padding: 0;
+            color: #0000ee;
+            text-decoration: underline;
+            font: inherit;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -58,7 +68,13 @@
             <input type="submit" class="btn login large danger" value="Deny access" />
             <input type="submit" class="btn login large primary" name="allow" value="Authorize!" />
         </form>
-        <p>(logged in as <strong>{{ user }}</strong>, <a href="{% url "api-logout" %}?next={% next_url_for_login form.client_id.value form.response_type.value form.state.value %}">login as another user</a>)</p>
+        <div>(logged in as <strong>{{ user }}</strong>,
+            <form class="switch-account" method="post" action="{% url 'api-logout' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% next_url_for_login form %}">
+                <button type="submit">login as another user</button>
+            </form>
+        )</div>
     {% else %}
         <p>Oops! there were some errors...</p>
 

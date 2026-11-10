@@ -30,13 +30,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import caches
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from oauth2_provider.models import AccessToken, Grant
+from oauth2_provider.models import AccessToken, Grant, RefreshToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, throttle_classes
@@ -1720,15 +1720,14 @@ def granted_permissions(request):
 
 
 @login_required
+@transaction.atomic
 def revoke_permission(request, client_id):
     user = request.user
-    tokens = AccessToken.objects.filter(user=user, application__client_id=client_id)
-    for token in tokens:
-        token.delete()
-
-    grants = Grant.objects.filter(user=user, application__client_id=client_id)
-    for grant in grants:
-        grant.delete()
+    # Delete access tokens and grants. Delete refresh tokens so that a new access
+    # token cannot be created.
+    RefreshToken.objects.filter(user=user, application__client_id=client_id).delete()
+    AccessToken.objects.filter(user=user, application__client_id=client_id).delete()
+    Grant.objects.filter(user=user, application__client_id=client_id).delete()
 
     messages.add_message(request, messages.INFO, "Permission has been successfully revoked")
     return HttpResponseRedirect(reverse("access-tokens"))

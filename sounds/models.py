@@ -59,7 +59,7 @@ from django.db.models.functions import Coalesce, Greatest, JSONObject, RowNumber
 from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.encoding import smart_str
 from django.utils.functional import cached_property
@@ -2330,7 +2330,11 @@ class Pack(LicenseSummaryMixin, models.Model):
         return quote(quote_filter_value(f"{self.id}_{self.name}"), safe="")
 
     def browse_pack_tag_url(self, tag):
-        return reverse("tags", args=[tag]) + f"?pack_flt={self.pack_filter_value()}"
+        try:
+            url = reverse("tags", args=[tag])
+        except NoReverseMatch:
+            return ""
+        return url + f"?pack_flt={self.pack_filter_value()}"
 
     def get_pack_tags_bw(self):
         try:

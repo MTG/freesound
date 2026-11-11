@@ -29,7 +29,7 @@ while for some tonal descriptors, the frame size is 4,096 samples with a hop siz
 
 """
 
-curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"
+curl_str = '    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields={}&token=YOUR_API_KEY"'
 image_folder = "../source/_static/descriptors/"
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
@@ -58,7 +58,7 @@ def print_descriptor(descriptor):
     print(descriptor["name"])
     print("-------------------------")
     print("\n::\n")
-    print(curl_str + descriptor["name"])
+    print(curl_str.format(descriptor["name"]))
 
     print("\n**Description:** " + descriptor["description"])
 

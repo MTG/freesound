@@ -44,7 +44,7 @@ query                                     string                     The query! 
 :ref:`sort <search-sort>`                 string                     Indicates how query results should be sorted. See below for a list of the sorting options. By default ``sort=score``.
 :ref:`similar_to <search-similar>`        integer or array[float]    Allows finding sounds similar to a given sound. You can pass the ID of a sound (integer) or a similarity vector (array of floats separated by commas) and the results will be sorted by their similarity to this sound.
 :ref:`similarity_space <search-similar>`  string                     Indicates the similarity space used when performing similarity search. If not defined, the default similarity space is used.
-group_by_pack                             bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many other results belong to the same pack (and have not been returned) ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
+group_by_pack                             bool (yes=1, no=0)         This parameter represents a boolean option to indicate whether to collapse results belonging to sounds of the same pack into single entries in the results list. If ``group_by_pack=1`` and search results contain more than one sound that belongs to the same pack, only one sound for each distinct pack is returned (sounds with no packs are returned as well). However, the returned sound will feature two extra properties to access these other sounds omitted from the results list: ``n_from_same_pack``: indicates how many results belong to the same pack, including the returned sound. ``more_from_same_pack``: uri pointing to the list of omitted sound results of the same pack (also including the result which has already been returned). See examples below. By default ``group_by_pack=0``.
 :ref:`weights <search-weights>`           string                     Allows definition of custom weights when matching queries with sound metadata fields. You should most likely never use that :)
 :ref:`fields <search-fields>`             strings (comma separated)  Indicates which sound properties should be included in every sound of the response. Sound properties can be any of those listed in :ref:`sound-instance-response` (plus an additional field ``score`` which returns a matching score added by the search engine), and must be separated by commas. By default ``fields=id,name,tags,username,license``. **Use this parameter to optimize request time by only requesting the information you really need.**
 page                                      string                     Query results are paginated, this parameter indicates what page should be returned. By default ``page=1``.
@@ -243,6 +243,19 @@ Search resource returns a *sound list response*. Sound list responses have the f
   }
 
 You can use the request parameters ``fields``, ``page``, and ``page_size`` to indicate what information should be returned for any sound in the list and the size/page number (see :ref:`sound-search-parameters`).
+
+Additional search result fields
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. rst-class:: fieldstable
+
+======================  ==============================================================================================================================
+Field                   Description
+======================  ==============================================================================================================================
+distance_to_target      Distance from the target in the selected similarity space. Included for similarity searches.
+n_from_same_pack        Number of matching sounds in the same pack, including the returned sound. Included when results are grouped by pack.
+more_from_same_pack     URL for the matching sounds in the same pack, including the returned sound. Included when results are grouped by pack.
+======================  ==============================================================================================================================
 
 
 .. _sound-search-examples:
@@ -466,6 +479,8 @@ The ``fields`` parameter allows you to restrict or expand the set of fields retu
 By default, all metadata fields from the first table are returned, while content-based descriptors from the second table are excluded.
 To return information about specific descriptors, their names can be added to ``fields`` (e.g. ``fields=mfcc,bpm``).
 Descriptor names are also listed in :ref:`analysis-docs`.
+Similarity vector field names use the prefix ``sim_`` followed by the similarity space name, for example ``sim_laion_clap``.
+See :ref:`search-similar` for the available similarity spaces.
 Note that when ``fields`` is explicitly defined, the default fields are not included automatically and all desired fields must be listed explicitly.
 
 
@@ -494,9 +509,8 @@ You can use the :ref:`sound-sound` resource if filtering is needed.
 Response
 --------
 
-The response to a Sound Analysis request is a dictionary with the values of all content-based descriptors listed in :ref:`analysis-docs`.
-That dictionary can be filtered using an extra ``fields`` parameter which should include a list of comma separated descriptor names 
-chosen from those listed in :ref:`analysis-docs` (e.g. ``fields=mfcc,bpm``).
+The response to a Sound Analysis request is a dictionary containing all content-based descriptors listed in :ref:`analysis-docs`
+and similarity vectors for the available similarity spaces.
 
 
 Examples
@@ -1004,7 +1018,7 @@ url                       URI               The URI for this user's profile on t
 username                  string            The username.
 about                     string            The 'about' text of the user's profile (if indicated).
 homepage                  URI               The URI of the user's homepage outside Freesound (if indicated).
-avatar                    object            Dictionary including the URIs for the avatar of the user. The avatar is presented in three sizes ``Small``, ``Medium`` and ``Large``, which correspond to the three fields in the dictionary. If user has no avatar, this field is null.
+avatar                    object            Dictionary with three keys: ``small``, ``medium`` and ``large``. Each value is the URI of the user's avatar at that size. If the user has no avatar, all values are ``null``.
 date_joined               string            The date when the user joined Freesound (e.g. "2008-08-07T17:39:00").
 num_sounds                numeric           The number of sounds uploaded by the user.
 sounds                    URI               The URI for a list of sounds by the user.
@@ -1291,16 +1305,16 @@ The structure of the response is as follows:
   {
     "current": {
       "burst": {
-          "num_requests": <number of requests made in the current burst period (minute)>,
+          "num": <number of requests made in the current burst period (minute)>,
           "limit": <burst limit for the current API client>
       },
       "sustained": {
-          "num_requests": <number of requests made in the current sustained period (day)>,
+          "num": <number of requests made in the current sustained period (day)>,
           "limit": <sustained limit for the current API client>
-      },
+      }
     },
     "historic": [
-        ["YYYY-DD-MM", <number of requests made in YYYY-DD-MM>],
+        ["YYYY-MM-DD", <number of requests made in YYYY-MM-DD>],
         ...
     ]
   }

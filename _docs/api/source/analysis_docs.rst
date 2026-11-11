@@ -24,7 +24,7 @@ while for some tonal descriptors, the frame size is 4,096 samples with a hop siz
 
 
 Main set of descriptors
->>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>
 
 beat_count
 -------------------------
@@ -607,7 +607,7 @@ warmth
 
 
 Advanced set of descriptors
->>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 amplitude_peak_ratio
 -------------------------

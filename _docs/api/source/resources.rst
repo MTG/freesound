@@ -35,6 +35,7 @@ Parameters
 Search queries are defined using the following parameters:
 
 .. rst-class:: fieldstable
+
 ========================================  =========================  ======================
 Name                                      Type                       Description
 ========================================  =========================  ======================
@@ -166,7 +167,7 @@ are marked with "yes" in the ``filtering`` column and are of type ``numeric`` or
 .. _search-similar:
 
 The 'similar_to' and 'similarity_space' parameters
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These parameters allow similarity-based search in order to retrieve sounds that are acoustically, semantically, or perceptually similar to a given reference sound.
 The ``similar_to`` parameter takes the ID of a sound (e.g. 1234) or a similarity vector (e.g. [1.36, 2.05, ..]) and returns results sorted by similarity to that sound. For example::
@@ -280,6 +281,7 @@ Response (sound instance)
 The Sound Instance response is a dictionary including the following properties/fields:
 
 .. rst-class:: fieldstable
+
 =========================  ================  =========  ====================================================================================
 Field name                 Type              Filtering  Description
 =========================  ================  =========  ====================================================================================
@@ -332,6 +334,7 @@ The available descriptors, whose names are valid as field names, are:
 .. _AudioCommons: http://www.audiocommons.org/
 
 .. rst-class:: fieldstable
+
 =========================  ==============  =========  =================================================================================================================================================================================================================================================================================================================================================
 Field name                 Type            Filtering  Description                                                                                                                           
 =========================  ==============  =========  =================================================================================================================================================================================================================================================================================================================================================
@@ -521,6 +524,7 @@ Essentially, the Similar Sounds resource is like the parameter ``similar_to`` in
 You can optionally define the following parameters: 
 
 .. rst-class:: fieldstable
+
 ======================  =========================  ======================
 Name                    Type                       Description
 ======================  =========================  ======================
@@ -636,6 +640,7 @@ Supported file formats include .wav, .aif, .flac, .ogg and .mp3.
 Additionally, the request can include the following POST parameters to provide a description for the file:
 
 .. rst-class:: fieldstable
+
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
@@ -710,6 +715,7 @@ Parameters
 A request to the Describe Sound resource must include the following POST parameters:
 
 .. rst-class:: fieldstable
+
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
@@ -829,6 +835,7 @@ Parameters
 A request to the Edit Sound Description resource must include mostly the same POST parameters that would be included in a :ref:`sound-describe` request:
 
 .. rst-class:: fieldstable
+
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
@@ -871,6 +878,7 @@ Parameters
 A request to the Bookmark Sound resource can include the following POST parameters:
 
 .. rst-class:: fieldstable
+
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
@@ -908,6 +916,7 @@ Parameters
 A request to the Rate Sound resource must only include a single POST parameter:
 
 .. rst-class:: fieldstable
+
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
@@ -946,6 +955,7 @@ Parameters
 A request to the Comment Sound resource must only include a single POST parameter:
 
 .. rst-class:: fieldstable
+
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================
@@ -986,6 +996,7 @@ Response
 The User Instance response is a dictionary including the following properties/fields:
 
 .. rst-class:: fieldstable
+
 ========================  ================  ====================================================================================
 Name                      Type              Description
 ========================  ================  ====================================================================================
@@ -1094,6 +1105,7 @@ Response
 The Pack Instance response is a dictionary including the following properties/fields:
 
 .. rst-class:: fieldstable
+
 ====================  ================  ====================================================================================
 Name                  Type              Description
 ====================  ================  ====================================================================================

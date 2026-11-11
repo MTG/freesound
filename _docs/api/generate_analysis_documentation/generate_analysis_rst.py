@@ -1,9 +1,7 @@
 import csv
 import glob
-import json
 import os
 import re
-import urllib.request
 
 header = """
 .. _analysis-docs:
@@ -32,7 +30,7 @@ while for some tonal descriptors, the frame size is 4,096 samples with a hop siz
 """
 
 curl_str = "    curl https://freesound.org/api/sounds/<sound_id>/analysis/"
-image_folder = '../source/_static/descriptors/'
+image_folder = "../source/_static/descriptors/"
 image_str = "    .. image:: _static/descriptors/"
 height_str = "        :height: 300px"
 
@@ -40,17 +38,20 @@ descriptors = []
 with open("descriptors.csv") as f:
     reader = csv.DictReader(f)
     for row in reader:
-        descriptors.append({
-            "name": row["Descriptor name"].strip(),
-            "mode": row["Mode"].strip(),
-            "type": row["Type"].strip(),
-            "complexity": row["Complexity"].strip(),
-            "description": row["Description"].strip(),
-            "values": row.get("Range", "").strip(),
-            "links": row.get("Links", "").strip()
-        })
+        descriptors.append(
+            {
+                "name": row["Descriptor name"].strip(),
+                "mode": row["Mode"].strip(),
+                "type": row["Type"].strip(),
+                "complexity": row["Complexity"].strip(),
+                "description": row["Description"].strip(),
+                "values": row.get("Range", "").strip(),
+                "links": row.get("Links", "").strip(),
+            }
+        )
 
 print(header)
+
 
 def print_descriptor(descriptor):
     """Print a single descriptor in formatted documentation style."""
@@ -76,11 +77,15 @@ def print_descriptor(descriptor):
 
     image_paths = (
         glob.glob(os.path.join(image_folder, f"{descriptor['name']}.png"))
-        or glob.glob(os.path.join(image_folder, f"{descriptor['name']}-*.png"))  #descriptor_[number]
+        or glob.glob(os.path.join(image_folder, f"{descriptor['name']}-*.png"))  # descriptor_[number]
     )
-            
+
     if image_paths:
-        image_paths.sort(key=lambda p: int(re.findall(r'\d+', os.path.basename(p))[-1]) if re.findall(r'\d+', os.path.basename(p)) else -1)
+        image_paths.sort(
+            key=lambda p: int(re.findall(r"\d+", os.path.basename(p))[-1])
+            if re.findall(r"\d+", os.path.basename(p))
+            else -1
+        )
         print("\n**Distribution in Freesound**\n")
         for image_path in image_paths:
             print(f"{image_str}{os.path.basename(image_path)}")
@@ -88,16 +93,17 @@ def print_descriptor(descriptor):
 
     print("\n")
 
+
 # Split descriptors by complexity
 main_descriptors = [d for d in descriptors if d.get("complexity").strip() != "advanced"]
 advanced_descriptors = [d for d in descriptors if d.get("complexity").strip() == "advanced"]
 
 print("Main set of descriptors")
-print(">>>>>>>>>>>>>>>>\n")
+print(">>>>>>>>>>>>>>>>>>>>>>>\n")
 for descriptor in main_descriptors:
     print_descriptor(descriptor)
 
 print("Advanced set of descriptors")
-print(">>>>>>>>>>>>>>>>\n")
+print(">>>>>>>>>>>>>>>>>>>>>>>>>>>\n")
 for descriptor in advanced_descriptors:
     print_descriptor(descriptor)

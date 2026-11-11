@@ -51,11 +51,11 @@ basically consists of three steps:
 
 * Step 1: Your application redirects users to a Freesound page where they log in and are asked to give permissions to your application.
 
-* Step 2: If users grant access to your application, Freesound redirects users to a url you provide and includes an authorization grant as a GET parameter*.
+* Step 2: If users grant access to your application, Freesound redirects users to a url you provide and includes an authorization grant as a GET parameter\*.
 
 * Step 3: Your application uses that authorization grant to request an access token that 'links' the end user with your application and that you will then need to add to all your API requests.
 
-*If your application can't handle requests, the user can also be redirected to another Freesound page that prints the
+\*If your application can't handle requests, the user can also be redirected to another Freesound page that prints the
 authorization grant on screen so that the user can manually introduce it in your application (see below).
 
 All these steps and all other further OAuth2 API requests **need to be made over HTTPS**.

@@ -927,6 +927,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
                 if self.auth_method_name == "OAuth2":
                     apiv2_client = request.auth.application.apiv2_client
                 sound_fields = serializer.data.copy()
+                sound_fields["name"] = sound_fields.get("name") or sound_fields["upload_filename"]
                 sound_fields["tags"] = clean_and_split_tags(sound_fields["tags"])
                 sound_fields["dest_path"] = os.path.join(
                     self.user.profile.locations()["uploads_dir"], sound_fields["upload_filename"]

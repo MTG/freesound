@@ -233,6 +233,23 @@ class TestAPISoundWrites(TestCase):
         create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
 
         self.assertEqual(create_sound.call_args.args[1]["tags"], {"bird", "forest", "wind"})
+        self.assertEqual(create_sound.call_args.args[1]["name"], "Bird recording")
+
+    @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
+    @mock.patch("apiv2.views.generate_tree", return_value=({}, {1: SimpleNamespace(name="bird.wav")}))
+    def test_describe_defaults_name_to_upload_filename(self, generate_tree, create_sound):
+        response = self.client.post(
+            reverse("apiv2-uploads-describe"),
+            {
+                "upload_filename": "bird.wav",
+                "description": "Birds",
+                "license": "Creative Commons 0",
+                "tags": "bird forest wind",
+            },
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
+        self.assertEqual(create_sound.call_args.args[1]["name"], "bird.wav")
 
     @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
     @mock.patch("apiv2.views.handle_uploaded_file")

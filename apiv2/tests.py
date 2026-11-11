@@ -232,6 +232,8 @@ class TestAPISoundWrites(TestCase):
         self.assertEqual(response.json()["id"], 123)
         create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
 
+        self.assertEqual(create_sound.call_args.args[1]["tags"], {"bird", "forest", "wind"})
+
     @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
     @mock.patch("apiv2.views.handle_uploaded_file")
     def test_upload_calls_create_sound_with_oauth(self, handle_uploaded_file, create_sound):
@@ -253,6 +255,7 @@ class TestAPISoundWrites(TestCase):
         create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
         fields = create_sound.call_args.args[1]
         self.assertEqual(fields["name"], "Bird recording")
+        self.assertEqual(fields["tags"], {"bird", "forest", "wind"})
         self.assertEqual(fields["dest_path"], str(Path(self.user.profile.locations("uploads_dir")) / "bird.wav"))
 
 

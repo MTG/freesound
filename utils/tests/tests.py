@@ -109,7 +109,10 @@ class UtilsTest(TestCase):
         create_sound(user, sound_fields, process=False)
         self.assertEqual(user.sounds.all().count(), 2)
         self.assertEqual(Pack.objects.filter(name="new pack").exists(), True)
-        self.assertEqual(user.sounds.get(original_filename=filenames[1]).tags.count(), 3)
+        self.assertCountEqual(
+            user.sounds.get(original_filename=filenames[1]).tags.values_list("name", flat=True),
+            ["tag1", "tag2", "tag3"],
+        )
         self.assertNotEqual(user.sounds.get(original_filename=filenames[1]).geotag, None)
 
 

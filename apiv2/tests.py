@@ -20,6 +20,7 @@
 import base64
 import hashlib
 import json
+from datetime import timedelta
 from unittest import mock
 from urllib.parse import parse_qs, urlsplit
 
@@ -32,6 +33,8 @@ from django.db.migrations.executor import MigrationExecutor
 from django.http import Http404, HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
+from oauth2_provider.models import AccessToken
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
 from apiv2.apiv2_utils import FreesoundAPIViewMixin
@@ -183,6 +186,33 @@ class TestAPI(TestCase):
             "/apiv2/search/text/?query=ambient&filter=tag:(rain%20OR%CAfe)", secure=True, **headers
         )
         self.assertEqual(resp.status_code, 200)
+
+
+class TestAPITagWrites(TestCase):
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.user = User.objects.create_user("tag-writer")
+        self.api_client = ApiV2Client.objects.create(name="Tag writer", user=self.user)
+        token = AccessToken.objects.create(
+            user=self.user,
+            application=self.api_client.oauth_client,
+            token="tag-write-test-token",
+            expires=timezone.now() + timedelta(hours=1),
+            scope="read write",
+        )
+        self.client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {token.token}"
+
+    def test_edit_splits_tag_string(self):
+        _, _, [sound] = create_user_and_sounds(
+            user=self.user, tags="old-tag", moderation_state="OK", processing_state="OK"
+        )
+        response = self.client.post(
+            reverse("apiv2-sound-edit", args=[sound.id]),
+            {"tags": "bird forest wind"},
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertCountEqual(sound.tags.values_list("name", flat=True), ["bird", "forest", "wind"])
 
 
 class TestDownloadViews(TestCase):

@@ -995,7 +995,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         sound.description = serializer.data["description"]
                 if "tags" in serializer.data:
                     if serializer.data["tags"]:
-                        sound.set_tags(serializer.data["tags"])
+                        sound.set_tags(clean_and_split_tags(serializer.data["tags"]))
                 if "license" in serializer.data:
                     if serializer.data["license"]:
                         license = License.objects.filter(name=serializer.data["license"]).order_by("-id").first()

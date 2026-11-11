@@ -355,7 +355,7 @@ onset_times
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/onset_times
 
-**Description:** Timestamps for the detected onsets in the audio signal in seconds, which can vary according to the amount of onsets (computed by the onset_count descriptor).
+**Description:** Timestamps of the detected onsets in the audio signal, in seconds. One timestamp per onset reported by ``onset_count``.
 
 **Mode:** VL
 
@@ -417,7 +417,7 @@ pitch_confidence
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/pitch_confidence
 
-**Description:** A measure of the confidence with which the pitch was estimated. If the output is near 1, there exist just one pitch in the mixture, an output near 0 indicates multiple, not distinguishable pitches.
+**Description:** A measure of the confidence with which the pitch was estimated. If the output is near 1, there is only one pitch in the mixture. An output near 0 indicates multiple, indistinguishable pitches.
 
 **Mode:** mean
 
@@ -1289,7 +1289,7 @@ temporal_centroid
 
     curl https://freesound.org/api/sounds/<sound_id>/analysis/temporal_centroid
 
-**Description:** Temporal centroid of the audio signal, defined as the time point at which the temporal balancing position of the sound event energy.
+**Description:** Temporal centroid of the audio signal, defined as the temporal balancing position of the sound event energy.
 
 **Type:** numeric
 

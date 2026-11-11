@@ -11,21 +11,17 @@ advanced queries combining content analysis features and other metadata (tags, e
 With the Freesound APIv2, you can also upload, comment, rate and bookmark sounds!
 
 
-**NOTE**: Some of the examples in the API documentation use the multi-platform command-line tool ``curl`` (http://curl.haxx.se).
-If you do not have ``curl`` installed, we recommend you to install it as it will help you learning how to use the Freesound API.
-
-
 Authentication
 --------------
 
 In order to start using APIv2 you'll need an API credential that you can request in https://freesound.org/apiv2/apply.
-Basic API calls can be authenticated using a typical api key mechanism in which you'll need to add the key given with your APIv2
+Basic API calls can be authenticated using a typical API key mechanism in which you'll need to add the key given with your APIv2
 credential into every request you make. You'll need to add the key as a ``token`` request parameter.
 For example:
 
 ::
 
-  curl "https://freesound.org/apiv2/search/text/?query=piano&token=YOUR_API_KEY"
+  curl "https://freesound.org/apiv2/search/?query=piano&token=YOUR_API_KEY"
 
 However, there are some APIv2 resources that require the use of OAuth2 authentication.
 Please, read the :ref:`authentication` docs for a complete description of both authentication methods and how to use them.
@@ -42,7 +38,7 @@ Searching
 =========
 
 There are several ways in which you can search sounds using the Freesound APIv2.
-The most basic one is using the :ref:`sound-text-search` resource which allows you to define query terms and other parameters to filter query results.
+The most basic one is using the :ref:`sound-search` resource which allows you to define query terms and other parameters to filter query results.
 As a quick example, the following request would return all sorts of dog sounds:
 
 ::
@@ -57,25 +53,24 @@ As a quick example, you can retrieve sounds that feature a particular pitch as f
 
 ::
 
-  curl "https://freesound.org/apiv2/search/?filter=pitch:\[219.9%20TO%20220.1\]"
+  curl "https://freesound.org/apiv2/search/?filter=pitch:\[219.9%20TO%20220.1\]&token=YOUR_API_KEY"
 
 
 Downloading sounds
 ==================
 
-The Freesound APIv2 allows you to downloads sounds from Freesound.
+The Freesound API allows you to download sounds from Freesound.
 There are two ways in which you can download sounds.
 The first one is to download the original file that was uploaded to Freesound for a particular sound.
 You can do that using the :ref:`sound-download` resource.
 This resource allows you to retrieve the file in its maximum quality, but the format depends on the original format with which the sound was uploaded (it can be .wav, .aif, .flac, .ogg or .mp3).
-This means that the weight of the sound can vary a lot depending on the format.
 Downloading original sound files requires OAuth2 authentication (see :ref:`authentication`).
 
 
 The second way in which you can download sounds is by accessing their *previews*.
 When sounds are uploaded to Freesound we automatically generate .ogg and .mp3 versions for each one with different qualities. We call these versions *previews*.
 Using the :ref:`sound-sound` resource (or any resource that returns a list of sounds), it is possible to obtain the urls for retrieving sound previews.
-In general, using previews is much more faster than downloading sounds in their original quality, and allows your application to retrieve sounds with an unified format.
+In general, downloading previews is faster than downloading sounds in their original quality and allows your application to retrieve sounds in a consistent format.
 Retrieving previews does not require OAuth2 authentication.
 
 
@@ -83,8 +78,8 @@ Uploading sounds
 ================
 
 APIv2 also allows you to upload sounds to Freesound!
-Sounds are uploaded by providing an audio file and some metadata which we call *sound description*.
-The minimum sound description consists in a list of tags, a textual description for the sound and the license with which the sound should be released.
+Sounds are uploaded by providing an audio file and metadata, which we call the *sound description*.
+The minimum sound description consists of a category, a list of tags, a textual description, and a license.
 You can upload and describe sounds using the :ref:`sound-upload` resource (requires OAuth2).
 Alternatively, you can simply upload an audio file using the :ref:`sound-upload` resource, and later describe it using the :ref:`sound-describe` resource.
 
@@ -94,20 +89,22 @@ Processing is an automatic step that is almost instantaneous, but moderation is 
 The Freesound APIv2 provides a resource, :ref:`sound-pending-uploads`, to keep track of the status of uploaded files.
 
 
-More stuff...
-=============
+Other resources
+===============
 
-Besides searching and uploading/downloading sounds, the APIv2 also allows you retrieve information about sound analysis, similar sounds, sound packs, users, bookmarks...
-Check the :ref:`resources` page for a complete list and description of resources!
+The Freesound API also provides access to :ref:`sound analysis <sound-analysis>`,
+:ref:`similar sounds <similar-sounds>`, :ref:`packs <pack_instance>`,
+:ref:`users <user_instance>`, and :ref:`bookmarks <bookmark-categories>`.
+See the :ref:`resources` page for the complete list.
 
 
-Browseable API
---------------
+Browsable API
+-------------
 
-Freesound APIv2 includes a browseable API which renders responses in nice html when accessing them with your browser.
-Using the browseable api will allow you to quickly experiment with resources and learn to use Freesound APIv2.
-You can start using the browseable api pointing your browser to https://freesound.org/apiv2 .
-Note that the browseable API authenticates yourself with standard session authentication (instead of token or OAuth2), so you'll need to login into Freesound.
+The Freesound API includes a browsable interface for exploring resources and trying requests in your browser.
+
+Visit https://freesound.org/apiv2/ and use the login link if you're not already logged in.
+Once logged in, you can navigate the API interface without providing an API key.
 
 
 POST request content types
@@ -126,7 +123,7 @@ Responses are returned as JSON. You can request this explicitly with a ``format`
 
   https://freesound.org/apiv2/sounds/1234/?format=json
 
-If the format is not specified, it will be automatically determined in the content-negotiation phase, typically defaulting to json.
+If the format is not specified, it will be automatically determined in the content-negotiation phase, typically defaulting to JSON.
 
 
 Errors
@@ -140,10 +137,10 @@ HTTP code                  Explanation
 =========================  ====================================================================
 400 Bad request            The request was unsuccessful because the request is missing parameters or parameters are not properly formatted.
 401 Unauthorized           The credentials you provided are invalid.
-403 Forbidden              Mainly returned when resources that require https are accessed with plain http requests.
+403 Forbidden              Mainly returned when resources that require HTTPS are accessed with plain HTTP requests.
 404 Not found              The information that the request is trying to access does not exist.
 405 Method not allowed     The current request method (generally GET or POST) is not supported by the resource.
-409 Conflict               The request is valid but it can not be processed for some reason detailed in the response.
+409 Conflict               The request is valid but it cannot be processed for some reason detailed in the response.
 429 Too many requests      The request was throttled because of exceeding request limit rates (see :ref:`overview-throttling`).
 5xx                        An error on our part, hopefully you will see few of these.
 =========================  ====================================================================
@@ -167,7 +164,7 @@ If a request is throttled, the APIv2 will return a 429 Too many requests respons
 Although we have set the default usage limits so that they should be enough for most applications,
 if these usage limits are not enough for you, please contact Freesound administrators using the contact form (https://freesound.org/contact/) to request more permissive limits.
 
-For more information about throttling and how you can find about about your current usage, please refer to the :ref:`current-usage` resource documentation.
+See the :ref:`Usage resource documentation <current-usage>` for more information about rate limits and your current usage.
 
 
 More help

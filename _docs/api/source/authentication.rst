@@ -3,13 +3,13 @@
 Authentication
 <<<<<<<<<<<<<<
 
-APIv2 offers two authentication strategies: Token based authentication and OAuth2.
+APIv2 offers two authentication strategies: Token-based authentication and OAuth2.
 
-Token based authentication is the simplest one as it only requires the developer to request an API credential
-(https://freesound.org/apiv2/apply) and add a provided api key to all requests (see below).
-The flow for OAuth2 authentication is a little bit more complicated but it allows users to log in Freesound
+Token-based authentication is the simplest one as it only requires the developer to request an API credential
+(https://freesound.org/apiv2/apply) and add a provided API key to all requests (see below).
+The flow for OAuth2 authentication is a little bit more complicated but it allows users to log in to Freesound
 from your application. This enables non "read-only" resources such as uploading or rating sounds.
-**OAuth2 resources require the requests to be made over https**.
+**OAuth2 resources require the requests to be made over HTTPS**.
 Most of the resources are accessible using both authentication strategies but some of them
 are restricted to the use of OAuth2. These resources are marked as "OAuth2 required" in the :ref:`resources` page.
 
@@ -20,7 +20,7 @@ Token authentication
 
 To authenticate API calls with the token strategy you'll need to create a Freesound account (if you don't have one yet!)
 and request a new API credential by visiting https://freesound.org/apiv2/apply.
-In this page you'll see a table with all API credentials you have requested plus some other information. You should use
+On this page you'll see a table with all API credentials you have requested plus some other information. You should use
 the keys in 'Client secret/Api key' column, which are long alphanumeric strings.
 You should get a different API key for every application you develop.
 
@@ -29,13 +29,13 @@ adding the key as a ``token`` GET parameter...
 
 ::
 
-  curl "https://freesound.org/apiv2/search/text/?query=piano&token=YOUR_API_KEY"
+  curl "https://freesound.org/apiv2/search/?query=piano&token=YOUR_API_KEY"
 
 ...or by adding it as an authorization header:
 
 ::
 
-  curl -H "Authorization: Token YOUR_API_KEY" "https://freesound.org/apiv2/search/text/?query=piano"
+  curl -H "Authorization: Token YOUR_API_KEY" "https://freesound.org/apiv2/search/?query=piano"
 
 And there we go, that's all you need to know about token authentication!
 
@@ -58,7 +58,7 @@ basically consists of three steps:
 *If your application can't handle requests, the user can also be redirected to another Freesound page that prints the
 authorization grant on screen so that the user can manually introduce it in your application (see below).
 
-All these steps and all other further OAuth2 API requests **need to be made over https**.
+All these steps and all other further OAuth2 API requests **need to be made over HTTPS**.
 
 Applications must use PKCE (Proof Key for Code Exchange) with the ``S256``
 challenge method, as described below. Applications registered before November 2026
@@ -105,7 +105,7 @@ Example:
 
   https://freesound.org/apiv2/oauth2/authorize/?client_id=YOUR_CLIENT_ID&response_type=code&redirect_uri=YOUR_URL_ENCODED_REDIRECT_URL&code_challenge=YOUR_CODE_CHALLENGE&code_challenge_method=S256&state=YOUR_RANDOM_STATE
 
-In this page users will be prompted to log in into Freesound (if they are not already logged in, Fig. 1) and will be asked to give
+On this page users will be prompted to log in to Freesound (if they are not already logged in, Fig. 1) and will be asked to give
 permission to your application to access their data (Fig. 2).
 
 .. figure:: _static/authentication/api_login.png
@@ -119,7 +119,7 @@ permission to your application to access their data (Fig. 2).
    Fig 2. Permission request (Step 1)
 
 
-In some situations it might be desirable that users had to login in Freesound (i.e. type their user and password) even if they are already logged in.
+In some situations it might be desirable that users had to log in to Freesound (i.e. type their user and password) even if they are already logged in.
 If you want to implement this behaviour, you can use an alternative url for Step 1 of the OAuth2 flow which forces a user logout before proceeding to the authorization process.
 Therefore, instead of pointing users to ``https://freesound.org/apiv2/oauth2/authorize/`` (and adding the appropriate request parameters),
 you should point users to:
@@ -216,14 +216,13 @@ The response to that request should look like the following:
     "access_token": "64c64660ceed813476b314f52136d9698e075622",
     "scope": "read write read+write",
     "expires_in": 86399,
-    "refresh_token": "0354489231f6a874331aer4927569297c7fea4d5"}
+    "refresh_token": "0354489231f6a874331aer4927569297c7fea4d5"
   }
 
 Authorization codes obtained in Step 2 have a **lifetime of 10 minutes**, therefore the POST request to get the access token
 must be done at most 10 minutes after the authorization code was issued. After that time if an access token is requested
-using this code the API will return a 400 (Bar request) response showing an 'Invalid grant' error.
-Authorization codes can only be exchanged for an access token **once**, therefore you can not use the same authorization
-grant two times to get an access token.
+using this code the API will return a 400 (Bad request) response showing an 'Invalid grant' error.
+Each authorization code can be exchanged for an access token **only once**.
 
 Once you have the access token you will be able to access OAuth2 restricted API resources as described below.
 
@@ -232,7 +231,7 @@ Once you have your access token...
 ----------------------------------
 
 Every access token relates your application with a Freesound account. Therefore, using this access token your application
-can act on users behalf and use all API resources that are restricted to OAuth2 authentication strategy.
+can act on the user's behalf and use all API resources that are restricted to OAuth2 authentication strategy.
 To do that you must include the access token in API requests as an authorization header:
 
 ::
@@ -283,7 +282,7 @@ And even more, if the user had previously granted permission to your application
 there exists an either active or expired access token relating your application and the Freesound account), the permissions
 will be automatically granted and OAuth2 flow will go directly to the redirection step (Step 2), making the process even faster.
 
-Aaaaaand that is all you need to know about OAuth2 authentication strategy. If you have any further questions or doubts
+Aaaaaand that is all you need to know about OAuth2 authentication strategy. If you have any further questions
 you can post them in our mailing list http://groups.google.com/group/freesound-api. Suggestions to improve this documentation
 are also welcome!
 

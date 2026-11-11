@@ -69,7 +69,7 @@ The first one is to download the original file that was uploaded to Freesound fo
 You can do that using the :ref:`sound-download` resource.
 This resource allows you to retrieve the file in its maximum quality, but the format depends on the original format with which the sound was uploaded (it can be .wav, .aif, .flac, .ogg or .mp3).
 This means that the weight of the sound can vary a lot depending on the format.
-Note that, **unlike in the previous version of the API**, this resource requires to use the OAuth2 authentication strategy (see :ref:`authentication`).
+Downloading original sound files requires OAuth2 authentication (see :ref:`authentication`).
 
 
 The second way in which you can download sounds is by accessing their *previews*.

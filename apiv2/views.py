@@ -925,7 +925,7 @@ class DescribeSound(WriteRequiredGenericAPIView):
                 apiv2_client = None
                 # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
                 if self.auth_method_name == "OAuth2":
-                    apiv2_client = request.auth.client.apiv2_client
+                    apiv2_client = request.auth.application.apiv2_client
                 sound_fields = serializer.data.copy()
                 sound_fields["dest_path"] = os.path.join(
                     self.user.profile.locations()["uploads_dir"], sound_fields["upload_filename"]

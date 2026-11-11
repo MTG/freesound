@@ -21,6 +21,8 @@ import base64
 import hashlib
 import json
 from datetime import timedelta
+from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 from urllib.parse import parse_qs, urlsplit
 
@@ -28,6 +30,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.http import Http404, HttpResponse
@@ -188,7 +191,7 @@ class TestAPI(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-class TestAPITagWrites(TestCase):
+class TestAPISoundWrites(TestCase):
     fixtures = ["licenses"]
 
     def setUp(self):
@@ -213,6 +216,44 @@ class TestAPITagWrites(TestCase):
         )
         self.assertEqual(response.status_code, 200, response.content)
         self.assertCountEqual(sound.tags.values_list("name", flat=True), ["bird", "forest", "wind"])
+
+    @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
+    @mock.patch("apiv2.views.generate_tree", return_value=({}, {1: SimpleNamespace(name="bird.wav")}))
+    def test_describe_calls_create_sound_with_oauth(self, generate_tree, create_sound):
+        data = {
+            "upload_filename": "bird.wav",
+            "name": "Bird recording",
+            "description": "Birds in the forest",
+            "license": "Creative Commons 0",
+            "tags": "bird forest wind",
+        }
+        response = self.client.post(reverse("apiv2-uploads-describe"), data)
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.json()["id"], 123)
+        create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
+
+    @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
+    @mock.patch("apiv2.views.handle_uploaded_file")
+    def test_upload_calls_create_sound_with_oauth(self, handle_uploaded_file, create_sound):
+        response = self.client.post(
+            reverse("apiv2-uploads-upload"),
+            {
+                "audiofile": SimpleUploadedFile("bird.wav", b"audio content"),
+                "name": "Bird recording",
+                "description": "Birds in the forest",
+                "license": "Creative Commons 0",
+                "bst_category": "ss-n",
+                "tags": "bird forest wind",
+            },
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.json()["id"], 123)
+        handle_uploaded_file.assert_called_once_with(self.user.id, mock.ANY)
+        self.assertEqual(handle_uploaded_file.call_args.args[1].name, "bird.wav")
+        create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
+        fields = create_sound.call_args.args[1]
+        self.assertEqual(fields["name"], "Bird recording")
+        self.assertEqual(fields["dest_path"], str(Path(self.user.profile.locations("uploads_dir")) / "bird.wav"))
 
 
 class TestDownloadViews(TestCase):

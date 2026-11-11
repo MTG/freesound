@@ -1449,6 +1449,9 @@ class FreesoundApiV2Resources(FreesoundAPIView):
                                 reverse("apiv2-me-bookmark-category-sounds", args=[0]).replace("0", "<category_id>"),
                                 request_is_secure=request.is_secure(),
                             ),
+                            "04 Usage": prepend_base(
+                                reverse("apiv2-current-usage"), request_is_secure=request.is_secure()
+                            ),
                         }.items(),
                         key=lambda t: t[0],
                     )

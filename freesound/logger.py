@@ -66,11 +66,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "graylog.search": {
-            "handlers": ["stdout"],
-            "level": "INFO",
-            "propagate": False,
-        },
         "file_upload": {
             "handlers": ["stdout"],
             "level": "INFO",

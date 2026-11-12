@@ -31,7 +31,6 @@ from utils.pagination import PreSlicedCountProvidedPaginator
 from utils.search import SearchEngineException, SearchResults, get_search_engine
 
 search_logger = logging.getLogger("search")
-graylog_search_logger = logging.getLogger("graylog.search")
 
 
 def parse_weights_parameter(weights_param):
@@ -193,7 +192,6 @@ def get_all_sim_vector_sound_ids_from_search_engine(solr_collection_url=None) ->
 def get_random_sound_id_from_search_engine(solr_collection_url=None):
     # This helper function is used to facilitate unit testing and handle exception
     try:
-        graylog_search_logger.info("Making random sound query")
         return get_search_engine(sounds_index_url=solr_collection_url).get_random_sound_id()
     except SearchEngineException as e:
         search_logger.info(f"Could not retrieve a random sound ID from search engine: {str(e)}")

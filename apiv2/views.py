@@ -181,8 +181,6 @@ class Search(FreesoundAPIView):
         )
 
     def get(self, request, *args, **kwargs):
-        api_logger.info(self.log_message("search"))
-
         # Validate search form and check page 0
         search_form = SoundTextSearchFormAPI(request.query_params)
         if not search_form.is_valid():

@@ -28,7 +28,6 @@ from utils.search import SearchEngineException, SearchEngineTimeoutException
 from utils.search_metrics import partial_results, slow_queries
 
 search_logger = logging.getLogger("search")
-graylog_search_logger = logging.getLogger("graylog.search")
 
 # Boolean operators and lone punctuation that dismax rejects when dangling at the start or end of a
 # query. A token made up entirely of these punctuation chars (e.g. "+", "--", "\\") is also junk.
@@ -373,16 +372,6 @@ class SolrResponseInterpreter:
             partial_results.inc()
             q_time = response_header.get("QTime", -1)
             solr_query_url = make_solr_query_url(response_header.get("params", {}), debug=True)
-            graylog_search_logger.warning(
-                "SOLR partial results returned (timeAllowed exceeded) %s"
-                % json.dumps(
-                    {
-                        "q_time": q_time,
-                        "url": solr_query_url,
-                        "partial_results_details": response_header.get("partialResultsDetails"),
-                    }
-                )
-            )
             search_logger.warning(
                 "SOLR partial results returned (timeAllowed exceeded)",
                 extra={
@@ -487,10 +476,6 @@ class SolrResponseInterpreter:
                 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD
             ):
                 slow_queries.inc()
-                graylog_search_logger.info(
-                    "SOLR slow query detected (%s)"
-                    % json.dumps({"q_time": self.q_time, "num_results": self.num_found, "url": solr_query_url})
-                )
                 search_logger.info(
                     "SOLR slow query detected",
                     extra={"q_time_ms": self.q_time, "num_results": self.num_found, "url": solr_query_url},

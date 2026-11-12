@@ -61,7 +61,6 @@ from utils.search_logging import archive_search
 from utils.search_metrics import record_search
 
 search_logger = logging.getLogger("search")
-graylog_search_logger = logging.getLogger("graylog.search")
 
 
 def is_empty_query(request):
@@ -120,18 +119,6 @@ def search_view_helper(request):
     # Anti-abuse: reject pages beyond the hard limit before sending a request to solr
     page = sqp.get_option_value_to_apply("page")
     if is_over_hard_page_limit(page):
-        graylog_search_logger.info(
-            "Search pagination blocked (%s)"
-            % json.dumps(
-                {
-                    "ip": get_client_ip(request),
-                    "page": page,
-                    "query": sqp.get_option_value_to_apply("query"),
-                    "reason": RequestLimitReason.SEARCH_PAGE_LIMIT.value,
-                    "enforced": True,
-                }
-            )
-        )
         search_logger.info(
             "Search pagination blocked",
             extra={
@@ -217,25 +204,6 @@ def search_view_helper(request):
                         add_filters=["pack_grouping:" + quote_filter_value(f"{d['pack'].id}_{d['pack'].name}")]
                     )
 
-        graylog_search_logger.info(
-            "Search (%s)"
-            % json.dumps(
-                {
-                    "ip": get_client_ip(request),
-                    "query": query_params["textual_query"],
-                    "filter": query_params["query_filter"],
-                    "similar_to": query_params["similar_to"],
-                    "similar_to_similarity_space": query_params["similar_to_similarity_space"],
-                    "username": request.user.username,
-                    "page": query_params["current_page"],
-                    "sort": query_params["sort"],
-                    "url": sqp.get_url(),
-                    "tags_mode": sqp.tags_mode_active(),
-                    "query_time": results.q_time,
-                }
-            )
-        )
-
         record_search(
             "tags" if sqp.tags_mode_active() else "web",
             similar_to=query_params["similar_to"],
@@ -280,23 +248,6 @@ def search_view_helper(request):
         }
 
     except SearchEngineTimeoutException as e:
-        graylog_search_logger.info(
-            "SearchTimeout (%s)"
-            % json.dumps(
-                {
-                    "ip": get_client_ip(request),
-                    "query": query_params["textual_query"],
-                    "filter": query_params["query_filter"],
-                    "similar_to": query_params["similar_to"],
-                    "similar_to_similarity_space": query_params["similar_to_similarity_space"],
-                    "username": request.user.username,
-                    "page": query_params["current_page"],
-                    "sort": query_params["sort"],
-                    "url": sqp.get_url(),
-                    "tags_mode": sqp.tags_mode_active(),
-                }
-            )
-        )
         record_search(
             "tags" if sqp.tags_mode_active() else "web",
             similar_to=query_params.get("similar_to"),
@@ -463,19 +414,6 @@ def search_forum(request):
             current_page = page.number  # clamp the pager to the real last page on overflow
             error = False
         except SearchEngineTimeoutException as e:
-            graylog_search_logger.info(
-                "SearchTimeout (%s)"
-                % json.dumps(
-                    {
-                        "ip": get_client_ip(request),
-                        "query": search_query,
-                        "filter": filter_query,
-                        "page": current_page,
-                        "sort": sort,
-                        "url": request.get_full_path(),
-                    }
-                )
-            )
             record_search("forum", outcome="timeout")
             search_logger.info(
                 "Forum search timeout",

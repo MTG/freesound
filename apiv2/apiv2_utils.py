@@ -68,7 +68,6 @@ from utils.search_metrics import record_search
 from .examples import examples
 
 search_logger = logging.getLogger("search")
-graylog_search_logger = logging.getLogger("graylog.search")
 cache_api_monitoring = caches["api_monitoring"]
 
 
@@ -305,19 +304,6 @@ def api_search(search_form, target_file=None, resource=None):
         )
 
     except SearchEngineTimeoutException as e:
-        graylog_search_logger.info(
-            "SearchTimeout (%s)"
-            % json.dumps(
-                {
-                    "ip": getattr(resource, "end_user_ip", None),
-                    "query": search_form.cleaned_data["query"],
-                    "filter": search_form.cleaned_data["filter"],
-                    "page": search_form.cleaned_data["page"],
-                    "sort": search_form.cleaned_data["sort"],
-                    "api_version": "v2",
-                }
-            )
-        )
         record_search("api", similar_to=search_form.cleaned_data["similar_to"], outcome="timeout")
         search_logger.info(
             "API search timeout",

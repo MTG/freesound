@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import json
 import logging
 
 import sentry_sdk
@@ -31,13 +30,11 @@ from django.urls import reverse
 from search.abuse import PaginationAbuseBlocked
 from search.views import search_view_helper
 from tags.models import FS1Tag, Tag
-from utils.logging_filters import get_client_ip
 from utils.search import SearchEngineException, SearchEngineTimeoutException
 from utils.search.search_sounds import perform_search_engine_query
 from utils.search_metrics import record_search
 
 search_logger = logging.getLogger("search")
-graylog_search_logger = logging.getLogger("graylog.search")
 
 
 def tags(request):
@@ -71,18 +68,6 @@ def tag_cloud(request):
                 )
             )
         except SearchEngineTimeoutException as e:
-            graylog_search_logger.info(
-                "SearchTimeout (%s)"
-                % json.dumps(
-                    {
-                        "ip": get_client_ip(request),
-                        "url": request.get_full_path(),
-                        "query": "",
-                        "filter": "*:*",
-                        "tags_mode": True,
-                    }
-                )
-            )
             record_search("tag_cloud", outcome="timeout")
             search_logger.info(
                 "Tag cloud search timeout",

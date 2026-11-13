@@ -22,6 +22,17 @@ to mono. For most descriptors, the frame size is 2,048 samples with a hop size o
 while for some tonal descriptors, the frame size is 4,096 samples with a hop size of 2,048.
 
 
+Analysis values
+>>>>>>>>>>>>>>>>>
+
+Descriptors that list a **Values** range are bounded by definition. The ones without it
+(counts, variances, durations, energies, and similar) are unbounded, so their range depends
+on the sound.
+
+Values are retrieved all at once with the :ref:`sound-analysis` resource, or one at a time with the
+``fields`` parameter of any resource that returns sounds, such as :ref:`sound-sound`.
+
+
 
 Main set of descriptors
 >>>>>>>>>>>>>>>>>>>>>>>
@@ -169,6 +180,8 @@ dissonance
 
 **Type:** numeric
 
+**Values:** 0-1
+
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Dissonance.html
 
 **Distribution in Freesound**
@@ -249,6 +262,8 @@ loopable
 
 **Type:** boolean
 
+**Values:** 0/1
+
 **More information:** https://en.wikipedia.org/wiki/Loop_(music)
 
 **Distribution in Freesound**
@@ -267,6 +282,8 @@ loudness
 **Description:** Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.
 
 **Type:** numeric
+
+**Values:** -70 to 0
 
 **More information:** https://en.wikipedia.org/wiki/LUFS
 
@@ -305,6 +322,8 @@ note_midi
 **Description:** MIDI value corresponding to the estimated note (computed by the note_name descriptor).
 
 **Type:** integer
+
+**Values:** 0-127
 
 **Distribution in Freesound**
 
@@ -377,36 +396,13 @@ pitch
 
 **Type:** numeric
 
-**Values:** 0-25000
+**Values:** 0-22050
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
     .. image:: _static/descriptors/pitch.png
-        :height: 300px
-
-
-pitch_salience
--------------------------
-
-::
-
-    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_salience&token=YOUR_API_KEY"
-
-**Description:** Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.
-
-**Mode:** mean
-
-**Type:** numeric
-
-**Values:** 0-1
-
-**More information:** https://essentia.upf.edu/reference/streaming_PitchSalience.html
-
-**Distribution in Freesound**
-
-    .. image:: _static/descriptors/pitch_salience.png
         :height: 300px
 
 
@@ -415,9 +411,9 @@ pitch_confidence
 
 ::
 
-    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_confidence&token=YOUR_API_KEY"
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_salience&token=YOUR_API_KEY"
 
-**Description:** A measure of the confidence with which the pitch was estimated. If the output is near 1, there is only one pitch in the mixture. An output near 0 indicates multiple, indistinguishable pitches.
+**Description:** Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.
 
 **Mode:** mean
 
@@ -433,6 +429,29 @@ pitch_confidence
         :height: 300px
 
 
+pitch_salience
+-------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_confidence&token=YOUR_API_KEY"
+
+**Description:** A measure of the confidence with which the pitch was estimated. If the output is near 1, there is only one pitch in the mixture. An output near 0 indicates multiple, indistinguishable pitches.
+
+**Mode:** mean
+
+**Type:** numeric
+
+**Values:** 0-1
+
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
+
+**Distribution in Freesound**
+
+    .. image:: _static/descriptors/pitch_salience.png
+        :height: 300px
+
+
 reverbness
 -------------------------
 
@@ -443,6 +462,8 @@ reverbness
 **Description:** Whether the signal is reverberated or not.
 
 **Type:** boolean
+
+**Values:** 0/1
 
 **More information:** https://en.wikipedia.org/wiki/Reverberation
 
@@ -523,6 +544,8 @@ single_event
 **Description:** Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.
 
 **Type:** boolean
+
+**Values:** 0/1
 
 **Distribution in Freesound**
 
@@ -909,6 +932,8 @@ hpcp_entropy
 
 **Type:** numeric
 
+**Values:** 0-5.17
+
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Entropy.html, http://essentia.upf.edu/documentation/reference/streaming_HPCP.html
 
 **Distribution in Freesound**
@@ -1039,7 +1064,9 @@ pitch_max
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**Values:** 0-22050
+
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
@@ -1060,7 +1087,9 @@ pitch_min
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**Values:** 0-22050
+
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html
 
 **Distribution in Freesound**
 
@@ -1081,7 +1110,7 @@ pitch_var
 
 **Type:** numeric
 
-**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYin.html
+**More information:** http://essentia.upf.edu/documentation/reference/streaming_PitchYinFFT.html, https://en.wikipedia.org/wiki/Variance
 
 **Distribution in Freesound**
 
@@ -1101,6 +1130,8 @@ spectral_centroid
 **Mode:** mean
 
 **Type:** numeric
+
+**Values:** 0-22050
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Centroid.html, https://en.wikipedia.org/wiki/Spectral_centroid
 
@@ -1186,6 +1217,8 @@ spectral_entropy
 
 **Type:** numeric
 
+**Values:** 0-10
+
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_Entropy.html
 
 **Distribution in Freesound**
@@ -1230,7 +1263,7 @@ spectral_rolloff
 
 **Type:** numeric
 
-**Values:** 0-25000
+**Values:** 0-22050
 
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_RollOff.html
 
@@ -1253,7 +1286,7 @@ spectral_skewness
 
 **Type:** numeric
 
-**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html, https://en.wikipedia.org/wiki/Skewness
 
 **Distribution in Freesound**
 
@@ -1314,6 +1347,8 @@ temporal_centroid_ratio
 
 **Type:** numeric
 
+**Values:** 0-1
+
 **More information:** http://essentia.upf.edu/documentation/reference/streaming_TCToTotal.html
 
 **Distribution in Freesound**
@@ -1356,7 +1391,7 @@ temporal_skewness
 
 **Type:** numeric
 
-**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
+**More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html, https://en.wikipedia.org/wiki/Skewness
 
 **Distribution in Freesound**
 
@@ -1376,6 +1411,8 @@ temporal_spread
 **Mode:** mean
 
 **Type:** numeric
+
+**Values:** 0-0.25
 
 **More information:** https://essentia.upf.edu/reference/streaming_CentralMoments.html
 

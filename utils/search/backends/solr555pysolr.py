@@ -24,14 +24,28 @@ import random
 import re
 from collections import defaultdict
 from datetime import date, datetime
+from http.client import HTTPException
 
 import pysolr
+import requests
 from django.conf import settings
 
 from forum.models import Post
 from sounds.models import Sound, SoundSimilarityVector
-from utils.search import SearchEngineBase, SearchEngineException, SearchEngineTimeoutException, SearchResults
+from utils.search import (
+    SearchEngineBadRequestException,
+    SearchEngineBase,
+    SearchEngineException,
+    SearchEngineInternalErrorException,
+    SearchEngineInvalidValueException,
+    SearchEngineSyntaxErrorException,
+    SearchEngineTimeoutException,
+    SearchEngineUnavailableException,
+    SearchEngineUndefinedFieldException,
+    SearchResults,
+)
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
+from utils.search_metrics import random_queries
 from utils.text import remove_control_chars
 
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
@@ -188,12 +202,49 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, value)
 
 
+# pysolr embeds the HTTP status and Solr's reason string in its SolrError message, e.g.
+#   "Solr responded with an error (HTTP 400): [Reason: undefined field foobar]"
+_SOLR_ERROR_HTTP_CODE_RE = re.compile(r"\(HTTP (\d{3})\)")
+
+
 def _raise_search_engine_exception(error: BaseException) -> None:
-    # pysolr swallows exceptions and returns a generic SolrError with some specific text in the message
-    # super annoying but this is the only way to check the type of error.
-    if "timed out" in str(error).lower():
-        raise SearchEngineTimeoutException(error)
-    raise SearchEngineException(error)
+    # pysolr uses SolrError for any error. Separate them based on error message or an underlying
+    # exception so that we can group them separately in sentry
+    message = str(error)
+    code_match = _SOLR_ERROR_HTTP_CODE_RE.search(message)
+    status_code = int(code_match.group(1)) if code_match else None
+    reason = message.lower()
+
+    # Solr responded with an HTTP status
+    if status_code is not None and 400 <= status_code < 500:
+        if "undefined field" in reason:
+            raise SearchEngineUndefinedFieldException(error) from error
+        if any(
+            message in reason
+            for message in (
+                "invalid number",
+                "invalid date string",
+                "invalid date in date math string",
+                "invalid date math string",
+            )
+        ):
+            raise SearchEngineInvalidValueException(error) from error
+        if "cannot parse" in reason or "syntaxerror" in reason:
+            raise SearchEngineSyntaxErrorException(error) from error
+        raise SearchEngineBadRequestException(error) from error
+
+    if status_code is not None and 500 <= status_code < 600:
+        raise SearchEngineInternalErrorException(error) from error
+
+    # No HTTP status, use underlying exception.
+    # Check Timeout before its parent, RequestException.
+    if status_code is None:
+        if isinstance(error.__cause__, requests.exceptions.Timeout):
+            raise SearchEngineTimeoutException(error) from error
+        if isinstance(error.__cause__, (requests.exceptions.RequestException, HTTPException)):
+            raise SearchEngineUnavailableException(error) from error
+
+    raise SearchEngineException(error) from error
 
 
 class Solr555PySolrSearchEngine(SearchEngineBase):
@@ -529,7 +580,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
                 return f"+{match.group(1)}"
             return match.group(0)
 
-        query_filter = re.sub(r'"[^"]*"|\b([a-zA-Z_]+:)', add_plus, query_filter)
+        query_filter = re.sub(r'"(?:\\.|[^"\\])*"|\b([a-zA-Z_]+:)', add_plus, query_filter)
         query_filter = re.sub(
             r"(\+)\1+", r"\1", query_filter
         )  # This is to avoid having multiple + in a row if user already has added them
@@ -959,6 +1010,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             _raise_search_engine_exception(e)
 
     def get_random_sound_id(self):
+        random_queries.inc()
         query = SolrQuery()
         rand_key = random.randint(1, 10000000)  # noqa: S311
         sort = ["random_%d asc" % rand_key]

@@ -43,10 +43,14 @@
         {% endif %}
         <form method="post" action="{% url 'add-sound-to-collection' sound.id %}?ajax=1" class="disable-on-submit">{% csrf_token %}
             <div class="v-spacing-4">
+                {% if form.collection.field.choices %}
                 <div class="middle v-spacing-2">
                     <span class="text-grey h-spacing-2">Select a collection:</span>
                     {{ form.collection }}
                 </div>
+                {% else %}
+                <div class="text-grey v-spacing-4">No collections available for this sound.</div>
+                {% endif %}
                 <div>
                     <label for="{{ form.mark_as_featured.id_for_label }}" class="bw-checkbox-label cursor-pointer" style="white-space: nowrap;">
                         <input type="checkbox" class="bw-checkbox" id="{{ form.mark_as_featured.id_for_label }}" name="mark_as_featured">
@@ -55,12 +59,13 @@
                 </div>
             </div>
             {{ form.use_last_collection }}
+            {% if form.collection.field.choices %}
             <button class="btn-primary v-spacing-top-2">Add sound to selected collection</button>
             <div class="text-grey text-center v-spacing-top-2 v-spacing-2">OR</div>
+            {% endif %}
             <button type="button" class="btn-inverse" id="createNewCollectionLink" data-modal-content-url="{% url 'create-collection' %}?ajax=1&sound_id={{ sound.id }}">Add sound to a new collection</button>
         </form>
     </div>
     {% endif %}
 </div>
 {% endblock %}
-

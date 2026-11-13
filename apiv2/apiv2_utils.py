@@ -21,6 +21,7 @@
 import json
 import logging
 import urllib.parse
+from collections.abc import Sequence
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -31,6 +32,7 @@ from django.utils.encoding import smart_str
 from oauth2_provider.generators import BaseHashGenerator
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from oauthlib.common import generate_client_id as oauthlib_generate_client_id
+from rest_framework.authentication import BaseAuthentication
 from rest_framework.generics import (
     GenericAPIView as RestFrameworkGenericAPIView,
 )
@@ -42,11 +44,11 @@ from rest_framework.generics import (
 )
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.utils import formatting
+from rest_framework.views import APIView as RestFrameworkAPIView
 
 from apiv2.authentication import OAuth2Authentication, SessionAuthentication, TokenAuthentication
 from apiv2.exceptions import (
     BadRequestException,
-    RequiresHttpsException,
     ServerErrorException,
     UnauthorizedException,
 )
@@ -54,8 +56,14 @@ from apiv2.forms import API_SORT_OPTIONS_MAP
 from apiv2.models import ApiV2Client
 from utils.encryption import create_hash
 from utils.logging_filters import get_client_ip
-from utils.search import SearchEngineException, SearchEngineTimeoutException, get_search_engine
+from utils.search import (
+    SearchEngineException,
+    SearchEngineInternalErrorException,
+    SearchEngineTimeoutException,
+    get_search_engine,
+)
 from utils.search.search_sounds import parse_weights_parameter
+from utils.search_metrics import record_search
 
 from .examples import examples
 
@@ -105,6 +113,15 @@ def get_view_description(cls, html=False):
 
 
 class FreesoundAPIViewMixin:
+    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+    authentication_classes: Sequence[type[BaseAuthentication]] = (
+        OAuth2Authentication,
+        TokenAuthentication,
+        SessionAuthentication,
+    )
+    require_write_scope = False
+    redirect_browsable = True
+
     end_user_ip = None
     auth_method_name = None
     developer = None
@@ -114,6 +131,22 @@ class FreesoundAPIViewMixin:
     client_name = None
     protocol = None
     contains_www = None
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        self.get_request_information(request)
+        self.store_monitor_usage()
+        if self.require_write_scope and self.auth_method_name == "OAuth2" and "write" not in request.auth.scopes:
+            raise UnauthorizedException(resource=self)
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        """Redirect browsable requests after DRF has selected the response renderer.
+
+        Authentication failures in initial() are handled by APIView.dispatch(), so
+        redirects must also run during finalization of those error responses.
+        """
+        response = super().finalize_response(request, response, *args, **kwargs)
+        return self.redirect_if_needed(request, response) if self.redirect_browsable else response
 
     def log_message(self, message):
         return log_message_helper(message, resource=self)
@@ -155,15 +188,10 @@ class FreesoundAPIViewMixin:
         ) = get_authentication_details_form_request(request)
 
     def redirect_if_needed(self, request, response):
-        """Returns HttpResponseRedirect if the current request should be redirected
+        """Redirect browsable API requests from www to the canonical hostname.
 
-        This methods returns an HttpResponseRedirect if:
-            1) user is using the browseable API and the www domain
-            2) user is using the browseable API and HTTP
-
-        The redirect is done to no-www and HTTPS. This is implemented here because, for compatibility reasons, the API
-        is the only part of Freesound which is not automatically redirected to HTTPS/no-www. However, when users are
-        browsing the API interactively (with the browser), we want this behaviour top be applied.
+        Ingress enforces HTTPS but exempts API paths from the www redirect for
+        client compatibility. Browsable HTML responses still use the canonical host.
         """
 
         if isinstance(response.accepted_renderer, BrowsableAPIRenderer):
@@ -171,122 +199,34 @@ class FreesoundAPIViewMixin:
                 domain = f"{'https' if not settings.DEBUG else 'http'}://{Site.objects.get_current().domain}"
                 return_url = urllib.parse.urljoin(domain, request.get_full_path())
                 return HttpResponseRedirect(return_url)
-            if request.scheme != "https" and not settings.DEBUG:
-                domain = f"https://{Site.objects.get_current().domain}"
-                return_url = urllib.parse.urljoin(domain, request.get_full_path())
-                return HttpResponseRedirect(return_url)
-        return response
-
-    def throw_exception_if_not_https(self, request):
-        if not settings.DEBUG:
-            if not request.is_secure():
-                raise RequiresHttpsException(request=request)
-
-
-class GenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
-    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-    queryset = False
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        self.get_request_information(request)
-        self.store_monitor_usage()
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        """This method is overridden to make a redirect when the user is using the interactive API browser and
-        with 'www' sub-domain. The problem is that we can't check if it's accessing through the interactive browser
-        inside the 'initial' method because it raises an exception when the user is not logged in, that exception is
-        handled by 'finalize_response' method of APIView.
-        """
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_if_needed(request, response)
         return response
 
 
-class OauthRequiredAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
-    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
+class FreesoundAPIView(FreesoundAPIViewMixin, RestFrameworkAPIView):
+    def get_serializer_context(self):
+        return {"request": self.request, "format": self.format_kwarg, "view": self}
+
+
+class OauthRequiredAPIView(FreesoundAPIViewMixin, RestFrameworkGenericAPIView):
     authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        self.get_request_information(request)
-        self.throw_exception_if_not_https(request)
-        self.store_monitor_usage()
 
-    def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_if_needed(request, response)
-        return response
-
-
-class DownloadAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
+class DownloadAPIView(OauthRequiredAPIView):
     throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS  # Use stricter limits
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        self.get_request_information(request)
-        self.throw_exception_if_not_https(request)
-        self.store_monitor_usage()
-
-    # NOTE: don't override finalize_response here as we are returning a file and not the browseable api response.
-    # There is no need to check for www/non-www host here.
+    redirect_browsable = False
 
 
-class WriteRequiredGenericAPIView(RestFrameworkGenericAPIView, FreesoundAPIViewMixin):
+class WriteRequiredGenericAPIView(OauthRequiredAPIView):
     throttling_rates_per_level = settings.APIV2_POST_THROTTLING_RATES_PER_LEVELS
-    authentication_classes = (OAuth2Authentication, SessionAuthentication)
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        self.get_request_information(request)
-        self.throw_exception_if_not_https(request)
-        self.store_monitor_usage()
-
-        # Check if client has write permissions
-        if self.auth_method_name == "OAuth2":
-            if "write" not in request.auth.scopes:
-                raise UnauthorizedException(resource=self)
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_if_needed(request, response)
-        return response
+    require_write_scope = True
 
 
-class ListAPIView(RestFrameworkListAPIView, FreesoundAPIViewMixin):
-    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        self.get_request_information(request)
-        self.store_monitor_usage()
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_if_needed(request, response)
-        return response
+class ListAPIView(FreesoundAPIViewMixin, RestFrameworkListAPIView):
+    pass
 
 
-class RetrieveAPIView(RestFrameworkRetrieveAPIView, FreesoundAPIViewMixin):
-    throttling_rates_per_level = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS
-    authentication_classes = (OAuth2Authentication, TokenAuthentication, SessionAuthentication)
-
-    def initial(self, request, *args, **kwargs):
-        super().initial(request, *args, **kwargs)
-        self.get_request_information(request)
-        self.store_monitor_usage()
-
-    def finalize_response(self, request, response, *args, **kwargs):
-        # See comment in GenericAPIView.finalize_response
-        response = super().finalize_response(request, response, *args, **kwargs)
-        response = self.redirect_if_needed(request, response)
-        return response
+class RetrieveAPIView(FreesoundAPIViewMixin, RestFrameworkRetrieveAPIView):
+    pass
 
 
 ##################
@@ -307,6 +247,8 @@ def api_process_sort_parameter(sort):
 
 
 def api_search(search_form, target_file=None, resource=None):
+    # Any ServerErrorException raised from this will show to the user as a generic "an error occurred" message
+    # but the exception handler (apiv2/handlers.py) will also report the underlying error to sentry
     if (
         search_form.cleaned_data["query"] is None
         and search_form.cleaned_data["filter"] is None
@@ -348,6 +290,7 @@ def api_search(search_form, target_file=None, resource=None):
                 int(group["id"]): [group["n_more_in_group"], group["group_name"]] for group in result.docs
             }
 
+        record_search("api", similar_to=search_form.cleaned_data["similar_to"], query_time_ms=result.q_time)
         return (
             ids_score,
             result.num_found,
@@ -361,20 +304,24 @@ def api_search(search_form, target_file=None, resource=None):
         )
 
     except SearchEngineTimeoutException as e:
+        record_search("api", similar_to=search_form.cleaned_data["similar_to"], outcome="timeout")
         search_logger.info(
-            "SearchTimeout (%s)"
-            % json.dumps(
-                {
-                    "ip": resource.end_user_ip,
-                    "query": search_form.cleaned_data["query"],
-                    "filter": search_form.cleaned_data["filter"],
-                    "page": search_form.cleaned_data["page"],
-                    "sort": search_form.cleaned_data["sort"],
-                    "api_version": "v2",
-                }
-            )
+            "API search timeout",
+            extra={
+                "query": search_form.cleaned_data["query"],
+                "filter": search_form.cleaned_data["filter"],
+                "page": search_form.cleaned_data["page"],
+                "sort": search_form.cleaned_data["sort"],
+                "error": str(e),
+            },
         )
-        raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource)
+        raise ServerErrorException(msg="Search is overloaded, please try again later.", resource=resource) from e
+    except SearchEngineInternalErrorException as e:
+        search_logger.info(f"Search server internal error: {e}")
+        raise ServerErrorException(
+            msg="There was a problem performing your search, please try again later.",
+            resource=resource,
+        ) from e
     except SearchEngineException as e:
         if search_form.cleaned_data["filter"] is not None:
             raise BadRequestException(
@@ -387,7 +334,7 @@ def api_search(search_form, target_file=None, resource=None):
         print(e)
         raise ServerErrorException(
             msg="The search server could not be reached or some unexpected error occurred.", resource=resource
-        )
+        ) from e
 
 
 ###############

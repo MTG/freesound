@@ -23,24 +23,22 @@ import json
 import logging
 import os
 from collections import OrderedDict
-from urllib.parse import quote
 
-import jwt
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import caches
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-from oauth2_provider.models import AccessToken, Grant
+from oauth2_provider.models import AccessToken, Grant, RefreshToken
 from oauth2_provider.views import AuthorizationView as ProviderAuthorizationView
 from rest_framework import status
-from rest_framework.decorators import api_view, authentication_classes, permission_classes, throttle_classes
+from rest_framework.decorators import api_view, authentication_classes, throttle_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
@@ -80,21 +78,23 @@ from apiv2.serializers import (
 from apiv2.throttling import ClientBasedThrottlingBurst, ClientBasedThrottlingSustained
 from bookmarks.models import Bookmark, BookmarkCategory
 from comments.models import Comment
-from fscollections.models import Collection, CollectionSound
+from fscollections.models import Collection
 from geotags.models import GeoTag
 from ratings.models import SoundRating
 from sounds.models import DownloadAPI, License, Pack, PackDownloadAPI, PackDownloadSoundAPI, Sound
+from utils.cdn import generate_cdn_download_url
 from utils.download_limit import DownloadType, is_new_download, set_sentinel
 from utils.downloads import download_sounds
 from utils.filesystem import generate_tree
 from utils.nginxsendfile import prepare_sendfile_arguments_for_sound_download, sendfile
 from utils.pagination import PreSlicedCountProvidedPaginator
-from utils.search.search_sounds import save_record_of_search_query
+from utils.search import escape_lucene_phrase_value
+from utils.search_logging import archive_search
 from utils.tags import clean_and_split_tags
 
 from .apiv2_utils import (
     DownloadAPIView,
-    GenericAPIView,
+    FreesoundAPIView,
     ListAPIView,
     OauthRequiredAPIView,
     RetrieveAPIView,
@@ -167,7 +167,7 @@ def get_include_remix_subqueries(fields):
         return False
 
 
-class Search(GenericAPIView):
+class Search(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -181,8 +181,6 @@ class Search(GenericAPIView):
         )
 
     def get(self, request, *args, **kwargs):
-        api_logger.info(self.log_message("search"))
-
         # Validate search form and check page 0
         search_form = SoundTextSearchFormAPI(request.query_params)
         if not search_form.is_valid():
@@ -262,7 +260,7 @@ class Search(GenericAPIView):
                         sound["more_from_same_pack"] = search_form.construct_link(
                             reverse("apiv2-sound-search"),
                             page=1,
-                            filt='pack_grouping:"%i_%s"' % (int(pack_id), pack_name),
+                            filt='pack_grouping:"%i_%s"' % (int(pack_id), escape_lucene_phrase_value(pack_name)),
                             group_by_pack="0",
                         )
                         sound["n_from_same_pack"] = more_from_pack_data[sid][0] + 1  # we add one as is the sound itself
@@ -275,14 +273,13 @@ class Search(GenericAPIView):
                 sounds.append(None)
         response_data["results"] = sounds
 
-        if settings.SEARCH_SAVE_QUERY_RECORDS:
-            save_record_of_search_query(
-                url=search_form.construct_link(base_url="/apiv2/search/", include_domain=False),
-                num_results=non_grouped_count or paginator.count,  # Return non grouped number of results if available
-                query_time=q_time,
-                ip=self.end_user_ip,
-                user_id=self.user.id if self.user is not None else None,
-            )
+        archive_search(
+            source="api",
+            params=request.query_params,
+            num_results=non_grouped_count or paginator.count,
+            query_time=q_time,
+            ip=self.end_user_ip,
+        )
 
         if note:
             response_data["note"] = note
@@ -335,7 +332,7 @@ class SoundInstance(RetrieveAPIView):
 
 
 class SoundAnalysisView(
-    GenericAPIView
+    FreesoundAPIView
 ):  # Needs to be named SoundAnalysisView so it does not overlap with SoundAnalysis
     @classmethod
     def get_description(cls):
@@ -372,7 +369,7 @@ class SoundAnalysisView(
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class SimilarSounds(GenericAPIView):
+class SimilarSounds(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -513,37 +510,12 @@ class DownloadSound(DownloadAPIView):
                     api_client=self.client, user=self.user, sound=sound, license_id=sound.license_id
                 )
 
+        if settings.USE_CDN_FOR_API_DOWNLOADS:
+            cdn_url = generate_cdn_download_url(sound)
+            if cdn_url is not None:
+                return HttpResponseRedirect(cdn_url)
+
         return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
-
-
-class DownloadLink(DownloadAPIView):
-    @classmethod
-    def get_description(cls):
-        return "Get a url to download a sound without authentication."
-
-    def get(self, request, *args, **kwargs):
-        sound_id = kwargs["pk"]
-        api_logger.info(self.log_message("sound:%i get_download_link" % (int(sound_id))))
-
-        try:
-            sound = Sound.objects.get(id=sound_id, moderation_state="OK", processing_state="OK")
-        except Sound.DoesNotExist:
-            raise NotFoundException(resource=self)
-
-        download_token = jwt.encode(
-            {
-                "user_id": self.user.id,
-                "sound_id": sound.id,
-                "client_id": self.client_id,
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=settings.API_DOWNLOAD_TOKEN_LIFETIME),
-            },
-            settings.SECRET_KEY,
-            algorithm="HS256",
-        )
-        download_link = prepend_base(
-            reverse("apiv2-download_from_token", args=[download_token]), request_is_secure=request.is_secure()
-        )
-        return Response({"download_link": download_link}, status=status.HTTP_200_OK)
 
 
 ############
@@ -950,8 +922,10 @@ class DescribeSound(WriteRequiredGenericAPIView):
                 apiv2_client = None
                 # This will always be true as long as settings.ALLOW_WRITE_WHEN_SESSION_BASED_AUTHENTICATION is False
                 if self.auth_method_name == "OAuth2":
-                    apiv2_client = request.auth.client.apiv2_client
+                    apiv2_client = request.auth.application.apiv2_client
                 sound_fields = serializer.data.copy()
+                sound_fields["name"] = sound_fields.get("name") or sound_fields["upload_filename"]
+                sound_fields["tags"] = clean_and_split_tags(sound_fields["tags"])
                 sound_fields["dest_path"] = os.path.join(
                     self.user.profile.locations()["uploads_dir"], sound_fields["upload_filename"]
                 )
@@ -1020,7 +994,7 @@ class EditSoundDescription(WriteRequiredGenericAPIView):
                         sound.description = serializer.data["description"]
                 if "tags" in serializer.data:
                     if serializer.data["tags"]:
-                        sound.set_tags(serializer.data["tags"])
+                        sound.set_tags(clean_and_split_tags(serializer.data["tags"]))
                 if "license" in serializer.data:
                     if serializer.data["license"]:
                         license = License.objects.filter(name=serializer.data["license"]).order_by("-id").first()
@@ -1205,27 +1179,6 @@ class CommentSound(WriteRequiredGenericAPIView):
 #############
 
 
-@api_view(["GET"])
-@throttle_classes([])
-@authentication_classes([])
-@permission_classes([])
-def download_from_token(request, token):
-    try:
-        token_contents = jwt.decode(token, settings.SECRET_KEY, leeway=10)
-    except jwt.ExpiredSignatureError:
-        raise UnauthorizedException(msg="This token has expired.")
-    except jwt.InvalidTokenError:
-        raise UnauthorizedException(msg="Invalid token.")
-    try:
-        sound = Sound.objects.get(id=token_contents.get("sound_id", None))
-    except Sound.DoesNotExist:
-        raise NotFoundException
-    sound_path, sound_friendly_filename, sound_sendfile_url = prepare_sendfile_arguments_for_sound_download(sound)
-    if not os.path.exists(sound_path):
-        raise NotFoundException
-    return sendfile(sound_path, sound_friendly_filename, sound_sendfile_url)
-
-
 class Me(OauthRequiredAPIView):
     # authentication_classes = (OAuth2Authentication, SessionAuthentication)
 
@@ -1335,26 +1288,21 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
             kwargs["user__username"] = self.user.username
 
             if settings.ENABLE_COLLECTIONS:
-                if int(self.kwargs["category_id"]) != 0:
-                    collection_id = self.kwargs["category_id"]
-                else:
-                    # NOTE: If the category ID is 0, it is assumed to be user's "My bookmarks" collection
+                collections = Collection.objects.filter(user=self.user)
+                if self.kwargs["category_id"] == 0:
+                    # If the category ID is 0, it is assumed to be user's "My bookmarks" collection
                     # This is for backwards compatibility, but it could be removed in the future
-                    # This only make sense in the context of this API endpoint where user is specified as the logged
-                    # in user and there'll be only one collection named "My bookmnarks"
-                    collection = Collection.objects.filter(name="My bookmarks", user=self.user)
-                    if collection.exists():
-                        collection_id = collection.first().id
-                    else:
+                    collection = collections.filter(is_default_collection=True).first()
+                    if collection is None:
                         # User has no uncategorized bookmarks
                         return []
-                try:
-                    queryset = [
-                        cs.sound
-                        for cs in CollectionSound.objects.select_related("sound").filter(collection_id=collection_id)
-                    ]
-                except:
-                    raise NotFoundException(resource=self)
+                else:
+                    collection = collections.filter(id=self.kwargs["category_id"]).first()
+                    if collection is None:
+                        raise NotFoundException(resource=self)
+                queryset = Sound.objects.sounds_for_collection(collection.id).order_by(
+                    "-collectionsound__created", "-collectionsound__id"
+                )
             else:
                 if "category_id" in self.kwargs:
                     if int(self.kwargs["category_id"]) != 0:
@@ -1365,7 +1313,10 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
                     kwargs["category"] = None
                 try:
                     queryset = [
-                        bookmark.sound for bookmark in Bookmark.objects.select_related("sound").filter(**kwargs)
+                        bookmark.sound
+                        for bookmark in Bookmark.objects.select_related("sound").filter(
+                            sound__moderation_state="OK", sound__processing_state="OK", **kwargs
+                        )
                     ]
                 except:
                     raise NotFoundException(resource=self)
@@ -1374,7 +1325,7 @@ class MeBookmarkCategorySounds(OauthRequiredAPIView, ListAPIView):
             raise ServerErrorException(resource=self)
 
 
-class FreesoundApiV2Resources(GenericAPIView):
+class FreesoundApiV2Resources(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -1495,6 +1446,9 @@ class FreesoundApiV2Resources(GenericAPIView):
                                 reverse("apiv2-me-bookmark-category-sounds", args=[0]).replace("0", "<category_id>"),
                                 request_is_secure=request.is_secure(),
                             ),
+                            "04 Usage": prepend_base(
+                                reverse("apiv2-current-usage"), request_is_secure=request.is_secure()
+                            ),
                         }.items(),
                         key=lambda t: t[0],
                     )
@@ -1529,7 +1483,7 @@ class FreesoundApiV2Resources(GenericAPIView):
 
 
 @throttle_classes([])  # This view is never throttled
-class CurrentUsage(GenericAPIView):
+class CurrentUsage(FreesoundAPIView):
     @classmethod
     def get_description(cls):
         return (
@@ -1627,8 +1581,8 @@ def create_apiv2_key(request):
 
 
 @login_required
-def edit_api_credential(request, key):
-    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+def edit_api_credential(request, pk):
+    client = get_object_or_404(ApiV2Client, pk=pk, user=request.user)
 
     if request.method == "POST":
         form = ApiV2ClientForm(request.POST)
@@ -1665,8 +1619,8 @@ def edit_api_credential(request, key):
 
 
 @login_required
-def monitor_api_credential(request, key):
-    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+def monitor_api_credential(request, pk):
+    client = get_object_or_404(ApiV2Client, pk=pk, user=request.user)
     level = int(client.throttling_level)
     limit_rates = settings.APIV2_BASIC_THROTTLING_RATES_PER_LEVELS[level]
     try:
@@ -1692,8 +1646,8 @@ def monitor_api_credential(request, key):
 
 @login_required
 @require_POST
-def delete_api_credential(request, key):
-    client = get_object_or_404(ApiV2Client, key=key, user=request.user)
+def delete_api_credential(request, pk):
+    client = get_object_or_404(ApiV2Client, pk=pk, user=request.user)
     name = client.name
     client.delete()
     messages.add_message(request, messages.INFO, f"Credentials with name {name} have been deleted.")
@@ -1763,15 +1717,14 @@ def granted_permissions(request):
 
 
 @login_required
+@transaction.atomic
 def revoke_permission(request, client_id):
     user = request.user
-    tokens = AccessToken.objects.filter(user=user, application__client_id=client_id)
-    for token in tokens:
-        token.delete()
-
-    grants = Grant.objects.filter(user=user, application__client_id=client_id)
-    for grant in grants:
-        grant.delete()
+    # Delete access tokens and grants. Delete refresh tokens so that a new access
+    # token cannot be created.
+    RefreshToken.objects.filter(user=user, application__client_id=client_id).delete()
+    AccessToken.objects.filter(user=user, application__client_id=client_id).delete()
+    Grant.objects.filter(user=user, application__client_id=client_id).delete()
 
     messages.add_message(request, messages.INFO, "Permission has been successfully revoked")
     return HttpResponseRedirect(reverse("access-tokens"))
@@ -1787,11 +1740,4 @@ def permission_granted(request):
         app_name = grant.application.apiv2_client.name
     except Grant.DoesNotExist:
         grant = None
-    logout_next = request.GET.get("original_path", None)
-    if logout_next:
-        logout_next = quote(logout_next)
-    else:
-        logout_next = reverse("api-login")
-    return render(
-        request, "oauth2_provider/app_authorized.html", {"code": code, "app_name": app_name, "logout_next": logout_next}
-    )
+    return render(request, "oauth2_provider/app_authorized.html", {"code": code, "app_name": app_name})

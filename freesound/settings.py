@@ -93,9 +93,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ("accounts.modelbackend.CustomModelBackend",)
 
-# Read JSON or legacy pickle; write JSON.
-SESSION_SERIALIZER = "utils.session_serializers.TransitionalPickleSerializer"
-
 TIME_ZONE = "Europe/Brussels"
 
 LANGUAGE_CODE = "en-us"
@@ -120,7 +117,6 @@ CLUSTERING_CACHE_REDIS_STORE_ID = 1
 AUDIO_FEATURES_REDIS_STORE_ID = 2
 CELERY_BROKER_REDIS_STORE_ID = 3
 ABUSE_REDIS_STORE_ID = 4
-SEARCH_QUERIES_REDIS_STORE_ID = 5
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -143,10 +139,6 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{ABUSE_REDIS_STORE_ID}",
     },
-    "search_queries": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{SEARCH_QUERIES_REDIS_STORE_ID}",
-    },
 }
 
 CACHE_MIDDLEWARE_SECONDS = 300
@@ -163,6 +155,9 @@ LOGOUT_URL = "/home/logout/"
 LOGIN_REDIRECT_URL = "/home/"
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTOCOL", "https")
+# Send the origin as Referer on cross-origin requests (Django default is "same-origin", which sends none).
+# Needed because the Mapbox access token is URL-restricted and Mapbox validates it against the Referer header.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 IGNORABLE_404_URLS = (
     # for each <prefix> in IGNORABLE_404_STARTS
@@ -190,7 +185,7 @@ SILENCED_SYSTEM_CHECKS = ["urls.W002"]
 
 INTERNAL_IPS = ["127.0.0.1"]
 
-# Bearer token to pull data from /metrics. If empty, the endpoint returns 404
+# Shared bearer token for web and worker metrics. Empty disables both endpoints.
 PROMETHEUS_METRICS_TOKEN = ""
 # Management commands push stats to a pushgateway if this value is set
 PROMETHEUS_PUSHGATEWAY_URL = ""
@@ -200,11 +195,6 @@ MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
-    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
-    "django.contrib.auth.hashers.Argon2PasswordHasher",
-    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
-    "django.contrib.auth.hashers.BCryptPasswordHasher",
-    "django.contrib.auth.hashers.SHA1PasswordHasher",
 ]
 
 # Password validation
@@ -423,6 +413,8 @@ LOG_DOWNLOADS = False
 
 # Use external CDN for downloading sounds and serving previews/displays
 USE_CDN_FOR_DOWNLOADS = False
+# None inherits USE_CDN_FOR_DOWNLOADS after local_settings has been imported.
+USE_CDN_FOR_API_DOWNLOADS = None
 USE_CDN_FOR_PREVIEWS = False
 USE_CDN_FOR_DISPLAYS = False
 CDN_DOWNLOADS_BASE_URL = "https://cdn.freesound.org"
@@ -694,10 +686,9 @@ SEARCH_EMPTY_QUERY_CACHE_TIME = (
 
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
-SEARCH_SAVE_QUERY_RECORDS = True
-SEARCH_SAVE_QUERY_RECORDS_CACHE_EXPIRATION = (
-    3600 * 5
-)  # Save queries for that period of time. An async process should run before expiration time to collect data and save to disk
+SEARCH_ARCHIVE_ENABLED = False
+SEARCH_ARCHIVE_HOST = os.environ.get("SEARCH_ARCHIVE_HOST", "search-archive")
+SEARCH_ARCHIVE_PORT = int(os.environ.get("SEARCH_ARCHIVE_PORT", "5515"))
 
 # -------------------------------------------------------------------------------
 # AI preferences panel
@@ -866,8 +857,6 @@ REST_FRAMEWORK = {
     "VIEW_DESCRIPTION_FUNCTION": "apiv2.apiv2_utils.get_view_description",
 }
 
-API_DOWNLOAD_TOKEN_LIFETIME = 60 * 60  # 1 hour
-
 OAUTH2_PROVIDER = {
     "ACCESS_TOKEN_EXPIRE_SECONDS": 60 * 60 * 24,
     "CLIENT_SECRET_GENERATOR_LENGTH": 40,
@@ -958,11 +947,17 @@ MAX_FEATURED_SOUNDS_PER_COLLECTION = 6
 from .local_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
+# Resolve the API default using the final site setting, preserving explicit overrides.
+if USE_CDN_FOR_API_DOWNLOADS is None:
+    USE_CDN_FOR_API_DOWNLOADS = USE_CDN_FOR_DOWNLOADS
+
 # CDN secret validation (must be after local_settings import)
-if USE_CDN_FOR_DOWNLOADS and not CDN_SECURE_LINK_SECRET:
+if (USE_CDN_FOR_DOWNLOADS or USE_CDN_FOR_API_DOWNLOADS) and not CDN_SECURE_LINK_SECRET:
     from django.core.exceptions import ImproperlyConfigured
 
-    raise ImproperlyConfigured("CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS is True")
+    raise ImproperlyConfigured(
+        "CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS or USE_CDN_FOR_API_DOWNLOADS is True"
+    )
 
 # -------------------------------------------------------------------------------
 # More collections stuff
@@ -978,6 +973,8 @@ CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{CELERY_BROKER_REDIS
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_WORKER_SEND_TASK_EVENTS = True
+CELERY_TASK_SEND_SENT_EVENT = True
 CELERY_ASYNC_TASKS_QUEUE_NAME = "async_tasks_queue"
 CELERY_SOUND_PROCESSING_QUEUE_NAME = "sound_processing_queue"
 CELERY_CLUSTERING_TASK_QUEUE_NAME = "clustering_queue"

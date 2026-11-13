@@ -1,5 +1,10 @@
+import math
+from collections.abc import Iterable
+
 import luqum.thread
 import luqum.tree
+
+from utils.search import escape_lucene_phrase_value
 
 FIELD_TYPES_MAP = {
     "samplerate": int,
@@ -7,16 +12,47 @@ FIELD_TYPES_MAP = {
     "bitdepth": int,
     "channels": int,
     "duration": float,
+    "filesize": int,
+    "num_downloads": int,
+    "avg_rating": float,
+    "num_ratings": int,
+    "num_comments": int,
+    "timestamp_start": float,
+    "timestamp_end": float,
 }
 
-COMPLEX_EXPR_TYPES = (
-    luqum.tree.Range,
-    luqum.tree.OpenRange,
-    luqum.tree.From,
-    luqum.tree.To,
-    luqum.tree.FieldGroup,
-    luqum.tree.Boost,
-)
+
+def quote_filter_value(value: str) -> str:
+    """Quote a literal filter value, escaping backslashes and double quotes."""
+    return '"' + escape_lucene_phrase_value(value) + '"'
+
+
+def normalize_numeric_value(field_name: str, value: str) -> str:
+    """Check one value against the field's numeric type and return it as a string.
+
+    If the type is a float, accept a comma as a decimal separator: treat
+    1,4 as 1.4 and try again. Accept "*" as it's used in range bounds.
+
+    Returns the normalized value as a string.
+    Raises ValueError if the value is not a numeric value.
+    """
+    expected_type = FIELD_TYPES_MAP[field_name]
+    normalized = value.strip()
+    if normalized == "*":
+        return normalized
+    try:
+        try:
+            number = expected_type(normalized)
+        except ValueError:
+            if expected_type is not float or "," not in normalized:
+                raise
+            normalized = normalized.replace(",", ".")
+            number = float(normalized)
+        if expected_type is int or math.isfinite(number):
+            return normalized
+    except (ValueError, OverflowError):
+        pass
+    raise ValueError(f"Filter parsing error: '{field_name}' value must be {expected_type.__name__}, got {value!r}")
 
 
 def parse_filter(filter_string):
@@ -30,36 +66,40 @@ def parse_filter(filter_string):
     return [tree] if type(tree) == luqum.tree.SearchField else tree.children
 
 
-def validate_filter_types(nodes) -> str | None:
-    """Validate that in the given top-level filter nodes, the values of fields
-    with a known type (FIELD_TYPES_MAP) can be cast to that type. Return a
-    human-readable error string on first failure, or None on success.
+def validate_numeric_filters(nodes: Iterable[luqum.tree.Item]) -> str | None:
+    """Validate numeric fields in the luqum nodes returned by parse_filter.
+
+    Args:
+        nodes: A parsed luqum nodes for a user query, such as
+            'duration:[0 TO 10] samplerate:44100'.
+
+    Walks `nodes` and for every field which we know should be numeric, use
+    normalize_numeric_value to check that it is valid.
+    If a numeric field is updated to make it valid, the nodes are updated in-place.
+
+    Return the first error message, or None if all numeric values are valid.
     """
-    for node in nodes:
-        if type(node) != luqum.tree.SearchField:
-            continue
-        if node.name not in FIELD_TYPES_MAP:
-            continue
-        expr = node.expr
-        if isinstance(expr, COMPLEX_EXPR_TYPES):
-            # Ranges/inequalities/groups/boosts etc. e.g. samplerate:[a TO b]
-            # validate directly in solr
-            continue
-        if isinstance(expr, luqum.tree.Phrase):
-            # String in "quotes"
-            value = expr.value[1:-1]
+
+    def validate(node, field_name=None):
+        if isinstance(node, luqum.tree.SearchField):
+            if field_name in FIELD_TYPES_MAP:
+                # A numeric value cannot contain another field.
+                normalize_numeric_value(field_name, str(node))
+            field_name = node.name
+        if field_name in FIELD_TYPES_MAP and isinstance(node, (luqum.tree.Word, luqum.tree.Phrase)):
+            quoted = isinstance(node, luqum.tree.Phrase)
+            value = node.value[1:-1] if quoted else node.value
+            normalized = normalize_numeric_value(field_name, value)
+            node.value = f'"{normalized}"' if quoted else normalized
         else:
-            value = str(expr)
-        if value == "*":
-            # `field:*` is a valid solr query, continue
-            continue
-        expected_type = FIELD_TYPES_MAP[node.name]
-        # This does let through some values that are valid in python but not solr
-        # (e.g. int(1_000)), but we accept these few cases because they are rare
-        try:
-            expected_type(value)
-        except (ValueError, TypeError):
-            return f"Filter parsing error: '{node.name}' value must be {expected_type.__name__}, got {value!r}"
+            for child in node.children:
+                validate(child, field_name)
+
+    try:
+        for node in nodes:
+            validate(node)
+    except ValueError as error:
+        return str(error)
     return None
 
 

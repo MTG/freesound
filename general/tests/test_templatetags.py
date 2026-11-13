@@ -19,8 +19,11 @@
 #
 
 import pytest
+from django.contrib.auth.models import AnonymousUser
+from django.template import Context, Template
 
 from general.templatetags.util import samplerate_with_units, smart_duration_with_units
+from utils.test_helpers import create_user_and_sounds
 
 
 def test_smart_duration_with_units():
@@ -47,3 +50,23 @@ def test_smart_duration_with_units():
 )
 def test_samplerate_with_units(rate, expected):
     assert samplerate_with_units(rate) == expected
+
+
+@pytest.fixture
+def carousel_packs(load_fixtures):
+    load_fixtures(["licenses"])
+    _, packs, _ = create_user_and_sounds(num_sounds=3, num_packs=3, processing_state="OK", moderation_state="OK")
+    return packs
+
+
+def test_pack_carousel_batches_queries(carousel_packs, rf, django_assert_num_queries):
+    request = rf.get("/")
+    request.user = AnonymousUser()
+    pack_ids = [pack.id for pack in reversed(carousel_packs)]
+    template = Template("{% load bw_templatetags %}{% pack_carousel packs %}")
+
+    with django_assert_num_queries(4):
+        html = template.render(Context({"request": request, "packs": pack_ids}))
+
+    positions = [html.index(f'title="{pack.name}"') for pack in reversed(carousel_packs)]
+    assert positions == sorted(positions)

@@ -127,6 +127,15 @@ class Collection(LicenseSummaryMixin, models.Model):
         models.IntegerField(), size=settings.MAX_FEATURED_SOUNDS_PER_COLLECTION, blank=True, default=list
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(is_default_collection=True),
+                name="unique_default_collection_per_user",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.name}"
 
@@ -177,6 +186,9 @@ class Collection(LicenseSummaryMixin, models.Model):
         if not user or not user.is_authenticated:
             return False
         return user == self.user or self.maintainers.filter(id=user.id).exists()
+
+    def user_can_view(self, user):
+        return self.public or self.user_is_owner_or_maintainer(user)
 
     def update_num_sounds(self):
         # Single source of truth for the num_sounds recount
@@ -243,10 +255,12 @@ class Collection(LicenseSummaryMixin, models.Model):
 
     @cached_property
     def licenses_data(self):
-        licenses_data = list(Sound.objects.sounds_for_collection(self.id).values_list("license__name", "license_id"))
-        license_ids = [lid for _, lid in licenses_data]
-        license_names = [lname for lname, _ in licenses_data]
-        return license_ids, license_names
+        return [
+            {"id": license_id, "name": name}
+            for license_id, name in Sound.objects.sounds_for_collection(self.id).values_list(
+                "license_id", "license__name"
+            )
+        ]
 
     def get_collection_tags_bw(self):
         tags = (

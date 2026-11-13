@@ -46,6 +46,20 @@ def test_name_can_be_reused_after_repeated_deletion():
     Pack.objects.create(user=User.objects.get(username="User2"), name="Birds")
 
 
+def test_license_summary_without_bulk_loading(load_fixtures):
+    load_fixtures(["licenses"])
+    _, packs, sounds = create_user_and_sounds(num_sounds=2, num_packs=1)
+    pack = packs[0]
+    license = sounds[0].license
+
+    assert pack.licenses_data == [
+        {"id": license.id, "name": license.name},
+        {"id": license.id, "name": license.name},
+    ]
+    assert pack.license_summary_name_and_id == (license.name, license.id)
+    assert pack.license_summary == license
+
+
 class PackNumSoundsTestCase(TestCase):
     fixtures = ["licenses"]
 

@@ -17,23 +17,39 @@
 # Authors:
 #     See AUTHORS file.
 #
+import base64
+import hashlib
 import json
+from datetime import timedelta
+from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
+from urllib.parse import parse_qs, urlsplit
+from uuid import uuid4
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 from django.http import Http404, HttpResponse
-from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.test import Client, RequestFactory, SimpleTestCase, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
+from oauth2_provider.models import AccessToken, Grant, RefreshToken
 from rest_framework.exceptions import ErrorDetail, ValidationError
 
+from apiv2.apiv2_utils import FreesoundAPIViewMixin
 from apiv2.models import ApiV2Client
 from apiv2.serializers import DEFAULT_FIELDS_IN_SOUND_LIST, SoundListSerializer, SoundSerializer, validate_tags
-from bookmarks.models import Bookmark, BookmarkCategory
+from bookmarks.models import Bookmark
+from fscollections.models import Collection, CollectionSound
 from sounds.models import DownloadAPI, PackDownloadAPI, PackDownloadSoundAPI, Sound
 from utils.ratelimit import request_limit_events_total
+from utils.search import SearchEngineUnavailableException, SearchResults
 from utils.test_helpers import counter_samples, create_user_and_sounds
 
 from .exceptions import (
@@ -103,8 +119,8 @@ class TestAPiViews(TestCase):
         resp = self.client.get(reverse("apiv2-apply"), secure=True)
         self.assertEqual(resp.status_code, 200)
 
-        # 302 response on logout page
-        resp = self.client.get(reverse("api-logout"), secure=True)
+        # 302 response on logout submission
+        resp = self.client.post(reverse("api-logout"), secure=True)
         self.assertEqual(resp.status_code, 302)
 
     def test_user_views_response_ok(self):
@@ -177,6 +193,91 @@ class TestAPI(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
+class TestAPISoundWrites(TestCase):
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        self.user = User.objects.create_user("tag-writer")
+        self.api_client = ApiV2Client.objects.create(name="Tag writer", user=self.user)
+        token = AccessToken.objects.create(
+            user=self.user,
+            application=self.api_client.oauth_client,
+            token="tag-write-test-token",
+            expires=timezone.now() + timedelta(hours=1),
+            scope="read write",
+        )
+        self.client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {token.token}"
+
+    def test_edit_splits_tag_string(self):
+        _, _, [sound] = create_user_and_sounds(
+            user=self.user, tags="old-tag", moderation_state="OK", processing_state="OK"
+        )
+        response = self.client.post(
+            reverse("apiv2-sound-edit", args=[sound.id]),
+            {"tags": "bird forest wind"},
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertCountEqual(sound.tags.values_list("name", flat=True), ["bird", "forest", "wind"])
+
+    @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
+    @mock.patch("apiv2.views.generate_tree", return_value=({}, {1: SimpleNamespace(name="bird.wav")}))
+    def test_describe_calls_create_sound_with_oauth(self, generate_tree, create_sound):
+        data = {
+            "upload_filename": "bird.wav",
+            "name": "Bird recording",
+            "description": "Birds in the forest",
+            "license": "Creative Commons 0",
+            "tags": "bird forest wind",
+        }
+        response = self.client.post(reverse("apiv2-uploads-describe"), data)
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.json()["id"], 123)
+        create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
+
+        self.assertEqual(create_sound.call_args.args[1]["tags"], {"bird", "forest", "wind"})
+        self.assertEqual(create_sound.call_args.args[1]["name"], "Bird recording")
+
+    @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
+    @mock.patch("apiv2.views.generate_tree", return_value=({}, {1: SimpleNamespace(name="bird.wav")}))
+    def test_describe_defaults_name_to_upload_filename(self, generate_tree, create_sound):
+        response = self.client.post(
+            reverse("apiv2-uploads-describe"),
+            {
+                "upload_filename": "bird.wav",
+                "description": "Birds",
+                "license": "Creative Commons 0",
+                "tags": "bird forest wind",
+            },
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
+        self.assertEqual(create_sound.call_args.args[1]["name"], "bird.wav")
+
+    @mock.patch("apiv2.views.utils.sound_upload.create_sound", return_value=SimpleNamespace(id=123))
+    @mock.patch("apiv2.views.handle_uploaded_file")
+    def test_upload_calls_create_sound_with_oauth(self, handle_uploaded_file, create_sound):
+        response = self.client.post(
+            reverse("apiv2-uploads-upload"),
+            {
+                "audiofile": SimpleUploadedFile("bird.wav", b"audio content"),
+                "name": "Bird recording",
+                "description": "Birds in the forest",
+                "license": "Creative Commons 0",
+                "bst_category": "ss-n",
+                "tags": "bird forest wind",
+            },
+        )
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.json()["id"], 123)
+        handle_uploaded_file.assert_called_once_with(self.user.id, mock.ANY)
+        self.assertEqual(handle_uploaded_file.call_args.args[1].name, "bird.wav")
+        create_sound.assert_called_once_with(self.user, mock.ANY, apiv2_client=self.api_client)
+        fields = create_sound.call_args.args[1]
+        self.assertEqual(fields["name"], "Bird recording")
+        self.assertEqual(fields["tags"], {"bird", "forest", "wind"})
+        self.assertEqual(fields["dest_path"], str(Path(self.user.profile.locations("uploads_dir")) / "bird.wav"))
+
+
 class TestDownloadViews(TestCase):
     fixtures = ["licenses"]
 
@@ -208,6 +309,7 @@ class TestDownloadViews(TestCase):
             "HTTP_AUTHORIZATION": f"Bearer {resp.json()['access_token']}",
         }
 
+    @override_settings(USE_CDN_FOR_DOWNLOADS=True, USE_CDN_FOR_API_DOWNLOADS=False)
     @mock.patch("apiv2.views.sendfile", return_value=HttpResponse("Dummy response"))
     @mock.patch("apiv2.views.os.path.exists", return_value=True)
     def test_download_sound_creates_download_api_object(self, exists, sendfile):
@@ -226,6 +328,31 @@ class TestDownloadViews(TestCase):
         self.assertEqual(download_api.api_client_id, self.api_client.id)
         self.assertEqual(download_api.license_id, sound.license_id)
 
+    @override_settings(USE_CDN_FOR_DOWNLOADS=False, USE_CDN_FOR_API_DOWNLOADS=True)
+    @mock.patch("apiv2.views.os.path.exists", return_value=True)
+    @mock.patch("apiv2.views.generate_cdn_download_url")
+    def test_download_sound_cdn_redirect(self, cdn_url, exists):
+        sound = self.sounds[0]
+        signed_url = "https://cdn.freesound.org/sounds/0/1.wav?md5=signature&expires=123&filename=sound.wav"
+        cdn_url.return_value = signed_url
+
+        response = self.client.get(reverse("apiv2-sound-download", args=[sound.id]), secure=True, **self.auth_headers)
+
+        self.assertRedirects(response, signed_url, fetch_redirect_response=False)
+        self.assertEqual(DownloadAPI.objects.filter(sound=sound).count(), 1)
+
+    @override_settings(USE_CDN_FOR_API_DOWNLOADS=True)
+    @mock.patch("apiv2.views.sendfile", return_value=HttpResponse("Dummy response"))
+    @mock.patch("apiv2.views.os.path.exists", return_value=True)
+    @mock.patch("apiv2.views.generate_cdn_download_url", return_value=None)
+    def test_download_sound_cdn_fallback(self, cdn_url, exists, sendfile):
+        sound = self.sounds[0]
+
+        self.client.get(reverse("apiv2-sound-download", args=[sound.id]), secure=True, **self.auth_headers)
+
+        sendfile.assert_called_once()
+
+    @override_settings(USE_CDN_FOR_DOWNLOADS=True, USE_CDN_FOR_API_DOWNLOADS=True)
     def test_download_pack_creates_pack_download_api_objects(self):
         pack = self.packs[0]
         self.assertEqual(PackDownloadAPI.objects.count(), 0)
@@ -233,6 +360,7 @@ class TestDownloadViews(TestCase):
 
         resp = self.client.get(reverse("apiv2-pack-download", kwargs={"pk": pack.id}), secure=True, **self.auth_headers)
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp["X-Archive-Files"], "zip")
 
         self.assertEqual(PackDownloadAPI.objects.count(), 1)
         pack_download_api = PackDownloadAPI.objects.get()
@@ -250,6 +378,34 @@ class TestDownloadViews(TestCase):
                     pack_download_api=pack_download_api, sound=sound, license_id=sound.license_id
                 ).exists()
             )
+
+
+class TestApiSearchServerError(TestCase):
+    """When the search backend reports a server-side fault (5xx or unreachable), the API must
+    return a 500 with a generic message and must not leak the raw Solr reason to the client."""
+
+    SOLR_REASON = "Failed to connect to server at http://solr:8983/solr/freesound"
+    EXPECTED_MESSAGE = "There was a problem performing your search, please try again later."
+
+    def setUp(self):
+        user = User.objects.create_user(username="searchuser")
+        self.client_key = ApiV2Client.objects.create(
+            user=user, status="OK", redirect_uri="https://freesound.com", url="https://freesound.com", name="test"
+        ).key
+
+    def _search(self):
+        headers = {"HTTP_AUTHORIZATION": f"Token {self.client_key}"}
+        return self.client.get(reverse("apiv2-sound-text-search") + "?query=test", secure=True, **headers)
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_server_error_returns_generic_500_without_leaking_solr_reason(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.side_effect = SearchEngineUnavailableException(self.SOLR_REASON)
+
+        resp = self._search()
+
+        self.assertEqual(resp.status_code, 500)
+        self.assertEqual(resp.json()["detail"], self.EXPECTED_MESSAGE)
+        self.assertNotIn(self.SOLR_REASON, resp.content.decode())
 
 
 class TestSoundCombinedSearchFormAPI(SimpleTestCase):
@@ -441,12 +597,21 @@ class TestApiV2Client(TestCase):
         for route in ["apiv2-edit-credential", "apiv2-monitor-credential", "apiv2-delete-credential"]:
             with self.subTest(route=route):
                 request = self.client.post if route == "apiv2-delete-credential" else self.client.get
-                self.assertEqual(request(reverse(route, args=[credential.key])).status_code, 404)
+                self.assertEqual(request(reverse(route, args=[credential.pk])).status_code, 404)
         credential.refresh_from_db()
         credential.oauth_client.refresh_from_db()
         self.client.force_login(owner)
-        self.assertEqual(self.client.get(reverse("apiv2-edit-credential", args=[credential.key])).status_code, 200)
-        delete_url = reverse("apiv2-delete-credential", args=[credential.key])
+        self.assertEqual(self.client.get(reverse("apiv2-edit-credential", args=[credential.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("apiv2-monitor-credential", args=[credential.pk])).status_code, 200)
+        credentials_page = self.client.get(reverse("apiv2-apply"))
+        for action in ["edit", "monitor", "delete"]:
+            with self.subTest(action=action):
+                self.assertContains(credentials_page, reverse(f"apiv2-{action}-credential", args=[credential.pk]))
+                old_url = f"/apiv2/apply/credentials/{credential.key}/{action}/"
+                self.assertNotContains(credentials_page, old_url)
+                request = self.client.post if action == "delete" else self.client.get
+                self.assertEqual(request(old_url).status_code, 404)
+        delete_url = reverse("apiv2-delete-credential", args=[credential.pk])
         self.assertEqual(self.client.get(delete_url).status_code, 405)
         credential.refresh_from_db()
         oauth_client = credential.oauth_client
@@ -516,11 +681,60 @@ class TestMeResources(TestCase):
             sound.change_processing_state("OK")
             sound.change_moderation_state("OK")
 
-        self.category = BookmarkCategory.objects.create(name="Category1", user=self.end_user)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[0].id)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[1].id)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[2].id, category=self.category)
-        Bookmark.objects.create(user=self.end_user, sound_id=sounds[3].id, category=self.category)
+        self.sounds = sounds
+        self.category = Collection.objects.create(name="Category1", user=self.end_user)
+        self.default_collection = Collection.objects.create(
+            name="My bookmarks", user=self.end_user, is_default_collection=True
+        )
+        for sound, collection in zip(sounds[:4], [self.default_collection] * 2 + [self.category] * 2):
+            collection.add_sound(sound, self.end_user)
+
+    def get_with_lifecycle_counts(self, url):
+        with (
+            mock.patch.object(
+                FreesoundAPIViewMixin,
+                "get_request_information",
+                autospec=True,
+                side_effect=FreesoundAPIViewMixin.get_request_information,
+            ) as information,
+            mock.patch.object(
+                FreesoundAPIViewMixin,
+                "store_monitor_usage",
+                autospec=True,
+                side_effect=FreesoundAPIViewMixin.store_monitor_usage,
+            ) as usage,
+            mock.patch.object(
+                FreesoundAPIViewMixin,
+                "redirect_if_needed",
+                autospec=True,
+                side_effect=FreesoundAPIViewMixin.redirect_if_needed,
+            ) as redirect,
+        ):
+            response = self.client.get(url, secure=True, **self.auth_headers)
+        information.assert_called_once()
+        usage.assert_called_once()
+        redirect.assert_called_once()
+        return response
+
+    def test_bookmark_categories_run_lifecycle_once(self):
+        response = self.get_with_lifecycle_counts(reverse("apiv2-me-bookmark-categories"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.category.id, [category["id"] for category in response.json()["results"]])
+
+    def test_bookmark_sounds_run_lifecycle_once(self):
+        response = self.get_with_lifecycle_counts(
+            reverse("apiv2-me-bookmark-category-sounds", args=[self.category.id]),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({sound["id"] for sound in response.json()["results"]}, {s.id for s in self.sounds[2:4]})
+
+    def test_bookmark_options_describes_post_fields(self):
+        self.client.force_login(self.end_user)
+        response = self.client.options(reverse("apiv2-user-create-bookmark", args=[self.sounds[0].id]), secure=True)
+        self.assertEqual(response.status_code, 200)
+        category = response.json()["actions"]["POST"]["category"]
+        self.assertEqual(category["type"], "string")
+        self.assertFalse(category["required"])
 
     def test_me_resource(self):
         # 200 response on me resource
@@ -541,6 +755,8 @@ class TestMeResources(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
+        self.assertEqual({s["id"] for s in resp.json()["results"]}, {s.id for s in self.sounds[:2]})
+
         # 200 response on getting sounds for bookmark category with name
         resp = self.client.get(
             reverse("apiv2-me-bookmark-category-sounds", kwargs={"category_id": self.category.id}) + "?fields=*",
@@ -548,6 +764,86 @@ class TestMeResources(TestCase):
             **self.auth_headers,
         )
         self.assertEqual(resp.status_code, 200)
+        self.assertEqual({s["id"] for s in resp.json()["results"]}, {s.id for s in self.sounds[2:4]})
+
+    def test_bookmark_collection_sounds_ordered_by_date_added(self):
+        # Return sounds in the order that they are added to the collection.
+        self.category.add_sound(self.sounds[0], self.end_user)
+        response = self.client.get(
+            reverse("apiv2-me-bookmark-category-sounds", args=[self.category.id]),
+            secure=True,
+            **self.auth_headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [sound["id"] for sound in response.json()["results"]],
+            [self.sounds[0].id, self.sounds[3].id, self.sounds[2].id],
+        )
+
+    def test_bookmark_collection_must_be_owned(self):
+        other_collection = Collection.objects.create(name="Other", user=self.dev_user, public=True)
+        other_collection.maintainers.add(self.end_user)
+        for category_id in [other_collection.id, other_collection.id + 1]:
+            with self.subTest(category_id=category_id):
+                response = self.client.get(
+                    reverse("apiv2-me-bookmark-category-sounds", args=[category_id]),
+                    secure=True,
+                    **self.auth_headers,
+                )
+                self.assertEqual(response.status_code, 404)
+
+    def test_bookmark_collections_only_return_public_accepted_sounds(self):
+        # Seed entries independently of form validation, then demote a bookmarked sound.
+        self.sounds[0].change_moderation_state("PE")
+        self.sounds[1].change_processing_state("PE")
+        for collection in [self.default_collection, self.category]:
+            for sound in self.sounds:
+                CollectionSound.objects.get_or_create(
+                    collection=collection, sound=sound, defaults={"user": self.end_user, "status": "OK"}
+                )
+            CollectionSound.objects.filter(collection=collection, sound=self.sounds[2]).update(status="PE")
+        for category_id in [0, self.category.id]:
+            with self.subTest(category_id=category_id):
+                response = self.client.get(
+                    reverse("apiv2-me-bookmark-category-sounds", args=[category_id]),
+                    secure=True,
+                    **self.auth_headers,
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual({s["id"] for s in response.json()["results"]}, {s.id for s in self.sounds[3:]})
+
+    @override_settings(ENABLE_COLLECTIONS=False)
+    def test_legacy_bookmarks_only_return_public_sounds(self):
+        for sound in self.sounds[:3]:
+            Bookmark.objects.create(user=self.end_user, sound=sound)
+        self.sounds[0].change_moderation_state("PE")
+        self.sounds[1].change_processing_state("PE")
+        response = self.client.get(
+            reverse("apiv2-me-bookmark-category-sounds", args=[0]), secure=True, **self.auth_headers
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([s["id"] for s in response.json()["results"]], [self.sounds[2].id])
+
+
+class PKCERegistrationMigrationTestCase(TransactionTestCase):
+    def test_existing_registrations_are_optional_and_new_registrations_require_pkce(self):
+        previous = [("apiv2", "0008_rename_allow_oauth_passoword_grant_apiv2client_allow_oauth_password_grant")]
+        current = [("apiv2", "0009_apiv2client_require_pkce")]
+        executor = MigrationExecutor(connection)
+        executor.migrate(previous)
+        try:
+            old_apps = executor.loader.project_state(previous).apps
+            user = old_apps.get_model("auth", "User").objects.create(username="legacy_developer")
+            legacy = old_apps.get_model("apiv2", "ApiV2Client").objects.create(user_id=user.pk, name="Legacy app")
+            executor = MigrationExecutor(connection)
+            executor.migrate(current)
+            self.assertFalse(ApiV2Client.objects.get(pk=legacy.pk).require_pkce)
+            new_client = ApiV2Client.objects.create(user_id=user.pk, name="New app")
+            self.assertTrue(new_client.require_pkce)
+            new_client.refresh_from_db()
+            self.assertTrue(new_client.require_pkce)
+        finally:
+            MigrationExecutor(connection).migrate(current)
 
 
 class APIAuthenticationTestCase(TestCase):
@@ -567,7 +863,123 @@ class APIAuthenticationTestCase(TestCase):
             name="AuthorizationCodeClient",
             user=self.dev_user,
             allow_oauth_password_grant=False,
+            require_pkce=False,  # Model an application registered before PKCE enforcement.
         )
+
+    def test_oauth_account_switch_preserves_authorization_parameters(self):
+        application = ApiV2Client.objects.create(
+            user=self.dev_user, name="Account switch", redirect_uri="https://example.com/callback?mode=one&other=two"
+        )
+        challenge = base64.urlsafe_b64encode(hashlib.sha256(b"a" * 43).digest()).rstrip(b"=").decode()
+        parameters = {
+            "client_id": application.client_id,
+            "response_type": "code",
+            "redirect_uri": application.redirect_uri,
+            "scope": "read write",
+            "state": 'state&next="quoted"+value',
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+        }
+
+        def form_data(response, action):
+            self.assertEqual(response.status_code, 200)
+            form = BeautifulSoup(response.content, "html.parser").find("form", action=action)
+            self.assertIsNotNone(form)
+            self.assertEqual(form["method"], "post")
+            return {field["name"]: field.get("value", "") for field in form.find_all("input", attrs={"name": True})}
+
+        self.client = Client(enforce_csrf_checks=True)
+        self.client.force_login(self.end_user)
+        response = self.client.get(reverse("oauth2_provider:authorize"), parameters, secure=True)
+        action = reverse("api-logout")
+        fields = form_data(response, action)
+        next_url = fields["next"]
+        self.assertEqual(urlsplit(next_url).path, reverse("oauth2_provider:authorize"))
+        returned = parse_qs(urlsplit(next_url).query)
+        for key, value in parameters.items():
+            self.assertEqual(returned[key], [value])
+        self.assertNotIn("allow", returned)
+        self.assertNotIn("csrfmiddlewaretoken", returned)
+        self.assertRedirects(self.client.post(action, fields), next_url, fetch_redirect_response=False)
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.client.force_login(self.dev_user)
+        consent = self.client.get(next_url, secure=True)
+        consent_fields = form_data(consent, reverse("oauth2_provider:authorize"))
+        self.assertEqual(consent_fields["code_challenge"], parameters["code_challenge"])
+        self.assertEqual(consent_fields["state"], parameters["state"])
+
+    def test_new_registration_requires_s256_on_authorization_get_and_post(self):
+        client = ApiV2Client.objects.create(name="PKCE client", user=self.dev_user)
+        self.assertTrue(client.require_pkce)
+        self.client.force_login(self.end_user)
+        for pkce_params in [
+            {},  # Missing PKCE challenge and method.
+            {"code_challenge": "a" * 43},  # Missing method defaults to plain.
+            {"code_challenge": "a" * 43, "code_challenge_method": "plain"},  # S256 is required.
+            {"code_challenge_method": "S256"},  # Missing challenge.
+        ]:
+            for method in [self.client.get, self.client.post]:
+                with self.subTest(pkce_params=pkce_params, method=method.__name__):
+                    response = method(
+                        reverse("oauth2_provider:authorize"),
+                        {
+                            "client_id": client.client_id,
+                            "response_type": "code",
+                            "redirect_uri": client.redirect_uri,
+                            "scope": "read",
+                            "allow": "Authorize",
+                            **pkce_params,
+                        },
+                        secure=True,
+                    )
+                    self.assertEqual(response.status_code, 302)
+                    self.assertEqual(parse_qs(urlsplit(response.url).query)["error"], ["invalid_request"])
+                    self.assertFalse(client.oauth_client.grant_set.exists())
+
+    def test_new_registration_s256_exchange_and_refresh_without_client_secret(self):
+        self.client.force_login(self.end_user)
+        verifier = "a" * 43
+        challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest()).rstrip(b"=").decode()
+        client = ApiV2Client.objects.create(name="PKCE client", user=self.dev_user)
+        authorization = {
+            "client_id": client.client_id,
+            "response_type": "code",
+            "redirect_uri": client.redirect_uri,
+            "scope": "read",
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+        }
+        self.assertEqual(
+            self.client.get(reverse("oauth2_provider:authorize"), authorization, secure=True).status_code, 200
+        )
+        response = self.client.post(
+            reverse("oauth2_provider:authorize"), {**authorization, "allow": "Authorize"}, secure=True
+        )
+        self.assertEqual(response.status_code, 302)
+        code = parse_qs(urlsplit(response.url).query)["code"][0]
+        token_url = reverse("oauth2_provider:access_token")
+        response = self.client.post(
+            token_url,
+            {
+                "client_id": client.client_id,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": client.redirect_uri,
+                "code_verifier": verifier,
+            },
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(
+            token_url,
+            {
+                "client_id": client.client_id,
+                "grant_type": "refresh_token",
+                "refresh_token": response.json()["refresh_token"],
+            },
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 200)
 
     @staticmethod
     def get_params_from_url(url):
@@ -842,17 +1254,129 @@ class APIAuthenticationTestCase(TestCase):
         self.assertEqual(resp.status_code, 401)
 
 
+class PermissionRevocationTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("authorized_user", email="authorized@example.com")
+        self.other_user = User.objects.create_user("other_user", email="other@example.com")
+        self.application = ApiV2Client.objects.create(user=self.other_user, name="Application", require_pkce=False)
+        self.access, self.refresh = self.create_tokens(self.user, self.application)
+        self.api = Client()
+        self.client.force_login(self.user)
+
+    def create_tokens(self, user, application):
+        access = AccessToken.objects.create(
+            user=user,
+            application=application.oauth_client,
+            token=uuid4().hex,
+            expires=timezone.now() + timedelta(hours=1),
+            scope="read",
+        )
+        refresh = RefreshToken.objects.create(
+            user=user, application=application.oauth_client, access_token=access, token=uuid4().hex
+        )
+        return access, refresh
+
+    def revoke(self):
+        response = self.client.get(reverse("revoke-permission", args=[self.application.client_id]))
+        self.assertRedirects(response, reverse("access-tokens"), fetch_redirect_response=False)
+
+    def refresh_token(self, token, application=None):
+        return self.api.post(
+            reverse("oauth2_provider:access_token"),
+            {
+                "grant_type": "refresh_token",
+                "client_id": (application or self.application).client_id,
+                "refresh_token": token,
+            },
+            secure=True,
+        )
+
+    def test_all_refresh_tokens_are_rejected_after_revocation(self):
+        _, second_refresh = self.create_tokens(self.user, self.application)
+        self.revoke()
+        self.assertFalse(
+            RefreshToken.objects.filter(user=self.user, application=self.application.oauth_client).exists()
+        )
+        response = self.refresh_token(self.refresh.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "invalid_grant")
+        self.assertEqual(self.refresh_token(second_refresh.token).json()["error"], "invalid_grant")
+
+    def test_access_token_is_rejected_after_revocation(self):
+        self.revoke()
+        response = self.api.get("/apiv2/me/", secure=True, HTTP_AUTHORIZATION=f"Bearer {self.access.token}")
+        self.assertEqual(response.status_code, 401)
+
+    def test_pending_authorization_code_is_rejected_after_revocation(self):
+        grant = Grant.objects.create(
+            user=self.user,
+            application=self.application.oauth_client,
+            code=uuid4().hex,
+            expires=timezone.now() + timedelta(minutes=5),
+            redirect_uri=self.application.redirect_uri,
+            scope="read",
+        )
+        self.revoke()
+        response = self.api.post(
+            reverse("oauth2_provider:access_token"),
+            {
+                "grant_type": "authorization_code",
+                "client_id": self.application.client_id,
+                "code": grant.code,
+                "redirect_uri": self.application.redirect_uri,
+            },
+            secure=True,
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "invalid_grant")
+
+    def test_refresh_token_without_access_token_is_removed(self):
+        self.access.delete()
+        self.refresh.refresh_from_db()
+        self.assertIsNone(self.refresh.access_token_id)
+        self.revoke()
+        self.assertFalse(RefreshToken.objects.filter(pk=self.refresh.pk).exists())
+        self.assertEqual(self.refresh_token(self.refresh.token).json()["error"], "invalid_grant")
+
+    @override_settings(OAUTH2_PROVIDER={"REFRESH_TOKEN_GRACE_PERIOD_SECONDS": 3600})
+    def test_revocation_is_immediate_with_refresh_grace_period(self):
+        self.revoke()
+        response = self.refresh_token(self.refresh.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "invalid_grant")
+
+    def test_other_users_authorization_remains_valid(self):
+        access, refresh = self.create_tokens(self.other_user, self.application)
+        self.revoke()
+        self.assertEqual(
+            self.api.get("/apiv2/me/", secure=True, HTTP_AUTHORIZATION=f"Bearer {access.token}").status_code, 200
+        )
+        self.assertEqual(self.refresh_token(refresh.token).status_code, 200)
+
+    def test_users_other_application_remains_authorized(self):
+        other_application = ApiV2Client.objects.create(
+            user=self.other_user, name="Other application", require_pkce=False
+        )
+        access, refresh = self.create_tokens(self.user, other_application)
+        self.revoke()
+        self.assertEqual(
+            self.api.get("/apiv2/me/", secure=True, HTTP_AUTHORIZATION=f"Bearer {access.token}").status_code, 200
+        )
+        self.assertEqual(self.refresh_token(refresh.token, other_application).status_code, 200)
+
+
 class TestAPIExceptionHandlerIntegration(SimpleTestCase):
     def test_exception_handler_is_wired_into_drf(self):
         # End-to-end check that a real request that raises a LoggedAPIException is routed through
         # our configured EXCEPTION_HANDLER.
-        url = reverse("apiv2-download_from_token", args=["bogus"])
+        with (
+            mock.patch("apiv2.authentication.OAuth2Authentication.authenticate", side_effect=BadRequestException()),
+            self.assertLogs("api_errors", level="INFO") as logs,
+        ):
+            response = self.client.get("/apiv2/")
 
-        with self.assertLogs("api_errors", level="INFO") as logs:
-            response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"detail": "Invalid token."})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"detail": "Bad request"})
         self.assertEqual(len(logs.records), 1)
 
 
@@ -1044,3 +1568,48 @@ class TagLengthValidationTests(SimpleTestCase):
         for value in (f"{'x' * 100},two,three", f"--{'x' * 98}---y-- two three"):
             with self.subTest(value=value):
                 self.assertEqual(validate_tags(value), value)
+
+
+class TestSearchEndpoints(TestCase):
+    fixtures = ["licenses"]
+
+    def setUp(self):
+        user, _, sounds = create_user_and_sounds(processing_state="OK", moderation_state="OK")
+        self.sound = sounds[0]
+        self.client.force_login(user)
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_search_get_serializes_requested_fields(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.return_value = SearchResults(
+            docs=[{"id": self.sound.id, "score": 1.0}], num_found=1
+        )
+
+        response = self.client.get(reverse("apiv2-sound-search") + "?query=test&fields=id", secure=True)
+
+        assert response.status_code == 200
+        assert response.json()["results"] == [{"id": self.sound.id}]
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_similar_sounds_get_serializes_requested_fields(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.return_value = SearchResults(
+            docs=[{"id": self.sound.id, "score": 1.0}], num_found=1
+        )
+
+        response = self.client.get(reverse("apiv2-similarity-sound", args=[self.sound.id]) + "?fields=id", secure=True)
+
+        assert response.status_code == 200
+        assert response.json()["results"] == [{"id": self.sound.id}]
+
+    @mock.patch("apiv2.apiv2_utils.get_search_engine")
+    def test_search_html_shows_custom_documentation_above_results(self, get_search_engine):
+        get_search_engine.return_value.search_sounds.return_value = SearchResults(docs=[], num_found=0)
+
+        response = self.client.get(reverse("apiv2-sound-search") + "?query=test", secure=True, HTTP_ACCEPT="text/html")
+
+        assert response.status_code == 200
+        assert response["Content-Type"].startswith("text/html")
+        html = response.content.decode()
+        description = "Search sounds in Freesound based on their tags and other metadata."
+        assert description in html
+        assert "Some quick examples:" in html
+        assert html.index(description) < html.index('class="response-info"')

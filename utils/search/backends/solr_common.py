@@ -25,8 +25,39 @@ from django.conf import settings
 from django.core.cache import cache
 
 from utils.search import SearchEngineException, SearchEngineTimeoutException
+from utils.search_metrics import partial_results, slow_queries
 
 search_logger = logging.getLogger("search")
+
+# Boolean operators and lone punctuation that dismax rejects when dangling at the start or end of a
+# query. A token made up entirely of these punctuation chars (e.g. "+", "--", "\\") is also junk.
+_DISMAX_BOOLEAN_OPERATORS = {"AND", "OR", "NOT"}
+_DISMAX_OPERATOR_CHARS = set("+-\\&|!")
+
+
+def sanitize_dismax_query(query):
+    """Make a user-entered dismax query safe to send to Solr without a syntax error.
+
+    Dismax is meant for simple phrases, but scraper and SQLi noise (unbalanced quotes, dangling
+    boolean operators) makes the Solr parser return a 400. We remove just enough to parse: drop all
+    double quotes when they are unbalanced, and trim leading/trailing boolean operators and lone
+    operator punctuation. Balanced phrases, apostrophes and hyphenated or "+"-suffixed terms are
+    left untouched. A fully-stripped query becomes empty and degrades to match-all via q.alt.
+    """
+    if not query:
+        return query
+    if query.count('"') % 2:
+        query = query.replace('"', "")
+
+    def is_junk(token):
+        return token in _DISMAX_BOOLEAN_OPERATORS or set(token) <= _DISMAX_OPERATOR_CHARS
+
+    tokens = query.split()
+    while tokens and is_junk(tokens[0]):
+        tokens.pop(0)
+    while tokens and is_junk(tokens[-1]):
+        tokens.pop()
+    return " ".join(tokens)
 
 
 class SolrQuery:
@@ -80,6 +111,7 @@ class SolrQuery:
         boost_query: see docs...
         boost_functions: see docs...
         """
+        query = sanitize_dismax_query(query)
         self.params["q"] = query
         self.params["defType"] = "dismax"
         self.params["q.alt"] = "*:*"
@@ -337,17 +369,16 @@ class SolrResponseInterpreter:
         # want a structured timeout exception rather than a KeyError downstream.
         response_header = response.get("responseHeader", {})
         if response_header.get("partialResults"):
+            partial_results.inc()
             q_time = response_header.get("QTime", -1)
             solr_query_url = make_solr_query_url(response_header.get("params", {}), debug=True)
             search_logger.warning(
-                "SOLR partial results returned (timeAllowed exceeded) %s"
-                % json.dumps(
-                    {
-                        "q_time": q_time,
-                        "url": solr_query_url,
-                        "partial_results_details": response_header.get("partialResultsDetails"),
-                    }
-                )
+                "SOLR partial results returned (timeAllowed exceeded)",
+                extra={
+                    "q_time_ms": q_time,
+                    "url": solr_query_url,
+                    "partial_results_details": response_header.get("partialResultsDetails"),
+                },
             )
             raise SearchEngineTimeoutException(f"Solr returned partial results (timeAllowed exceeded after {q_time}ms)")
 
@@ -444,9 +475,10 @@ class SolrResponseInterpreter:
                 settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD > -1
                 and self.q_time > settings.SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD
             ):
+                slow_queries.inc()
                 search_logger.info(
-                    "SOLR slow query detected (%s)"
-                    % json.dumps({"q_time": self.q_time, "num_results": self.num_found, "url": solr_query_url})
+                    "SOLR slow query detected",
+                    extra={"q_time_ms": self.q_time, "num_results": self.num_found, "url": solr_query_url},
                 )
 
             if settings.DEBUG:

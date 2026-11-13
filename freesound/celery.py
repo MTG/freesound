@@ -4,10 +4,13 @@ import requests
 from celery import Celery
 from django.conf import settings
 
+from utils.celery_metrics import WorkerMetrics
+
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "freesound.settings")
 
 app = Celery("freesound")
+app.steps["worker"].add(WorkerMetrics)
 
 # Using a string here means the worker don't have to serialize
 # the configuration object to child processes.

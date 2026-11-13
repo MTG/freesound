@@ -63,7 +63,7 @@ examples = {
             [
                 "apiv2/search/?query=alarm&fields=name,previews",
                 "apiv2/search/?query=alarm&fields=name,spectral_centroid,pitch",
-                "apiv2/search/?query=loop&fields=uri,onset_times",
+                "apiv2/search/?query=loop&fields=url,onset_times",
             ],
         ),
         ("Group search results by pack", ["apiv2/search/?query=piano&group_by_pack=1"]),
@@ -102,8 +102,6 @@ examples = {
     ],
     "SoundAnalysis": [
         ("Full analysis information", ["apiv2/sounds/1234/analysis/"]),
-        ("Getting only tristimulus descriptor", ["apiv2/sounds/1234/analysis/?fields=tristimulus"]),
-        ("Getting two or more descriptors", ["apiv2/sounds/1234/analysis/?fields=mfcc,tristimulus,warmth"]),
     ],
     "SimilarSounds": [
         (
@@ -111,7 +109,7 @@ examples = {
             [
                 "apiv2/sounds/80408/similar/",
                 "apiv2/sounds/80408/similar/?page=2",
-                "apiv2/sounds/1234/similar/?fields=name,pitch,spectral_centroid&filter=spectral_centroid:[80 TO 100] note_midi:60",
+                "apiv2/sounds/1234/similar/?fields=name,pitch,spectral_centroid",
             ],
         ),
     ],

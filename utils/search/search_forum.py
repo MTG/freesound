@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from forum.models import Post
 
 search_logger = logging.getLogger("search")
-console_logger = logging.getLogger("console")
 
 
 def add_posts_to_search_engine(post_objects: list[Post], solr_collection_url=None) -> int:
@@ -57,21 +56,19 @@ def delete_posts_from_search_engine(post_ids: list[int], solr_collection_url=Non
     Args:
         post_ids: IDs of the forum posts to delete
     """
-    console_logger.info(f"Deleting {len(post_ids)} forum posts from search engine")
     search_logger.info(f"Deleting {len(post_ids)} forum posts from search engine")
     try:
         get_search_engine(forum_index_url=solr_collection_url).remove_forum_posts_from_index(post_ids)
     except SearchEngineException as e:
-        console_logger.info(f"Could not delete forum posts: {str(e)}")
         search_logger.info(f"Could not delete forum posts: {str(e)}")
 
 
 def delete_all_posts_from_search_engine(solr_collection_url=None):
-    console_logger.info("Deleting ALL forum posts from search engine")
+    search_logger.info("Deleting ALL forum posts from search engine")
     try:
         get_search_engine(forum_index_url=solr_collection_url).remove_all_forum_posts()
     except SearchEngineException as e:
-        console_logger.info(f"Could not delete forum posts: {str(e)}")
+        search_logger.info(f"Could not delete forum posts: {str(e)}")
 
 
 def get_all_post_ids_from_search_engine(solr_collection_url=None, page_size=2000) -> list[int]:
@@ -83,7 +80,7 @@ def get_all_post_ids_from_search_engine(solr_collection_url=None, page_size=2000
     Returns:
         list of forum IDs indexed in the search engine
     """
-    console_logger.info("Getting all forum post ids from search engine")
+    search_logger.info("Getting all forum post ids from search engine")
     search_engine = get_search_engine(forum_index_url=solr_collection_url)
     solr_ids = []
     solr_count = None
@@ -97,5 +94,5 @@ def get_all_post_ids_from_search_engine(solr_collection_url=None, page_size=2000
             solr_count = response.num_found
             current_page += 1
     except SearchEngineException as e:
-        console_logger.info(f"Could retrieve all forum post IDs from search engine: {str(e)}")
+        search_logger.info(f"Could not retrieve all forum post IDs from search engine: {str(e)}")
     return sorted(solr_ids)

@@ -37,6 +37,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from accounts.models import Profile
 from sounds.models import Pack, Sound
 from utils.logging_filters import get_client_ip
+from utils.search import escape_lucene_phrase_value
 from utils.search.search_query_processor import SearchQueryProcessor
 from utils.search.search_sounds import perform_search_engine_query
 from utils.username import get_parameter_user_or_404, raise_404_if_user_is_deleted, redirect_if_old_username
@@ -116,7 +117,7 @@ def geotags_for_user_barray(request, username):
     is_embed = request.GET.get("embed", "0") == "1"
     results, _ = perform_search_engine_query(
         {
-            "query_filter": f'username:"{username}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
+            "query_filter": f'username:"{escape_lucene_phrase_value(username)}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
             "field_list": ["id", "score", "geotag"],
             "num_sounds": profile.num_sounds if profile.num_sounds else 1,  # Avoid potential 0-sized pagination
         }
@@ -142,7 +143,7 @@ def geotags_for_pack_barray(request, pack_id):
     pack = get_object_or_404(Pack, id=pack_id)
     results, _ = perform_search_engine_query(
         {
-            "query_filter": f'pack_grouping:"{pack.id}_{pack.name}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
+            "query_filter": f'pack_grouping:"{pack.id}_{escape_lucene_phrase_value(pack.name)}" is_geotagged:1',  # No need to urlencode here as it will happen somewhere before sending query to solr
             "field_list": ["id", "score", "geotag"],
             "num_sounds": pack.num_sounds if pack.num_sounds else 1,  # Avoid potential 0-sized pagination
         }
@@ -286,7 +287,7 @@ def for_pack(request, username, pack_id):
             "sound": None,
             "url": reverse("geotags-for-pack-barray", args=[pack.id]),
             "query_search_page_url": reverse("sounds-search")
-            + f'?f=pack_grouping:"{pack.id}_{urllib.parse.quote(pack.name)}"&mm=1',
+            + f'?f=pack_grouping:"{pack.id}_{urllib.parse.quote(escape_lucene_phrase_value(pack.name))}"&mm=1',
             "modal_version": request.GET.get("ajax"),
         }
     )

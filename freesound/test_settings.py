@@ -1,5 +1,7 @@
 from .settings import *  # noqa: F403
 
+SEARCH_ARCHIVE_ENABLED = False
+
 postgres_username = os.getenv("FS_TEST_PG_USERNAME", None)
 if postgres_username is not None:
     DATABASES["default"]["NAME"] = "freesound"
@@ -30,10 +32,6 @@ CACHES = {
     "abuse": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/15",
-    },
-    "search_queries": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/14",
     },
 }
 

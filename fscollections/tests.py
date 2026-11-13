@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -26,6 +26,31 @@ class CollectionTest(TestCase):
         self.sound1 = sounds[1]
         self.sound2 = sounds[2]
         self.collection = Collection.objects.create(user=self.user, name="testcollection")
+
+    def test_license_summary(self):
+        self.collection.sounds.add(self.sound, self.sound1, through_defaults={"status": "OK", "user": self.user})
+        license = self.sound.license
+
+        self.assertEqual(
+            self.collection.licenses_data,
+            [
+                {"id": license.id, "name": license.name},
+                {"id": license.id, "name": license.name},
+            ],
+        )
+        self.assertEqual(self.collection.license_summary_name_and_id, (license.name, license.id))
+        self.assertEqual(self.collection.license_summary, license)
+
+    def test_only_one_default_collection_per_user(self):
+        Collection.objects.create(user=self.user, name="Another collection")
+        Collection.objects.create(user=self.user, name="My bookmarks", is_default_collection=True)
+        Collection.objects.create(user=self.external_user, name="My bookmarks", is_default_collection=True)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Collection.objects.create(user=self.user, name="Second default", is_default_collection=True)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Collection.objects.filter(pk=self.collection.pk).update(is_default_collection=True)
 
     def test_load_collection_page(self):
         # Test a collection page is visible to all users if the collection is public
@@ -53,6 +78,54 @@ class CollectionTest(TestCase):
         self.client.force_login(self.external_user)
         resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 404)
+
+    def test_private_collection_visibility_before_redirect(self):
+        # If a collection is private then check that the user can see it before redirecting, otherwise
+        # it could leak the collection's name to any user
+        wrong_url = reverse("collection-licenses", args=[self.collection.id, "wrong-name"])
+        self.assertEqual(self.client.get(wrong_url).status_code, 404)
+        self.client.force_login(self.external_user)
+        self.assertEqual(self.client.get(wrong_url).status_code, 404)
+        self.collection.maintainers.add(self.maintainer)
+        self.client.force_login(self.maintainer)
+        self.assertRedirects(self.client.get(wrong_url), self.collection.licenses_url)
+
+    def test_public_collection_edit_modals_require_membership(self):
+        self.collection.public = True
+        self.collection.save()
+        self.client.force_login(self.external_user)
+        for url in [self.collection.add_sounds_modal_url, self.collection.add_maintainers_modal_url]:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_edit_collection_rejects_non_public_sounds(self):
+        self.client.force_login(self.user)
+        self.sound.moderation_state = "PE"
+        self.sound.save()
+        response = self.client.post(
+            self.collection.edit_url,
+            {"name": self.collection.name, "added_sounds": str(self.sound.id)},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("added_sounds", response.context["form"].errors)
+        self.assertFalse(CollectionSound.objects.filter(collection=self.collection, sound=self.sound).exists())
+
+    def test_last_collection_rechecks_maintainer_permission(self):
+        self.collection.maintainers.add(self.maintainer)
+        self.collection.add_sound(self.sound, self.maintainer)
+        self.client.force_login(self.maintainer)
+        response = self.client.post(
+            reverse("add-sound-to-collection", args=[self.sound1.id]) + "?ajax=1",
+            {"use_last_collection": True},
+        )
+        self.assertTrue(response.json()["success"])
+        self.collection.maintainers.remove(self.maintainer)
+        response = self.client.post(
+            reverse("add-sound-to-collection", args=[self.sound2.id]) + "?ajax=1",
+            {"use_last_collection": True},
+        )
+        self.assertFalse(response.json()["success"])
+        self.assertFalse(CollectionSound.objects.filter(collection=self.collection, sound=self.sound2).exists())
 
     def test_collections_create_and_delete(self):
         # User not logged in - redirects to login page
@@ -250,7 +323,9 @@ class CollectionTest(TestCase):
         form_data = {"collection": -1, "use_last_collection": False}
         resp = self.client.post(reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", form_data)
         self.assertEqual(200, resp.status_code)
+        self.assertTrue(resp.json()["success"])
         default_collection = Collection.objects.get(user=self.user, name="My bookmarks", is_default_collection=True)
+        self.assertTrue(CollectionSound.objects.filter(sound=self.sound, collection=default_collection).exists())
         resp = self.client.get(reverse("collection", args=[default_collection.id, slugify(default_collection.name)]))
         self.assertEqual(200, resp.status_code)
 
@@ -264,6 +339,34 @@ class CollectionTest(TestCase):
         # Test download collection
         resp = self.client.get(reverse("download-collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 200)
+
+    def test_add_sound_requires_collection_selection(self):
+        self.client.force_login(self.user)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"success": False, "message": "Please select or create a collection."})
+        self.assertFalse(CollectionSound.objects.filter(sound=self.sound).exists())
+
+    def test_add_sound_modal_without_available_collections(self):
+        self.client.force_login(self.user)
+        bookmarks = Collection.objects.create(user=self.user, name="My bookmarks", is_default_collection=True)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        bookmarks.add_sound(self.sound, self.user)
+        self.collection.add_sound(self.sound, self.user)
+        response = self.client.get(url)
+        self.assertContains(response, "No collections available for this sound.")
+        self.assertNotContains(response, "<select")
+        self.assertNotContains(response, "Add sound to selected collection")
+        self.assertContains(response, 'id="createNewCollectionLink"')
+        self.assertContains(response, f"?ajax=1&sound_id={self.sound.id}")
+
+    def test_add_sound_modal_offers_bookmarks_without_existing_collections(self):
+        self.client.force_login(self.external_user)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        response = self.client.get(url)
+        self.assertContains(response, '<option value="-1" selected>My bookmarks</option>', html=True)
+        self.assertNotContains(response, "No collections available for this sound.")
 
     def test_add_remove_sounds_as_maintainer(self):
         # test edit collection's parameters as maintainer of the collection
@@ -325,13 +428,11 @@ class CollectionTest(TestCase):
 
         # Additionally, test edit URL for external user
         resp = self.client.get(reverse("edit-collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(302, resp.status_code)
-        self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
+        self.assertEqual(404, resp.status_code)
 
         # Test deleting a collection as an external user (not owner -> not valid)
         resp = self.client.post(reverse("delete-collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
+        self.assertEqual(resp.status_code, 404)
 
     def test_edit_collection_as_user(self):
         # Test the edit collection form submission for different case scenarios
@@ -721,7 +822,7 @@ class CollectionTest(TestCase):
     def test_render_collection_cards_forbidden_for_non_member(self):
         self.client.force_login(self.external_user)
         resp = self.client.get(self.cards_url)
-        self.assertEqual(403, resp.status_code)
+        self.assertEqual(404, resp.status_code)
 
     def test_render_collection_cards_empty_state_with_search(self):
         """The render-cards endpoint owns the empty-state message so the JS

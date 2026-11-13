@@ -3,18 +3,18 @@
 Terms of Use
 >>>>>>>>>>>>
 
-The usage of the api is subject to the Freesound API terms of use which you can be found in https://freesound.org/help/tos_api/.
-Please read these terms and contact us using the Freesound contact form (https://freesound.org/contact/) if you have any doubts.
-As general rules, please take into account the following points:
+Use of the Freesound API is subject to the `API terms of use <https://freesound.org/help/tos_api/>`_.
+Please read these terms and use the `contact form <https://freesound.org/contact/>`_ if you have any questions.
+
+The main requirements are:
 
    **You can use the Freesound API for free only for non-commercial purposes**. To use the Freesound API for commercial purposes,
    please contact us using the Freesound contact form (https://freesound.org/contact/) and we will talk about licensing options.
 
 
 
-   **Be fair with your usage of the Freesound API**. Do not use the api to replicate Freesound in another site or to present
-   Freesound data pretending it is yours. Remember to properly credit Freesound and Freesound users in accordance to sounds'
-   licenses.
+   **Use the Freesound API fairly.** Do not use the API to replicate Freesound on another site or present Freesound data as your own.
+   Credit Freesound and sound creators in accordance with the sounds' licenses.
 
 
 

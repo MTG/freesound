@@ -64,7 +64,7 @@
     color: white;
     font-size: 12px;
     text-align: right;
-    font-family: 'Inconsolata', arial, serif;
+    font-family: monospace, arial, serif;
     padding-top:10px;
     padding-right: 10px;
 }
@@ -99,7 +99,7 @@
 
 .player.large .time-indicator
 {
-    font-family: 'Inconsolata', arial, serif;
+    font-family: monospace, arial, serif;
     padding-top:10px;
     padding-right: 10px;
 }
@@ -123,7 +123,7 @@
 
 .player.small .time-indicator
 {
-    font-family: 'Inconsolata', arial, serif;
+    font-family: monospace, arial, serif;
     padding-top: 0px;
     padding-right: 0px;
 }

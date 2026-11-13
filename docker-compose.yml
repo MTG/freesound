@@ -3,6 +3,7 @@ volumes:
     pghome:
     solr9data:
     fswebhome:
+    rabbitmqdata:
 
 services:
 
@@ -45,6 +46,7 @@ services:
             - environment
         environment:
             - FS_USER_ID
+            - RABBITMQ_MANAGEMENT_URL=http://localhost:${LOCAL_PORT_PREFIX}5673
         depends_on:
             - db
             - rabbitmq
@@ -83,10 +85,10 @@ services:
         hostname: rabbit
         image: rabbitmq:4.2.5-management
         ports:
-            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5673:5673"
+            # Management UI, don't use 15672 because LOCAL_PORT_PREFIX overflows.
+            - "${FS_BIND_HOST:-127.0.0.1}:${LOCAL_PORT_PREFIX}5673:15672"
         volumes:
-            - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-            - ${FS_DATA_DIR:-./freesound-data}/rabbitmq:/var/lib/rabbitmq/mnesia/
+            - rabbitmqdata:/var/lib/rabbitmq/mnesia/
 
     # Worker for async tasks and sound processing
     worker_celery:
@@ -103,6 +105,7 @@ services:
         depends_on:
             - db
             - rabbitmq
+            - redis
 
     # Audio Commons extractor - needs image to be built from freesound-audio-analyzers repository
     worker_analyzer1:

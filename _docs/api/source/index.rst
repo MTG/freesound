@@ -10,8 +10,7 @@ and retrieve automatically extracted features from audio files, as well as perfo
 advanced queries combining content analysis features and other metadata (tags, etc...).
 With the Freesound API, you can also upload, comment, rate and bookmark sounds!
 
-**NOTE**: The documentation that you'll find in this page corresponds to the **Freesound APIv2**.
-The previous version of the API, Freesound APIv1, has reached its end of life and is no longer available.
+This documentation covers the Freesound API.
 If you have any questions, don't hesitate to post them in our
 mailing list http://groups.google.com/group/freesound-api.
 

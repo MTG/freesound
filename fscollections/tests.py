@@ -1,14 +1,15 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
-from django.test import TestCase
+from django.db import IntegrityError, connection, transaction
+from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
-from django.utils.text import slugify
 
 from fscollections.models import Collection, CollectionSound
-from fscollections.views import serialize_collection_sounds
 from sounds.models import Sound
 from utils.test_helpers import create_user_and_sounds
+from utils.text import slugify
 
 
 class CollectionTest(TestCase):
@@ -25,6 +26,31 @@ class CollectionTest(TestCase):
         self.sound1 = sounds[1]
         self.sound2 = sounds[2]
         self.collection = Collection.objects.create(user=self.user, name="testcollection")
+
+    def test_license_summary(self):
+        self.collection.sounds.add(self.sound, self.sound1, through_defaults={"status": "OK", "user": self.user})
+        license = self.sound.license
+
+        self.assertEqual(
+            self.collection.licenses_data,
+            [
+                {"id": license.id, "name": license.name},
+                {"id": license.id, "name": license.name},
+            ],
+        )
+        self.assertEqual(self.collection.license_summary_name_and_id, (license.name, license.id))
+        self.assertEqual(self.collection.license_summary, license)
+
+    def test_only_one_default_collection_per_user(self):
+        Collection.objects.create(user=self.user, name="Another collection")
+        Collection.objects.create(user=self.user, name="My bookmarks", is_default_collection=True)
+        Collection.objects.create(user=self.external_user, name="My bookmarks", is_default_collection=True)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Collection.objects.create(user=self.user, name="Second default", is_default_collection=True)
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Collection.objects.filter(pk=self.collection.pk).update(is_default_collection=True)
 
     def test_load_collection_page(self):
         # Test a collection page is visible to all users if the collection is public
@@ -53,6 +79,54 @@ class CollectionTest(TestCase):
         resp = self.client.get(reverse("collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 404)
 
+    def test_private_collection_visibility_before_redirect(self):
+        # If a collection is private then check that the user can see it before redirecting, otherwise
+        # it could leak the collection's name to any user
+        wrong_url = reverse("collection-licenses", args=[self.collection.id, "wrong-name"])
+        self.assertEqual(self.client.get(wrong_url).status_code, 404)
+        self.client.force_login(self.external_user)
+        self.assertEqual(self.client.get(wrong_url).status_code, 404)
+        self.collection.maintainers.add(self.maintainer)
+        self.client.force_login(self.maintainer)
+        self.assertRedirects(self.client.get(wrong_url), self.collection.licenses_url)
+
+    def test_public_collection_edit_modals_require_membership(self):
+        self.collection.public = True
+        self.collection.save()
+        self.client.force_login(self.external_user)
+        for url in [self.collection.add_sounds_modal_url, self.collection.add_maintainers_modal_url]:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 403)
+
+    def test_edit_collection_rejects_non_public_sounds(self):
+        self.client.force_login(self.user)
+        self.sound.moderation_state = "PE"
+        self.sound.save()
+        response = self.client.post(
+            self.collection.edit_url,
+            {"name": self.collection.name, "added_sounds": str(self.sound.id)},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("added_sounds", response.context["form"].errors)
+        self.assertFalse(CollectionSound.objects.filter(collection=self.collection, sound=self.sound).exists())
+
+    def test_last_collection_rechecks_maintainer_permission(self):
+        self.collection.maintainers.add(self.maintainer)
+        self.collection.add_sound(self.sound, self.maintainer)
+        self.client.force_login(self.maintainer)
+        response = self.client.post(
+            reverse("add-sound-to-collection", args=[self.sound1.id]) + "?ajax=1",
+            {"use_last_collection": True},
+        )
+        self.assertTrue(response.json()["success"])
+        self.collection.maintainers.remove(self.maintainer)
+        response = self.client.post(
+            reverse("add-sound-to-collection", args=[self.sound2.id]) + "?ajax=1",
+            {"use_last_collection": True},
+        )
+        self.assertFalse(response.json()["success"])
+        self.assertFalse(CollectionSound.objects.filter(collection=self.collection, sound=self.sound2).exists())
+
     def test_collections_create_and_delete(self):
         # User not logged in - redirects to login page
         # For this to be truly useful, collection urls should be moved into accounts
@@ -79,11 +153,148 @@ class CollectionTest(TestCase):
             reverse("delete-collection", args=[delete_collection.id, slugify(delete_collection.name)])
         )
         self.assertEqual(resp.status_code, 302)
-        self.assertEqual("/collections/", resp.url)
+        self.assertEqual(reverse("your-collections"), resp.url)
 
         # Test collection URL for collection.id does not exist
         resp = self.client.get(reverse("collection", args=[delete_collection.id, slugify(delete_collection.name)]))
         self.assertEqual(resp.status_code, 404)
+
+    def test_public_collections_view_lists_only_public(self):
+        private_collection = Collection.objects.create(user=self.user, name="Private Collection", public=False)
+        public_collection = Collection.objects.create(user=self.user, name="Public Collection", public=True)
+
+        resp = self.client.get(reverse("collections"))
+        self.assertEqual(resp.status_code, 200)
+
+        listed_names = [collection.name for collection in resp.context["collections"]]
+        self.assertIn(public_collection.name, listed_names)
+        self.assertNotIn(private_collection.name, listed_names)
+
+    def test_public_collections_view_sorting(self):
+        collection_a = Collection.objects.create(user=self.user, name="Alpha", public=True)
+        collection_b = Collection.objects.create(user=self.user, name="Beta", public=True)
+
+        # Make sure collections have different num_sounds for "sounds" sorting
+        collection_a.add_sound(self.sound, user=self.user)
+        collection_a.refresh_from_db()
+        collection_b.refresh_from_db()
+
+        resp_by_name = self.client.get(reverse("collections") + "?sort=name")
+        self.assertEqual(resp_by_name.status_code, 200)
+        sorted_by_name = [collection.name for collection in resp_by_name.context["collections"]]
+        self.assertLess(sorted_by_name.index("Alpha"), sorted_by_name.index("Beta"))
+
+        resp_by_sounds = self.client.get(reverse("collections") + "?sort=sounds")
+        self.assertEqual(resp_by_sounds.status_code, 200)
+        sorted_by_sounds = [collection.name for collection in resp_by_sounds.context["collections"]]
+        self.assertLess(sorted_by_sounds.index("Alpha"), sorted_by_sounds.index("Beta"))
+
+    def test_public_collections_view_filter_by_name(self):
+        Collection.objects.create(user=self.user, name="Ocean Waves", public=True)
+        Collection.objects.create(user=self.user, name="Forest Birds", public=True)
+
+        resp = self.client.get(reverse("collections") + "?q=Ocean")
+        self.assertEqual(resp.status_code, 200)
+
+        listed_names = [collection.name for collection in resp.context["collections"]]
+        self.assertIn("Ocean Waves", listed_names)
+        self.assertNotIn("Forest Birds", listed_names)
+
+    def test_collections_for_user_filter_by_name(self):
+        self.client.force_login(self.user)
+        Collection.objects.create(user=self.user, name="Ocean Waves")
+        Collection.objects.create(user=self.user, name="Forest Birds")
+
+        resp = self.client.get(reverse("your-collections") + "?q=Ocean")
+        self.assertEqual(resp.status_code, 200)
+
+        owned_names = [collection.name for collection in resp.context["user_collections"]]
+        self.assertIn("Ocean Waves", owned_names)
+        self.assertNotIn("Forest Birds", owned_names)
+
+    def test_collections_for_user_sorting(self):
+        self.client.force_login(self.user)
+        collection_a = Collection.objects.create(user=self.user, name="Alpha")
+        collection_b = Collection.objects.create(user=self.user, name="Beta")
+
+        collection_a.add_sound(self.sound, user=self.user)
+        collection_a.refresh_from_db()
+        collection_b.refresh_from_db()
+
+        resp_by_name = self.client.get(reverse("your-collections") + "?sort=name")
+        self.assertEqual(resp_by_name.status_code, 200)
+        sorted_by_name = [collection.name for collection in resp_by_name.context["user_collections"]]
+        self.assertLess(sorted_by_name.index("Alpha"), sorted_by_name.index("Beta"))
+
+        resp_by_sounds = self.client.get(reverse("your-collections") + "?sort=sounds")
+        self.assertEqual(resp_by_sounds.status_code, 200)
+        sorted_by_sounds = [collection.name for collection in resp_by_sounds.context["user_collections"]]
+        self.assertLess(sorted_by_sounds.index("Alpha"), sorted_by_sounds.index("Beta"))
+
+    def test_public_collections_view_num_queries_does_not_scale_with_num_collections(self):
+        def build_public_collections(num_collections):
+            collections = []
+            for i in range(num_collections):
+                collection = Collection.objects.create(user=self.user, name=f"Public {i}", public=True)
+                collection.add_sound(self.sound, user=self.user)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+                collection.maintainers.add(self.maintainer)
+                collections.append(collection)
+            return collections
+
+        def get_num_queries():
+            with CaptureQueriesContext(connection) as ctx:
+                resp = self.client.get(reverse("collections"))
+                self.assertEqual(resp.status_code, 200)
+            return len(ctx.captured_queries)
+
+        build_public_collections(1)
+        queries_with_one = get_num_queries()
+
+        Collection.objects.exclude(id=self.collection.id).delete()
+        build_public_collections(10)
+        queries_with_ten = get_num_queries()
+
+        # Listing more collections should not trigger per-collection DB query growth.
+        self.assertLessEqual(queries_with_ten, queries_with_one + 2)
+
+    def test_collections_for_user_view_num_queries_does_not_scale_with_num_collections(self):
+        self.client.force_login(self.user)
+
+        def build_owned_and_maintained_collections(num_owned, num_maintained):
+            for i in range(num_owned):
+                collection = Collection.objects.create(user=self.user, name=f"Owned {i}")
+                collection.add_sound(self.sound, user=self.user)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+
+            owner = User.objects.create_user(username=f"owner_{num_maintained}", email=f"o{num_maintained}@a.com")
+            for i in range(num_maintained):
+                collection = Collection.objects.create(user=owner, name=f"Maintained {i}")
+                collection.add_sound(self.sound1, user=owner)
+                if i % 2 == 0:
+                    collection.featured_sound_ids = [self.sound1.id]
+                    collection.save(update_fields=["featured_sound_ids"])
+                collection.maintainers.add(self.user)
+
+        def get_num_queries():
+            with CaptureQueriesContext(connection) as ctx:
+                resp = self.client.get(reverse("your-collections"))
+                self.assertEqual(resp.status_code, 200)
+            return len(ctx.captured_queries)
+
+        build_owned_and_maintained_collections(1, 1)
+        queries_with_few = get_num_queries()
+
+        Collection.objects.exclude(id=self.collection.id).delete()
+        build_owned_and_maintained_collections(10, 10)
+        queries_with_many = get_num_queries()
+
+        # Rendering should remain near-constant regardless of list sizes.
+        self.assertLessEqual(queries_with_many, queries_with_few + 3)
 
     def test_add_remove_sounds_as_user(self):
         # test edit collection's parameters as owner of the collection
@@ -112,7 +323,9 @@ class CollectionTest(TestCase):
         form_data = {"collection": -1, "use_last_collection": False}
         resp = self.client.post(reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", form_data)
         self.assertEqual(200, resp.status_code)
+        self.assertTrue(resp.json()["success"])
         default_collection = Collection.objects.get(user=self.user, name="My bookmarks", is_default_collection=True)
+        self.assertTrue(CollectionSound.objects.filter(sound=self.sound, collection=default_collection).exists())
         resp = self.client.get(reverse("collection", args=[default_collection.id, slugify(default_collection.name)]))
         self.assertEqual(200, resp.status_code)
 
@@ -127,6 +340,34 @@ class CollectionTest(TestCase):
         resp = self.client.get(reverse("download-collection", args=[self.collection.id, slugify(self.collection.name)]))
         self.assertEqual(resp.status_code, 200)
 
+    def test_add_sound_requires_collection_selection(self):
+        self.client.force_login(self.user)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"success": False, "message": "Please select or create a collection."})
+        self.assertFalse(CollectionSound.objects.filter(sound=self.sound).exists())
+
+    def test_add_sound_modal_without_available_collections(self):
+        self.client.force_login(self.user)
+        bookmarks = Collection.objects.create(user=self.user, name="My bookmarks", is_default_collection=True)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        bookmarks.add_sound(self.sound, self.user)
+        self.collection.add_sound(self.sound, self.user)
+        response = self.client.get(url)
+        self.assertContains(response, "No collections available for this sound.")
+        self.assertNotContains(response, "<select")
+        self.assertNotContains(response, "Add sound to selected collection")
+        self.assertContains(response, 'id="createNewCollectionLink"')
+        self.assertContains(response, f"?ajax=1&sound_id={self.sound.id}")
+
+    def test_add_sound_modal_offers_bookmarks_without_existing_collections(self):
+        self.client.force_login(self.external_user)
+        url = reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1"
+        response = self.client.get(url)
+        self.assertContains(response, '<option value="-1" selected>My bookmarks</option>', html=True)
+        self.assertNotContains(response, "No collections available for this sound.")
+
     def test_add_remove_sounds_as_maintainer(self):
         # test edit collection's parameters as maintainer of the collection
         self.collection.maintainers.add(self.maintainer)
@@ -136,7 +377,7 @@ class CollectionTest(TestCase):
 
         # Test adding sound to collection as a maintainer
         resp = self.client.post(
-            reverse("add-sound-to-collection", args=[self.sound.id]), {"collection": self.collection.id}
+            reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", {"collection": self.collection.id}
         )
         self.collection.refresh_from_db()
         self.assertEqual(resp.status_code, 200)
@@ -177,7 +418,7 @@ class CollectionTest(TestCase):
 
         # Test adding sound to collection as external user (not owner nor maintainer -> shouldn't be added)
         resp = self.client.post(
-            reverse("add-sound-to-collection", args=[self.sound.id]), {"collection": self.collection.id}
+            reverse("add-sound-to-collection", args=[self.sound.id]) + "?ajax=1", {"collection": self.collection.id}
         )
         self.collection.refresh_from_db()
         self.assertEqual(resp.status_code, 200)
@@ -187,13 +428,11 @@ class CollectionTest(TestCase):
 
         # Additionally, test edit URL for external user
         resp = self.client.get(reverse("edit-collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(302, resp.status_code)
-        self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
+        self.assertEqual(404, resp.status_code)
 
         # Test deleting a collection as an external user (not owner -> not valid)
         resp = self.client.post(reverse("delete-collection", args=[self.collection.id, slugify(self.collection.name)]))
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(f"/collections/{self.collection.id}-{slugify(self.collection.name)}/", resp.url)
+        self.assertEqual(resp.status_code, 404)
 
     def test_edit_collection_as_user(self):
         # Test the edit collection form submission for different case scenarios
@@ -525,97 +764,95 @@ class CollectionTest(TestCase):
         self.assertIn("collections/collection.html", [template.name for template in resp.templates])
         self.assertContains(resp, 'id="sounds-grid"')
 
-    def test_render_collection_cards_preserves_order_and_edit_container_attrs(self):
+    def add_sounds_to_collection(self, *sounds):
+        for sound in sounds:
+            CollectionSound.objects.create(user=self.user, sound=sound, collection=self.collection, status="OK")
+
+    @property
+    def cards_url(self):
+        return reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+
+    def test_render_collection_cards_applies_client_featured_order(self):
+        """The client sends its pending featured order; the server sorts by it."""
         self.client.force_login(self.user)
-        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
+        self.add_sounds_to_collection(self.sound, self.sound2)
 
         resp = self.client.get(
-            cards_url,
-            {
-                "ids": f"{self.sound2.id},{self.sound.id}",
-                "page": "1",
-                "total": "1",
-            },
+            self.cards_url,
+            {"s": "featured", "featured": str(self.sound2.id)},
             HTTP_HX_CURRENT_URL="/collections/test/edit/",
         )
 
         self.assertEqual(200, resp.status_code)
         html = resp.content.decode()
-        self.assertIn(f'data-max-elements="{settings.MAX_SOUNDS_PER_COLLECTION}"', html)
+        self.assertIn('data-grid-total="2"', html)
         self.assertLess(
             html.index(f'data-object-id="{self.sound2.id}"'),
             html.index(f'data-object-id="{self.sound.id}"'),
         )
 
-    def test_render_collection_cards_renders_pager_when_multiple_pages(self):
-        """verify that the paginator shows 2 pages"""
+    def test_render_collection_cards_includes_pending_added_sounds(self):
+        """Sounds the user added but hasn't saved yet are merged in and counted."""
         self.client.force_login(self.user)
-        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
-        resp = self.client.get(
-            cards_url,
-            {"ids": f"{self.sound2.id},{self.sound.id}", "page": "1", "total": "2"},
-            HTTP_HX_CURRENT_URL="/collections/test/edit/",
-        )
+        self.add_sounds_to_collection(self.sound)
+
+        resp = self.client.get(self.cards_url, {"added": str(self.sound1.id)})
+
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, f'data-object-id="{self.sound1.id}"')
+        self.assertContains(resp, 'data-grid-total="2"')
+
+    @override_settings(BOOKMARKS_PER_PAGE=1)
+    def test_render_collection_cards_renders_pager_when_multiple_pages(self):
+        self.client.force_login(self.user)
+        self.add_sounds_to_collection(self.sound, self.sound2)
+        resp = self.client.get(self.cards_url, {"page": "1"}, HTTP_HX_CURRENT_URL="/collections/test/edit/")
         self.assertEqual(200, resp.status_code)
         self.assertContains(resp, "page=2")
 
+    @override_settings(BOOKMARKS_PER_PAGE=1)
     def test_render_collection_cards_clamps_overflow_page(self):
         """verify that asking for a large page number if there are only 2 doesn't raise"""
         self.client.force_login(self.user)
-        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
-        resp = self.client.get(
-            cards_url,
-            {"ids": f"{self.sound2.id},{self.sound.id}", "page": "99", "total": "2"},
-            HTTP_HX_CURRENT_URL="/collections/test/edit/",
-        )
+        self.add_sounds_to_collection(self.sound, self.sound2)
+        resp = self.client.get(self.cards_url, {"page": "99"}, HTTP_HX_CURRENT_URL="/collections/test/edit/")
         self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.context["current_page"], 2)
 
     def test_render_collection_cards_forbidden_for_non_member(self):
         self.client.force_login(self.external_user)
-        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
-        resp = self.client.get(cards_url, {"ids": f"{self.sound.id}"})
-        self.assertEqual(403, resp.status_code)
+        resp = self.client.get(self.cards_url)
+        self.assertEqual(404, resp.status_code)
 
     def test_render_collection_cards_empty_state_with_search(self):
         """The render-cards endpoint owns the empty-state message so the JS
         editor doesn't need a non-htmx render path."""
         self.client.force_login(self.user)
-        cards_url = reverse("collection-render-cards", args=[self.collection.id, slugify(self.collection.name)])
 
         # Searching an empty collection keeps the empty-collection message
-        resp = self.client.get(
-            cards_url,
-            {"ids": "", "page": "1", "total": "1", "q": "nonsense"},
-            HTTP_HX_CURRENT_URL="/collections/test/edit/",
-        )
+        resp = self.client.get(self.cards_url, {"q": "nonsense"}, HTTP_HX_CURRENT_URL="/collections/test/edit/")
         self.assertEqual(200, resp.status_code)
         self.assertContains(resp, "This collection is empty")
 
         # With sounds in the collection, an unmatched search shows the no-results message
-        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
-        resp = self.client.get(
-            cards_url,
-            {"ids": "", "page": "1", "total": "1", "q": "nonsense"},
-            HTTP_HX_CURRENT_URL="/collections/test/edit/",
-        )
+        self.add_sounds_to_collection(self.sound)
+        resp = self.client.get(self.cards_url, {"q": "nonsense"}, HTTP_HX_CURRENT_URL="/collections/test/edit/")
         self.assertEqual(200, resp.status_code)
         self.assertContains(resp, "No sounds found matching")
         self.assertContains(resp, "data-clear-search")
 
-    def test_serialized_collection_sounds_include_featured_order(self):
-        CollectionSound.objects.create(user=self.user, sound=self.sound, collection=self.collection, status="OK")
-        CollectionSound.objects.create(user=self.user, sound=self.sound1, collection=self.collection, status="OK")
-        CollectionSound.objects.create(user=self.user, sound=self.sound2, collection=self.collection, status="OK")
+    def test_edit_page_ships_saved_featured_order_to_the_grid(self):
+        """The editor seeds its ordered featured list from this attribute."""
+        self.client.force_login(self.user)
+        self.add_sounds_to_collection(self.sound, self.sound1, self.sound2)
         self.collection.featured_sound_ids = [self.sound2.id, self.sound.id]
         self.collection.save()
 
-        sidecar = serialize_collection_sounds(self.collection)
-        serialized_by_id = {sound["id"]: sound for sound in sidecar}
+        resp = self.client.get(self.collection.edit_url)
 
-        self.assertEqual(0, serialized_by_id[self.sound2.id]["featured_order"])
-        self.assertEqual(1, serialized_by_id[self.sound.id]["featured_order"])
-        self.assertIsNone(serialized_by_id[self.sound1.id]["featured_order"])
+        self.assertEqual(200, resp.status_code)
+        self.assertContains(resp, f'data-featured-ids="{self.sound2.id},{self.sound.id}"')
+        self.assertContains(resp, f'data-max-featured="{settings.MAX_FEATURED_SOUNDS_PER_COLLECTION}"')
 
 
 class CollectionNumSoundsTest(TestCase):

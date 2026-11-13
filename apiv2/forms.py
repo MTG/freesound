@@ -60,7 +60,7 @@ class ApiV2ClientForm(forms.Form):
             At the end of the OAuth2 authorization process, Freesound will redirect the browser to the url specified in this field.
             In this way your application can be automatically notified when users have given the permissions to access their data.
             If your application does not support the use of a callback url (generally non web-based applications or non server-based), you must
-            introduce the following url: <span style="font-family: 'Courier'">http://freesound.org/home/app_permissions/permission_granted/</span>.
+            introduce the following url: <span style="font-family: 'Courier'">https://freesound.org/home/app_permissions/permission_granted/</span>.
             <br>See the <a href="/docs/api/" target="_blank">API documentation</a> for more information.</div>""",
     )
     description = forms.CharField(
@@ -215,7 +215,9 @@ class SoundTextSearchFormAPI(forms.Form):
             similar_to = None
         return similar_to
 
-    def construct_link(self, base_url, page=None, filt=None, group_by_pack=None, include_page=True):
+    def construct_link(
+        self, base_url, page=None, filt=None, group_by_pack=None, include_page=True, include_domain=True
+    ):
         link = "?"
         if self.cleaned_data["query"] is not None:
             link += f"&query={my_quote(self.cleaned_data['query'])}"
@@ -250,7 +252,10 @@ class SoundTextSearchFormAPI(forms.Form):
                 link += f"&group_by_pack={self.cleaned_data['group_by_pack']}"
         else:
             link += f"&group_by_pack={group_by_pack}"
-        return f"https://{Site.objects.get_current().domain}{base_url}{link}"
+        if include_domain:
+            return f"https://{Site.objects.get_current().domain}{base_url}{link}"
+        else:
+            return f"{base_url}{link}"
 
 
 class SimilarityFormAPI(SoundTextSearchFormAPI):

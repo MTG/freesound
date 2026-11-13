@@ -28,6 +28,7 @@ from django.urls import reverse
 from follow.follow_utils import is_user_following_tag
 from general.templatetags.plausible import plausible_scripts
 from ratings.models import SoundRating
+from sounds.models import Pack
 from utils.pagination import build_paginator_template_context
 
 register = template.Library()
@@ -234,7 +235,8 @@ def sound_carousel_with_timesince(context, sounds):
 
 
 @register.inclusion_tag("molecules/carousel.html", takes_context=True)
-def pack_carousel(context, packs):
+def pack_carousel(context, pack_ids: list[int]):
+    packs = Pack.objects.ordered_ids(pack_ids)
     # Update context and pass it to templatetag so nested template tags also have it
     context.update({"elements": packs, "type": "pack"})
     return context

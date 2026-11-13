@@ -22,6 +22,10 @@ from __future__ import annotations
 
 import re
 
+from django.core.exceptions import ValidationError
+
+from tags.models import Tag
+
 
 def size_generator(small_size: float, large_size: float, num_items: int):
     if num_items <= 1:
@@ -86,3 +90,22 @@ def clean_and_split_tags(tags):
         "the of to and an in is it you that he was for on are with as i his they be at".split()
     )  # @UnusedVariable
     return {tag for tag in [tag.strip("-") for tag in tags.split()] if tag and tag not in common_words}
+
+
+def validate_normalized_tags(tags: set[str]) -> None:
+    """Validate each normalized tag using the model field's rules."""
+    name_field = Tag._meta.get_field("name")
+    for tag in tags:
+        try:
+            name_field.clean(tag, None)
+        except ValidationError as exc:
+            errors = []
+            for error in exc.error_list:
+                if error.code == "max_length":
+                    error = ValidationError(
+                        "One of the tags is too long. Each tag can have at most %(limit_value)s characters.",
+                        code="max_length",
+                        params={"limit_value": name_field.max_length},
+                    )
+                errors.append(error)
+            raise ValidationError(errors) from exc

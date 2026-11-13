@@ -22,9 +22,9 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q
 from django.template.loader import render_to_string
-from django.utils.text import slugify
 
 from sounds.models import License, Sound
+from utils.text import slugify
 
 
 class BookmarkCategory(models.Model):

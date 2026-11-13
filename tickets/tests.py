@@ -116,6 +116,34 @@ class TicketTests(TestCase):
 class TicketAccessTest(TicketTests):
     """Test that the expected users can view tickets"""
 
+    def test_uploader_cannot_approve_own_sound(self):
+        ticket = self._create_ticket(self.sound, self.test_user)
+        self.client.force_login(self.test_user)
+
+        response = self.client.post(reverse("tickets-ticket", args=[ticket.key]), {"ss-action": "Approve"})
+
+        self.assertEqual(response.status_code, 403)
+        self.sound.refresh_from_db()
+        ticket.refresh_from_db()
+        self.assertEqual(self.sound.moderation_state, "PE")
+        self.assertEqual(ticket.status, TICKET_STATUS_NEW)
+        self.assertIsNone(ticket.assignee)
+        self.assertFalse(ticket.messages.exists())
+
+    def test_moderator_actions_without_sound(self):
+        for action, status in [
+            ("Defer", TICKET_STATUS_DEFERRED),
+            ("Return", TICKET_STATUS_NEW),
+            ("Approve", TICKET_STATUS_CLOSED),
+        ]:
+            with self.subTest(action=action):
+                ticket = self._create_ticket(None, self.test_user)
+                url = reverse("tickets-ticket", args=[ticket.key])
+                response = self.client.post(url, {"ss-action": action})
+                self.assertRedirects(response, url, fetch_redirect_response=False)
+                ticket.refresh_from_db()
+                self.assertEqual(ticket.status, status)
+
     def test_user_can_view_own_ticket(self):
         """Test that a ticket can be viewed by the user who created it and by admins,
         but not by anyone else."""

@@ -1,4 +1,5 @@
 import pytest
+from django.core.management import call_command
 
 
 def pytest_addoption(parser):
@@ -10,6 +11,16 @@ def pytest_addoption(parser):
     parser.addoption(
         "--keep-solr-index", action="store_true", default=False, help="Keep Solr indexes after tests for inspection"
     )
+
+
+@pytest.fixture
+def load_fixtures(db):
+    """Return a loader for Django fixtures, e.g. load_fixtures(["licenses", "sounds"])."""
+
+    def load(names: list[str]) -> None:
+        call_command("loaddata", *names, verbosity=0)
+
+    return load
 
 
 @pytest.fixture

@@ -1,7 +1,12 @@
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"standard": {"format": "[%(asctime)s] # %(levelname)s    # %(message)s"}},
+    "formatters": {
+        "with_context": {
+            "()": "utils.logging_filters.ExtraFormatter",
+            "format": "[%(asctime)s] # %(levelname)s    # %(message)s",
+        },
+    },
     "filters": {
         "api_filter": {
             "()": "utils.logging_filters.APILogsFilter",
@@ -9,9 +14,18 @@ LOGGING = {
         "generic_data_filter": {"()": "utils.logging_filters.GenericDataFilter"},
     },
     "handlers": {
-        "stdout": {"class": "logging.StreamHandler", "formatter": "standard"},
+        "search_archive": {"class": "utils.search_logging.SearchArchiveHandler"},
+        "stdout": {
+            "class": "logging.StreamHandler",
+            "formatter": "with_context",
+        },
     },
     "loggers": {
+        "search_archive": {
+            "handlers": ["search_archive"],
+            "level": "INFO",
+            "propagate": False,
+        },
         "console": {
             "handlers": ["stdout"],
             "level": "INFO",

@@ -24,14 +24,28 @@ import random
 import re
 from collections import defaultdict
 from datetime import date, datetime
+from http.client import HTTPException
 
 import pysolr
+import requests
 from django.conf import settings
 
 from forum.models import Post
 from sounds.models import Sound, SoundSimilarityVector
-from utils.search import SearchEngineBase, SearchEngineException, SearchEngineTimeoutException, SearchResults
+from utils.search import (
+    SearchEngineBadRequestException,
+    SearchEngineBase,
+    SearchEngineException,
+    SearchEngineInternalErrorException,
+    SearchEngineInvalidValueException,
+    SearchEngineSyntaxErrorException,
+    SearchEngineTimeoutException,
+    SearchEngineUnavailableException,
+    SearchEngineUndefinedFieldException,
+    SearchResults,
+)
 from utils.search.backends.solr_common import SolrQuery, SolrResponseInterpreter
+from utils.search_metrics import random_queries
 from utils.text import remove_control_chars
 
 SOLR_FORUM_URL = f"{settings.SOLR5_BASE_URL}/forum"
@@ -49,6 +63,7 @@ FIELD_NAMES_MAP = {
     settings.SEARCH_SOUNDS_FIELD_NAME: "name",
     settings.SEARCH_SOUNDS_FIELD_TAGS: {"field": "tag", "facet": "tagfacet"},
     settings.SEARCH_SOUNDS_FIELD_DESCRIPTION: "description",
+    settings.SEARCH_SOUNDS_FIELD_COLLECTION_NAMES: "collection_names",
     settings.SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING: "collection",
     settings.SEARCH_SOUNDS_FIELD_USER_NAME: {"field": "username", "facet": "username_facet"},
     settings.SEARCH_SOUNDS_FIELD_PACK_NAME: "pack",
@@ -187,12 +202,49 @@ class FreesoundSoundJsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, value)
 
 
+# pysolr embeds the HTTP status and Solr's reason string in its SolrError message, e.g.
+#   "Solr responded with an error (HTTP 400): [Reason: undefined field foobar]"
+_SOLR_ERROR_HTTP_CODE_RE = re.compile(r"\(HTTP (\d{3})\)")
+
+
 def _raise_search_engine_exception(error: BaseException) -> None:
-    # pysolr swallows exceptions and returns a generic SolrError with some specific text in the message
-    # super annoying but this is the only way to check the type of error.
-    if "timed out" in str(error).lower():
-        raise SearchEngineTimeoutException(error)
-    raise SearchEngineException(error)
+    # pysolr uses SolrError for any error. Separate them based on error message or an underlying
+    # exception so that we can group them separately in sentry
+    message = str(error)
+    code_match = _SOLR_ERROR_HTTP_CODE_RE.search(message)
+    status_code = int(code_match.group(1)) if code_match else None
+    reason = message.lower()
+
+    # Solr responded with an HTTP status
+    if status_code is not None and 400 <= status_code < 500:
+        if "undefined field" in reason:
+            raise SearchEngineUndefinedFieldException(error) from error
+        if any(
+            message in reason
+            for message in (
+                "invalid number",
+                "invalid date string",
+                "invalid date in date math string",
+                "invalid date math string",
+            )
+        ):
+            raise SearchEngineInvalidValueException(error) from error
+        if "cannot parse" in reason or "syntaxerror" in reason:
+            raise SearchEngineSyntaxErrorException(error) from error
+        raise SearchEngineBadRequestException(error) from error
+
+    if status_code is not None and 500 <= status_code < 600:
+        raise SearchEngineInternalErrorException(error) from error
+
+    # No HTTP status, use underlying exception.
+    # Check Timeout before its parent, RequestException.
+    if status_code is None:
+        if isinstance(error.__cause__, requests.exceptions.Timeout):
+            raise SearchEngineTimeoutException(error) from error
+        if isinstance(error.__cause__, (requests.exceptions.RequestException, HTTPException)):
+            raise SearchEngineUnavailableException(error) from error
+
+    raise SearchEngineException(error) from error
 
 
 class Solr555PySolrSearchEngine(SearchEngineBase):
@@ -301,18 +353,24 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         )  # This is called outside the if "sound.pack" as in some cases it might still need ot be set
 
         collections = []
-        for collection_data in sound.collections_array:
+        for collection_data in sound.public_collections_array:
             collections.append(
                 str(collection_data["collection_id"]) + "_" + remove_control_chars(collection_data["collection_name"])
             )
         if collections:
             document["collection"] = collections
+            document["collection_names"] = " ".join(
+                [
+                    remove_control_chars(collection_data["collection_name"])
+                    for collection_data in sound.public_collections_array
+                ]
+            )
 
         document["is_geotagged"] = False
         if hasattr(sound, "geotag"):
             document["is_geotagged"] = True
             if not math.isnan(sound.geotag.lon) and not math.isnan(sound.geotag.lat):
-                document["geotag"] = str(sound.geotag.lon) + " " + str(sound.geotag.lat)
+                document["geotag"] = sound.geotag.get_lon_lat_as_string()
 
         document["in_remix_group"] = sound.was_remixed or sound.is_remix
 
@@ -515,7 +573,14 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
         # NOTE: in the future filter handling should be refactored and we should use a proper filter parser
         # that allows us to define our own filter syntax and then represent filters as some intermediate structure that can later
         # be converted to valid lucene/dismax syntax.
-        query_filter = re.sub(r"\b([a-zA-Z_]+:)", r"+\1", query_filter)
+        # Match either a quoted string (left untouched) or a filter name followed by ':' (gets a '+' prefix), so
+        # that filter values such as pack/collection names containing "word:" patterns are not affected.
+        def add_plus(match):
+            if match.group(1) is not None:
+                return f"+{match.group(1)}"
+            return match.group(0)
+
+        query_filter = re.sub(r'"(?:\\.|[^"\\])*"|\b([a-zA-Z_]+:)', add_plus, query_filter)
         query_filter = re.sub(
             r"(\+)\1+", r"\1", query_filter
         )  # This is to avoid having multiple + in a row if user already has added them
@@ -945,6 +1010,7 @@ class Solr555PySolrSearchEngine(SearchEngineBase):
             _raise_search_engine_exception(e)
 
     def get_random_sound_id(self):
+        random_queries.inc()
         query = SolrQuery()
         rand_key = random.randint(1, 10000000)  # noqa: S311
         sort = ["random_%d asc" % rand_key]

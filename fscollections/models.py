@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from urllib.parse import quote
 
 from django.contrib.auth.models import User
@@ -32,14 +33,82 @@ from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.text import slugify
 
 from freesound import settings
 from sounds.models import License, LicenseSummaryMixin, Sound
 from tags.models import Tag
+from utils.text import slugify
+
+
+class CollectionsManager(models.Manager):
+    def bulk_query_id(self, collection_ids):
+        """
+        Return collections with commonly needed related data and annotations.
+
+        This method does not preserve the order of collection_ids. Use ordered_ids
+        when order must match the input list.
+        """
+        if not isinstance(collection_ids, list):
+            collection_ids = [collection_ids]
+        collections = list(
+            self.get_queryset()
+            .select_related("user", "user__profile")
+            .prefetch_related("maintainers")
+            .filter(id__in=collection_ids)
+        )
+
+        if not collections:
+            return collections
+
+        fallback_collection_ids = [c.id for c in collections if not c.featured_sound_ids]
+        first_sound_ids_by_collection_id = defaultdict(list)
+        if fallback_collection_ids:
+            sounds_for_fallback = (
+                Sound.objects.filter(
+                    moderation_state="OK",
+                    processing_state="OK",
+                    collectionsound__collection_id__in=fallback_collection_ids,
+                    collectionsound__status="OK",
+                )
+                .values_list("collectionsound__collection_id", "id")
+                .order_by("collectionsound__collection_id", "-created")
+            )
+            for collection_id, sound_id in sounds_for_fallback:
+                if len(first_sound_ids_by_collection_id[collection_id]) < 3:
+                    first_sound_ids_by_collection_id[collection_id].append(sound_id)
+
+        header_sound_ids = set()
+        header_sound_ids.update(sound_id for ids in first_sound_ids_by_collection_id.values() for sound_id in ids)
+        for collection in collections:
+            header_sound_ids.update(collection.featured_sound_ids or [])
+
+        sounds_by_id = {sound.id: sound for sound in Sound.objects.bulk_query_id_public(list(header_sound_ids))}
+
+        for collection in collections:
+            if collection.featured_sound_ids:
+                collection.header_sounds_precomputed = [
+                    sounds_by_id[sound_id] for sound_id in collection.featured_sound_ids if sound_id in sounds_by_id
+                ]
+            else:
+                collection.header_sounds_precomputed = [
+                    sounds_by_id[sound_id]
+                    for sound_id in first_sound_ids_by_collection_id.get(collection.id, [])
+                    if sound_id in sounds_by_id
+                ]
+
+        return collections
+
+    def dict_ids(self, collection_ids):
+        return {collection_obj.id: collection_obj for collection_obj in self.bulk_query_id(collection_ids)}
+
+    def ordered_ids(self, collection_ids):
+        collections = self.dict_ids(collection_ids)
+        return [collections[collection_id] for collection_id in collection_ids if collection_id in collections]
 
 
 class Collection(LicenseSummaryMixin, models.Model):
+    objects = CollectionsManager()
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     created = models.DateTimeField(db_index=True, auto_now_add=True)
@@ -58,6 +127,15 @@ class Collection(LicenseSummaryMixin, models.Model):
         models.IntegerField(), size=settings.MAX_FEATURED_SOUNDS_PER_COLLECTION, blank=True, default=list
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(is_default_collection=True),
+                name="unique_default_collection_per_user",
+            ),
+        ]
+
     def __str__(self):
         return f"{self.name}"
 
@@ -69,7 +147,10 @@ class Collection(LicenseSummaryMixin, models.Model):
 
     @property
     def url_kwargs(self):
-        return {"collection_id": self.id, "collection_name": slugify(self.name)}
+        collection_name_slug = slugify(self.name, replace_unicode=True)
+        if collection_name_slug == "":
+            collection_name_slug = "_"
+        return {"collection_id": self.id, "collection_name": collection_name_slug}
 
     def get_url(self, url_name="collection"):
         return reverse(url_name, kwargs=self.url_kwargs)
@@ -105,6 +186,9 @@ class Collection(LicenseSummaryMixin, models.Model):
         if not user or not user.is_authenticated:
             return False
         return user == self.user or self.maintainers.filter(id=user.id).exists()
+
+    def user_can_view(self, user):
+        return self.public or self.user_is_owner_or_maintainer(user)
 
     def update_num_sounds(self):
         # Single source of truth for the num_sounds recount
@@ -171,10 +255,12 @@ class Collection(LicenseSummaryMixin, models.Model):
 
     @cached_property
     def licenses_data(self):
-        licenses_data = list(Sound.objects.sounds_for_collection(self.id).values_list("license__name", "license_id"))
-        license_ids = [lid for _, lid in licenses_data]
-        license_names = [lname for lname, _ in licenses_data]
-        return license_ids, license_names
+        return [
+            {"id": license_id, "name": name}
+            for license_id, name in Sound.objects.sounds_for_collection(self.id).values_list(
+                "license_id", "license__name"
+            )
+        ]
 
     def get_collection_tags_bw(self):
         tags = (
@@ -190,6 +276,10 @@ class Collection(LicenseSummaryMixin, models.Model):
             self.num_sounds = Sound.objects.sounds_for_collection(self.id).count()
 
         super().save(*args, **kwargs)
+
+    @property
+    def num_maintainers(self):
+        return self.maintainers.count()
 
 
 class CollectionSound(models.Model):

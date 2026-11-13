@@ -38,15 +38,17 @@ from utils.mail import send_mail_template
 from utils.pagination import paginate
 
 
+def owned_by(qs, user):
+    return qs.filter(Q(user_to=user, is_sent=False) | Q(user_from=user, is_sent=True))
+
+
 @login_required
 def messages_change_state(request):
     if request.method == "POST":
         choice = request.POST.get("choice", False)
         message_ids = [int(mid) for mid in request.POST.get("ids", "").split(",")]
         if choice and message_ids:
-            fs_messages = Message.objects.filter(
-                Q(user_to=request.user, is_sent=False) | Q(user_from=request.user, is_sent=True)
-            ).filter(id__in=message_ids)
+            fs_messages = owned_by(Message.objects.all(), request.user).filter(id__in=message_ids)
             if choice == "a":
                 for message in fs_messages:
                     message.is_archived = not message.is_archived
@@ -93,11 +95,8 @@ def archived_messages(request):
 @transaction.atomic()
 def message(request, message_id):
     try:
-        message = base_qs.get(id=message_id)
+        message = owned_by(base_qs, request.user).get(id=message_id)
     except Message.DoesNotExist:
-        raise Http404
-
-    if message.user_from != request.user and message.user_to != request.user:
         raise Http404
 
     if not message.is_read:
@@ -174,11 +173,9 @@ def new_message(request, username=None, message_id=None):
     else:
         if message_id:
             try:
-                message = Message.objects.get(id=message_id)
+                message = owned_by(base_qs, request.user).get(id=message_id)
 
-                if message.user_from != request.user and message.user_to != request.user:
-                    raise Http404
-                elif message.user_from == request.user:
+                if message.user_from == request.user:
                     to = message.user_to.username
                 else:
                     to = message.user_from.username
@@ -187,12 +184,10 @@ def new_message(request, username=None, message_id=None):
                 body = quote_message_for_reply(body, message.user_from.username)
 
                 subject = "re: " + message.subject
-                to = message.user_from.username
 
                 form = form_class(request, initial={"to": to, "subject": subject, "body": body})
             except Message.DoesNotExist:
-                messages.add_message(request, messages.INFO, "That message doesn't exist")
-                return HttpResponseRedirect(reverse("messages"))
+                raise Http404
         elif username:
             form = form_class(request, initial={"to": username})
         else:

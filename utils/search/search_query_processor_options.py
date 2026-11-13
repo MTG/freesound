@@ -25,6 +25,8 @@ from typing import Any
 
 from django.conf import settings
 
+from utils.search.filter_validation import FIELD_TYPES_MAP, normalize_numeric_value
+
 
 class SearchOption(object):
     """Base class to process and hold information about a search option (e.g. a filter or a sort option) of a search query.
@@ -359,6 +361,11 @@ class SearchOptionRange(SearchOption):
                             # A common user mistake is to write the number next to the * character, so we remove if it is not the only character
                             value_from_param = value_from_param.replace("*", "")
                         value[1] = value_from_param
+                if self.search_engine_field_name in FIELD_TYPES_MAP:
+                    try:
+                        value = [normalize_numeric_value(self.search_engine_field_name, bound) for bound in value]
+                    except ValueError as error:
+                        self.sqp.errors = str(error)
                 return value
 
     def format_value(self, value):

@@ -46,15 +46,19 @@ from utils.pagination import PreSlicedCountProvidedPaginator, read_page
 from utils.ratelimit import RequestLimitReason, count_request_limit_event, key_for_ratelimiting, rate_per_ip
 from utils.search import (
     SearchEngineException,
+    SearchEngineInternalErrorException,
     SearchEngineTimeoutException,
     get_search_engine,
     search_query_processor,
 )
+from utils.search.filter_validation import quote_filter_value
 from utils.search.search_sounds import (
     allow_beta_search_features,
     get_empty_query_cache_key,
     perform_search_engine_query,
 )
+from utils.search_logging import archive_search
+from utils.search_metrics import record_search
 
 search_logger = logging.getLogger("search")
 
@@ -74,7 +78,7 @@ def search_view_helper(request):
     # Check if there was a filter parsing error and return error if so
     if sqp.errors:
         search_logger.info(f"Errors in SearchQueryProcessor: {sqp.errors}")
-        return {"error_text": "There was an error while searching, is your query correct?"}
+        return {"error_text": sqp.errors}
 
     # Update compact mode preference if user has explicitly specified a different value than the preference
     if request.user.is_authenticated:
@@ -116,16 +120,12 @@ def search_view_helper(request):
     page = sqp.get_option_value_to_apply("page")
     if is_over_hard_page_limit(page):
         search_logger.info(
-            "Search pagination blocked (%s)"
-            % json.dumps(
-                {
-                    "ip": get_client_ip(request),
-                    "page": page,
-                    "query": sqp.get_option_value_to_apply("query"),
-                    "reason": RequestLimitReason.SEARCH_PAGE_LIMIT.value,
-                    "enforced": True,
-                }
-            )
+            "Search pagination blocked",
+            extra={
+                "page": page,
+                "query": sqp.get_option_value_to_apply("query"),
+                "reason": RequestLimitReason.SEARCH_PAGE_LIMIT.value,
+            },
         )
         count_request_limit_event(request, RequestLimitReason.SEARCH_PAGE_LIMIT, enforced=True)
         raise PaginationAbuseBlocked()
@@ -181,7 +181,9 @@ def search_view_helper(request):
                 for d in docs:
                     if d.get("n_more_in_group") and d["sound"].pack_id is not None:
                         d["more_from_this_pack_url"] = sqp.get_url(
-                            add_filters=[f'pack_grouping:"{d["sound"].pack_id}_{d["sound"].pack.name}"']
+                            add_filters=[
+                                "pack_grouping:" + quote_filter_value(f"{d['sound'].pack_id}_{d['sound'].pack.name}")
+                            ]
                         )
             else:
                 resultspackids = []
@@ -193,37 +195,26 @@ def search_view_helper(request):
                 resultpacks = sounds.models.Pack.objects.bulk_query_id(
                     resultspackids, sound_ids_for_pack_id=sound_ids_for_pack_id
                 )
-                allpacks = {}
-                for p in resultpacks:
-                    allpacks[p.id] = p
-                # allpacks will contain info from all the packs returned by bulk_query_id. This should
-                # be all packs in docs, but if solr and db are not synchronised, it might happen that there
-                # are ids in docs which are not found in bulk_query_id. To avoid problems we remove elements
-                # in docs that have not been loaded in allsounds.
+                allpacks = {pack.id: pack for pack in resultpacks}
+                # Search results may reference packs that no longer exist in the database.
                 docs = [d for d in results.docs if int(d.get("group_name").split("_")[0]) in allpacks]
                 for d in docs:
                     d["pack"] = allpacks[int(d.get("group_name").split("_")[0])]
                     d["more_from_this_pack_url"] = sqp.get_url(
-                        add_filters=[f'pack_grouping:"{d["pack"].id}_{d["pack"].name}"']
+                        add_filters=["pack_grouping:" + quote_filter_value(f"{d['pack'].id}_{d['pack'].name}")]
                     )
 
-        search_logger.info(
-            "Search (%s)"
-            % json.dumps(
-                {
-                    "ip": get_client_ip(request),
-                    "query": query_params["textual_query"],
-                    "filter": query_params["query_filter"],
-                    "similar_to": query_params["similar_to"],
-                    "similar_to_similarity_space": query_params["similar_to_similarity_space"],
-                    "username": request.user.username,
-                    "page": query_params["current_page"],
-                    "sort": query_params["sort"],
-                    "url": sqp.get_url(),
-                    "tags_mode": sqp.tags_mode_active(),
-                    "query_time": results.q_time,
-                }
-            )
+        record_search(
+            "tags" if sqp.tags_mode_active() else "web",
+            similar_to=query_params["similar_to"],
+            query_time_ms=results.q_time,
+        )
+        archive_search(
+            source="tags" if sqp.tags_mode_active() else "web",
+            params=request.GET,
+            num_results=results.non_grouped_number_of_results or results.num_found,
+            query_time=results.q_time,
+            ip=get_client_ip(request),
         )
 
         # If the requested page is beyond the last page of a non-empty result set, the search
@@ -257,24 +248,28 @@ def search_view_helper(request):
         }
 
     except SearchEngineTimeoutException as e:
+        record_search(
+            "tags" if sqp.tags_mode_active() else "web",
+            similar_to=query_params.get("similar_to"),
+            outcome="timeout",
+        )
         search_logger.info(
-            "SearchTimeout (%s)"
-            % json.dumps(
-                {
-                    "ip": get_client_ip(request),
-                    "query": query_params["textual_query"],
-                    "filter": query_params["query_filter"],
-                    "similar_to": query_params["similar_to"],
-                    "similar_to_similarity_space": query_params["similar_to_similarity_space"],
-                    "username": request.user.username,
-                    "page": query_params["current_page"],
-                    "sort": query_params["sort"],
-                    "url": sqp.get_url(),
-                    "tags_mode": sqp.tags_mode_active(),
-                }
-            )
+            "Search timeout",
+            extra={
+                "url": sqp.get_url(),
+                "query": query_params["textual_query"],
+                "filter": query_params["query_filter"],
+                "page": query_params["current_page"],
+                "sort": query_params["sort"],
+                "error": str(e),
+            },
         )
         return {"error_text": "Search is overloaded, please try again later."}
+    except SearchEngineInternalErrorException as e:
+        # A server-side fault (HTTP 5xx) or an unreachable search server, not the client's query.
+        search_logger.info(f"Search server error: {e}")
+        sentry_sdk.capture_exception(e)
+        return {"error_text": "There was a problem performing your search, please try again later."}
     except SearchEngineException as e:
         search_logger.info(f"Search error: query: {str(query_params)} error {e}")
         sentry_sdk.capture_exception(e)
@@ -410,6 +405,7 @@ def search_forum(request):
                 current_page=current_page,
                 group_by_thread=False,
             )
+            record_search("forum", query_time_ms=results.q_time)
 
             paginator = PreSlicedCountProvidedPaginator(results.docs, settings.FORUM_POSTS_PER_PAGE, results.num_found)
             num_results = paginator.count
@@ -418,21 +414,26 @@ def search_forum(request):
             current_page = page.number  # clamp the pager to the real last page on overflow
             error = False
         except SearchEngineTimeoutException as e:
+            record_search("forum", outcome="timeout")
             search_logger.info(
-                "SearchTimeout (%s)"
-                % json.dumps(
-                    {
-                        "ip": get_client_ip(request),
-                        "query": search_query,
-                        "filter": filter_query,
-                        "page": current_page,
-                        "sort": sort,
-                        "url": request.get_full_path(),
-                    }
-                )
+                "Forum search timeout",
+                extra={
+                    "query": search_query,
+                    "filter": filter_query,
+                    "page": current_page,
+                    "sort": sort,
+                    "url": request.get_full_path(),
+                    "error": str(e),
+                },
             )
             error = True
             error_text = "Search is overloaded, please try again later."
+        except SearchEngineInternalErrorException as e:
+            # A server-side fault (HTTP 5xx) or an unreachable search server, not the client's query.
+            search_logger.info(f"Search server error: {e}")
+            sentry_sdk.capture_exception(e)
+            error = True
+            error_text = "There was a problem performing your search, please try again later."
         except SearchEngineException as e:
             search_logger.info(f"Search error: query: {search_query} error {e}")
             sentry_sdk.capture_exception(e)

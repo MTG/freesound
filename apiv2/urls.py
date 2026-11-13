@@ -42,17 +42,14 @@ urlpatterns = [
         name="apiv2-me-bookmark-category-sounds",
     ),
     # Search
-    path("search/", views.TextSearch.as_view(), name="apiv2-sound-search"),
-    path(
-        "search/text/", views.TextSearch.as_view(), name="apiv2-sound-text-search"
-    ),  # Kept for backwards compatibility
+    path("search/", views.Search.as_view(), name="apiv2-sound-search"),
+    path("search/text/", views.Search.as_view(), name="apiv2-sound-text-search"),  # Kept for backwards compatibility
     # Sounds
     path("sounds/<int:pk>/", views.SoundInstance.as_view(), name="apiv2-sound-instance"),
     path("sounds/<int:pk>/comments/", views.SoundComments.as_view(), name="apiv2-sound-comments"),
     path("sounds/<int:pk>/analysis/", views.SoundAnalysisView.as_view(), name="apiv2-sound-analysis"),
     path("sounds/<int:pk>/similar/", views.SimilarSounds.as_view(), name="apiv2-similarity-sound"),
     path("sounds/<int:pk>/download/", views.DownloadSound.as_view(), name="apiv2-sound-download"),
-    path("sounds/<int:pk>/download/link/", views.DownloadLink.as_view(), name="apiv2-sound-get-download-link"),
     # Create or edit
     path("sounds/<int:pk>/edit/", views.EditSoundDescription.as_view(), name="apiv2-sound-edit"),
     path("sounds/<int:pk>/bookmark/", views.BookmarkSound.as_view(), name="apiv2-user-create-bookmark"),
@@ -70,21 +67,15 @@ urlpatterns = [
     path("packs/<int:pk>/", views.PackInstance.as_view(), name="apiv2-pack-instance"),
     path("packs/<int:pk>/sounds/", views.PackSounds.as_view(), name="apiv2-pack-sound-list"),
     path("packs/<int:pk>/download/", views.DownloadPack.as_view(), name="apiv2-pack-download"),
-    # Download item from link
-    path("download/<token>/", views.download_from_token, name="apiv2-download_from_token"),
     #########################
     # MANAGEMENT AND OAUTH2 #
     #########################
     # Client management
     # use apply[/]* for backwards compatibility with links to /apiv2/apply
     re_path(r"^apply[/]*$", views.create_apiv2_key, name="apiv2-apply"),
-    re_path(
-        r"^apply/credentials/(?P<key>[^//]+)/monitor/$", views.monitor_api_credential, name="apiv2-monitor-credential"
-    ),
-    re_path(
-        r"^apply/credentials/(?P<key>[^//]+)/delete/$", views.delete_api_credential, name="apiv2-delete-credential"
-    ),
-    re_path(r"^apply/credentials/(?P<key>[^//]+)/edit/$", views.edit_api_credential, name="apiv2-edit-credential"),
+    path("apply/credentials/<int:pk>/monitor/", views.monitor_api_credential, name="apiv2-monitor-credential"),
+    path("apply/credentials/<int:pk>/delete/", views.delete_api_credential, name="apiv2-delete-credential"),
+    path("apply/credentials/<int:pk>/edit/", views.edit_api_credential, name="apiv2-edit-credential"),
     # Oauth2
     path("oauth2/", include("apiv2.oauth2_urls", namespace="oauth2_provider")),
     path(
@@ -94,6 +85,7 @@ urlpatterns = [
         name="api-login",
     ),
     path("logout/", LogoutView.as_view(next_page="/apiv2/"), name="api-logout"),
+    path("usage/", views.CurrentUsage.as_view(), name="apiv2-current-usage"),
     #########
     # OTHER #
     #########

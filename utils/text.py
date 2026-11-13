@@ -23,6 +23,8 @@ from functools import partial
 
 import bleach
 from bleach.html5lib_shim import Filter
+from django.utils.text import slugify as django_slugify
+from slugify import slugify as unicode_slugify
 
 from sounds.templatetags.sound_signature import (
     SOUND_SIGNATURE_SOUND_ID_PLACEHOLDER,
@@ -153,3 +155,10 @@ def text_may_be_spam(text):
 def replace_hyperlinks_with_placeholder(text, placeholder="[URL REMOVED]"):
     # Replace non-freesound http or https hperlinks with a placeholder
     return re.sub(r"(https?://(?!freesound\.org)\S+)", placeholder, text, flags=re.IGNORECASE)
+
+
+def slugify(text, replace_unicode=False):
+    if not replace_unicode:
+        return django_slugify(text)
+    else:
+        return unicode_slugify(text)

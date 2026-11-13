@@ -78,6 +78,8 @@ class DownloadType(enum.Enum):
     PACK = "pdwn"
     BOOKMARK_CATEGORY = "bdwn"
     COLLECTION = "cdwn"
+    SOUND_API = "sapid"
+    PACK_API = "papid"
 
 
 def _sentinel_key(download_type: DownloadType, object_id: int, user_id: int) -> str:
@@ -92,14 +94,26 @@ def download_limit_reached_response(request: HttpRequest) -> HttpResponse:
     )
 
 
+def is_new_download(request: HttpRequest, download_type: DownloadType, object_id: int) -> bool:
+    """Whether this is a new download, i.e. the 5 minute "in progress" sentinel for this item
+    hasn't been set yet for this user. See ``count_download_and_set_sentinel`` for why this
+    sentinel exists."""
+    return cache.get(_sentinel_key(download_type, object_id, request.user.id), None) is None
+
+
+def set_sentinel(request: HttpRequest, download_type: DownloadType, object_id: int) -> None:
+    """(Re)set the 5 minute "in progress" sentinel for this download, on transaction commit."""
+    sentinel_key = _sentinel_key(download_type, object_id, request.user.id)
+    transaction.on_commit(lambda: cache.set(sentinel_key, True, DOWNLOAD_LIMIT_SENTINEL_TTL))
+
+
 def new_download_blocked(request: HttpRequest, download_type: DownloadType, object_id: int) -> bool:
     """Check if the user is allowed to download this item.
 
     The download is blocked if it's a new download and if the user is over their daily limit.
     see ``count_download_and_set_sentinel`` for a description of what new download means.
     """
-    is_new_download = cache.get(_sentinel_key(download_type, object_id, request.user.id), None) is None
-    return is_new_download and download_limit_reached(request.user.id)
+    return is_new_download(request, download_type, object_id) and download_limit_reached(request.user.id)
 
 
 def count_download_and_set_sentinel(request: HttpRequest, download_type: DownloadType, object_id: int) -> bool:
@@ -118,9 +132,8 @@ def count_download_and_set_sentinel(request: HttpRequest, download_type: Downloa
     Returns True if this is a new download, False otherwise.
     """
     user_id = request.user.id
-    sentinel_key = _sentinel_key(download_type, object_id, user_id)
-    is_new_download = cache.get(sentinel_key, None) is None
-    if is_new_download:
+    new_download = is_new_download(request, download_type, object_id)
+    if new_download:
         transaction.on_commit(lambda: increment_daily_download_count(user_id))
-    transaction.on_commit(lambda: cache.set(sentinel_key, True, DOWNLOAD_LIMIT_SENTINEL_TTL))
-    return is_new_download
+    set_sentinel(request, download_type, object_id)
+    return new_download

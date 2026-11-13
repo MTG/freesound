@@ -203,8 +203,8 @@ function make_sounds_map(geotags_url, map_element_id, on_built_callback, on_boun
 
 
             map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
-                map.loadImage('/static/bw-frontend/public/embeds/images/map_marker_v2.png', function(error, image) {
-                    map.addImage("custom-marker", image);
+                map.loadImage('/static/bw-frontend/public/embeds/images/map_marker_pin_s@2x.png', function(error, image) {
+                    map.addImage("custom-marker", image, { pixelRatio: 2 });
 
                     // Setup clustering
                     if (cluster === undefined){
@@ -359,8 +359,8 @@ function make_geotag_edit_map(map_element_id, arrow_url, on_bounds_changed_callb
     });
 
     map.on('style.load', function () {  // Triggered when `setStyle` is called, add all data layers
-        map.loadImage('/static/bw-frontend/public/embeds/images/map_marker_v2.png', function(error, image) {
-            map.addImage("custom-marker", image);
+        map.loadImage('/static/bw-frontend/public/embeds/images/map_marker_pin_s@2x.png', function(error, image) {
+            map.addImage("custom-marker", image, { pixelRatio: 2 });
 
             // Add position marker
             map.addLayer({

@@ -233,10 +233,7 @@ def create_sound(
     # 4 create pack if it does not exist
     if "pack" in sound_fields:
         if sound_fields["pack"]:
-            if Pack.objects.filter(name=sound_fields["pack"], user=user).exclude(is_deleted=True).exists():
-                p = Pack.objects.get(name=sound_fields["pack"], user=user)
-            else:
-                p, created = Pack.objects.get_or_create(user=user, name=sound_fields["pack"])
+            p, created = Pack.objects.get_or_create(user=user, name=sound_fields["pack"], is_deleted=False)
             sound.pack = p
 
     # 5 create geotag objects

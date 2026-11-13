@@ -1,9 +1,22 @@
 from oauth2_provider.models import AbstractApplication, Grant
 from oauth2_provider.oauth2_validators import GRANT_TYPE_MAPPING
 from oauth2_provider.oauth2_validators import OAuth2Validator as ProviderOauth2Validator
+from oauthlib.oauth2 import InvalidRequestError
 
 
 class OAuth2Validator(ProviderOauth2Validator):
+    def is_pkce_required(self, client_id, request):
+        return request.client.apiv2_client.require_pkce
+
+    def validate_response_type(self, client_id, response_type, client, request, *args, **kwargs):
+        if not super().validate_response_type(client_id, response_type, client, request, *args, **kwargs):
+            return False
+        # DOT requires a challenge but accepts both plain and S256.
+        # Require S256 for apiv2_client.require_pkce clients.
+        if client.apiv2_client.require_pkce and request.code_challenge_method != "S256":
+            raise InvalidRequestError(description="PKCE with code_challenge_method=S256 is required.", request=request)
+        return True
+
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client, *args, **kwargs):
         """
         We overwrite this method to make sure that default redirect_uri is taken if no

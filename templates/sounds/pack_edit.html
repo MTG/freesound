@@ -2,7 +2,6 @@
 {% load static %}
 {% load util %}
 {% load bw_templatetags %}
-{% load sounds_selector %}
 
 {% block title %}Edit pack - {{ pack.name }}{% endblock %}
 {% block page-title %}Edit pack{% endblock %}
@@ -16,7 +15,7 @@
 <div class="row no-gutters">
     <div class="col-lg-8 offset-lg-2">
         <h2 class="v-spacing-3">{{ pack.name }}</h2>
-        <form class="bw-form disable-on-submit" method="post" novalidate>{% csrf_token %}
+        <form class="bw-form disable-on-submit do-not-submit-on-enter" method="post" novalidate>{% csrf_token %}
             {{ form.non_field_errors }}
             {{ form.name.errors }}
             {{ form.name.label_tag }}
@@ -26,12 +25,29 @@
             {{ form.description }}
             <span class="helptext">{{ form.description.help_text|safe }}</span>
             <div class="select-sounds-field v-spacing-5">
-                {{ form.pack_sounds }}
-                <label>Sounds in pack (<span id="element-count">{{ form.pack_sound_objects|length }}</span>)</label>
-                {% sounds_selector form.pack_sound_objects %}
-                <div class="between v-spacing-top-4">
-                    <button class="btn-inverse" data-toggle="add-sounds-modal" data-selected-sounds-hidden-input-id="{{ form.pack_sounds.id_for_label }}" data-modal-url="{% url 'add-sounds-modal-pack' pack.id %}">{% bw_icon 'plus' %}Add sounds</button>
-                    <button class="btn-inverse">{% bw_icon 'trash' %}Remove selected sounds from pack</button>
+                {{ form.added_sounds }}
+                {{ form.removed_sounds }}
+                <label>Sounds in pack (<span id="element-count">0</span>)</label>
+                <div class="between middle no-gutters v-spacing-top-4">
+                    <div class="input-wrapper w-100" style="max-width: 250px;">
+                        <i class="bw-icon-search input-icon"></i><input id="sounds-search" type="search" placeholder="Search in pack..." role="searchbox" autocomplete="off">
+                    </div>
+                    <div class="no-wrap browse__search-overview-sorter" id="sort-container">
+                        <label class="text-light-grey d-none d-md-inline">Sort by:</label>
+                        <select id="sort-select">
+                            {% for key, option in sort_options.items %}
+                                <option value="{{ key }}" {% if key == current_sort %}selected{% endif %}>{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div>{{ form.added_sounds.errors }}{{ form.removed_sounds.errors }}</div>
+                <div id="sounds-section" data-render-cards-url="{{ render_cards_url }}">
+                    <div id="sounds-grid"></div>
+                    <div id="sounds-pagination" class="v-spacing-top-3"></div>
+                </div>
+                <div class="v-spacing-top-4">
+                    <button type="button" class="btn-inverse" data-toggle="add-sounds-modal" data-modal-url="{% url 'add-sounds-modal-pack' pack.id %}">{% bw_icon 'plus' %}Add sounds</button>
                 </div>
             </div>
             <button class="btn-primary w-100">Save pack</button>

@@ -10,14 +10,14 @@ Official
 * Python
   https://github.com/mtg/freesound-python
 
-* JUCE (c++)
+* JUCE (C++)
   https://github.com/mtg/freesound-juce
 
-* Javascript
+* JavaScript
   https://github.com/g-roma/freesound.js (by Gerard Roma)
 
 
-3rd Party
+Third-party
 
 * Common Lisp
   https://github.com/ntrocado/freesound (by Nuno Trocado)
@@ -28,13 +28,13 @@ Official
 * Perl
   https://github.com/CaesuraMedia/PerlFreesound (by Andy Cragg)
 
-* Supercollider
+* SuperCollider
   https://github.com/g-roma/Freesound.sc (by Gerard Roma)
 
-* Objective-c (iOS)
-  https://github.com/ffont/Freesound-iOS (by Frederic Font, no oauth2 support)
+* Objective-C (iOS)
+  https://github.com/ffont/Freesound-iOS (by Frederic Font, no OAuth2 support)
 
-* Qt framework (c++)
+* Qt framework (C++)
   https://github.com/ttguy/Qt_freesoundAPIv2 (by Roger Morton)
 
 * Scala

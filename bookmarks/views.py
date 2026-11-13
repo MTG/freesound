@@ -29,6 +29,7 @@ from django.urls import reverse
 
 from bookmarks.forms import BookmarkCategoryForm, BookmarkForm
 from bookmarks.models import Bookmark, BookmarkCategory
+from fscollections.models import Collection
 from sounds.models import Sound
 from utils.download_limit import (
     DownloadType,
@@ -47,12 +48,20 @@ def bookmarks(request, category_id=None):
     user = request.user
     is_owner = True
     n_uncat = Bookmark.objects.select_related("sound").filter(user=user, category=None).count()
+    corresponding_colection_name = None
     if not category_id:
+        if settings.ENABLE_COLLECTIONS:
+            return HttpResponseRedirect(reverse("your-collections"))
         category = None
         bookmarked_sounds = Bookmark.objects.filter(user=user, category=None)
     else:
         category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
+        if settings.ENABLE_COLLECTIONS:
+            # Find if there's a corresponding collection and redirect to its page
+            collection = get_object_or_404(Collection, name=category.name, user=user)
+            return HttpResponseRedirect(collection.get_absolute_url())
         bookmarked_sounds = category.bookmarks.all()
+
     bookmark_categories = BookmarkCategory.objects.filter(user=user).annotate(num_bookmarks=Count("bookmarks"))
     tvars = {
         "user": user,
@@ -60,6 +69,7 @@ def bookmarks(request, category_id=None):
         "n_uncat": n_uncat,
         "category": category,
         "bookmark_categories": bookmark_categories,
+        "edit_allowed": settings.ENABLE_CREATE_EDIT_BOOKMARKS,  # This will only be used while collection objects are created and the feature is not shown to public yet
     }
 
     paginator = paginate(request, bookmarked_sounds, settings.BOOKMARKS_PER_PAGE)
@@ -75,6 +85,15 @@ def bookmarks(request, category_id=None):
 def bookmarks_for_user(request, username, category_id=None):
     user = get_parameter_user_or_404(request)
     is_owner = request.user.is_authenticated and user == request.user
+
+    if settings.ENABLE_COLLECTIONS:
+        if category_id:
+            category = get_object_or_404(BookmarkCategory, id=category_id, user=user)
+            collection = get_object_or_404(Collection, name=category.name, user=user)
+            return HttpResponseRedirect(collection.get_absolute_url())
+        else:
+            return HttpResponseRedirect(reverse("collections"))
+
     if is_owner:
         # If accessing own bookmarks using the people/xx/bookmarks URL, redirect to the /home/bookmarks URL
         if category_id:
@@ -89,6 +108,8 @@ def bookmarks_for_user(request, username, category_id=None):
 @login_required
 @transaction.atomic()
 def delete_bookmark_category(request, category_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
     if request.method == "POST":
         category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
         # Remove only the bookmarks that would become duplicates after the category disappears.
@@ -124,8 +145,9 @@ def download_bookmark_category(request, category_id):
     return download_sounds(licenses_url, licenses_content, sounds_list, category.download_filename)
 
 
+@login_required
 def bookmark_category_licenses(request, category_id):
-    category = get_object_or_404(BookmarkCategory, id=category_id)
+    category = get_object_or_404(BookmarkCategory, id=category_id, user=request.user)
     attribution = category.get_attribution()
     return HttpResponse(attribution, content_type="text/plain")
 
@@ -133,6 +155,9 @@ def bookmark_category_licenses(request, category_id):
 @login_required
 @transaction.atomic()
 def edit_bookmark_category(request, category_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
+
     if not request.GET.get("ajax"):
         return HttpResponseRedirect(reverse("bookmarks-for-user", args=[request.user.username]))
 
@@ -157,6 +182,9 @@ def edit_bookmark_category(request, category_id):
 @login_required
 @transaction.atomic()
 def add_bookmark(request, sound_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
+
     sound = get_object_or_404(Sound, id=sound_id)
     msg_to_return = ""
     if request.method == "POST":
@@ -182,6 +210,9 @@ def add_bookmark(request, sound_id):
 
 @login_required
 def delete_bookmark(request, bookmark_id):
+    if not settings.ENABLE_CREATE_EDIT_BOOKMARKS:
+        raise Http404
+
     if request.method == "POST":
         bookmark = get_object_or_404(Bookmark, id=bookmark_id, user=request.user)
         msg = f"""Removed bookmark for sound "{bookmark.sound.original_filename}"."""
@@ -234,5 +265,6 @@ def get_form_for_sound(request, sound_id):
         "sound_has_bookmark_without_category": sound_has_bookmark_without_category,
         "categories_aready_containing_sound": categories_already_containing_sound,
         "add_bookmark_url": add_bookmark_url,
+        "edit_allowed": settings.ENABLE_CREATE_EDIT_BOOKMARKS,  # This will only be used while collection objects are created and the feature is not shown to public yet
     }
     return render(request, "bookmarks/modal_bookmark_sound.html", tvars)

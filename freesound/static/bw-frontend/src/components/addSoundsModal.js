@@ -5,22 +5,6 @@ import {
 } from '../components/objectSelector';
 import { serializedIdListToIntList, combineIdsLists } from '../utils/data';
 
-// Read the sidecar fields off a server-rendered card so the dynamic flow can
-// push freshly-added sounds into the editor's store. ``date_added`` is the
-// client-side timestamp; the server stamps its own when the form is saved.
-const extractSoundFromCard = card => {
-  const player = card.querySelector('.bw-player');
-  if (!player) return null;
-  const d = player.dataset;
-  return {
-    id: parseInt(d.soundId, 10),
-    name: d.title || '',
-    username: d.username || '',
-    duration: parseFloat(d.duration) || 0,
-    date_added: new Date().toISOString(),
-  };
-};
-
 const prepareAddSoundsModalAndFields = container => {
   const addSoundsButtons = [
     ...container.querySelectorAll(`[data-toggle^="add-sounds-modal"]`),
@@ -216,28 +200,12 @@ const openAddSoundsModal = (
   );
 };
 
-const prepareAddSoundsModalDynamic = (
-  container,
-  getExcludeIds,
-  onSoundsConfirmed
-) => {
+// Wire ``container``'s add-sounds button; ``onAdd`` receives the confirmed sound ids
+const wireAddSoundsModal = (container, getExcludeIds, onAdd) => {
   const addSoundsButton = container.querySelector(
     '[data-toggle="add-sounds-modal"]'
   );
   if (!addSoundsButton) return;
-
-  const onConfirmed = modalContainer => {
-    const sounds = [
-      ...modalContainer.querySelectorAll('.bw-selectable-object'),
-    ].reduce((acc, element) => {
-      const checkbox = element.querySelector('input.bw-checkbox');
-      if (checkbox && checkbox.checked) {
-        acc.push(extractSoundFromCard(element));
-      }
-      return acc;
-    }, []);
-    onSoundsConfirmed(sounds);
-  };
 
   addSoundsButton.addEventListener('click', evt => {
     evt.preventDefault();
@@ -246,9 +214,14 @@ const prepareAddSoundsModalDynamic = (
       addSoundsButton.dataset.modalUrl,
       addSoundsButton.dataset.modalUrl,
       getExcludeIds,
-      onConfirmed
+      modalContainer =>
+        onAdd(
+          [...modalContainer.querySelectorAll('input.bw-checkbox:checked')].map(
+            checkbox => parseInt(checkbox.dataset.objectId, 10)
+          )
+        )
     );
   });
 };
 
-export { prepareAddSoundsModalAndFields, prepareAddSoundsModalDynamic };
+export { prepareAddSoundsModalAndFields, wireAddSoundsModal };

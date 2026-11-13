@@ -25,6 +25,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import Group, User
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, F, Min, OuterRef, Q
 from django.db.models.functions import JSONObject
@@ -135,6 +136,8 @@ def ticket(request, ticket_key):
                 clean_comment_form = False
         # update sound ticket
         elif is_selected(request, "ss"):
+            if not request.user.has_perm("tickets.can_moderate"):
+                raise PermissionDenied
             sound_form = SoundStateForm(request.POST, prefix="ss")
 
             if ticket.sound is None:
@@ -164,20 +167,23 @@ def ticket(request, ticket_key):
 
                 elif sound_action == ModerationChoices.DEFER:
                     ticket.status = TICKET_STATUS_DEFERRED
-                    ticket.sound.change_moderation_state("PE")  # not sure if this state have been used before
+                    if ticket.sound:
+                        ticket.sound.change_moderation_state("PE")  # not sure if this state have been used before
                     comment += "deferred the ticket"
 
                 elif sound_action == ModerationChoices.RETURN:
                     ticket.status = TICKET_STATUS_NEW
                     ticket.assignee = None
-                    ticket.sound.change_moderation_state("PE")
+                    if ticket.sound:
+                        ticket.sound.change_moderation_state("PE")
                     comment += "returned the ticket to new sounds queue"
 
                 elif sound_action == ModerationChoices.APPROVE:
                     ticket.status = TICKET_STATUS_CLOSED
-                    ticket.sound.change_moderation_state("OK")
+                    if ticket.sound:
+                        ticket.sound.change_moderation_state("OK")
+                        notification = ticket.NOTIFICATION_APPROVED
                     comment += "approved the sound and closed the ticket"
-                    notification = ticket.NOTIFICATION_APPROVED
 
                 elif sound_action == "Close":
                     # This option in never shown in the form, but used when needing to close a ticket which has no sound associated (see ticket.html)
@@ -298,12 +304,16 @@ def _add_sound_objects_to_tickets(tickets):
 def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for moderators that haven't responded in the last day"""
     time_span = datetime.date.today() - datetime.timedelta(days=1)
-    tt = Ticket.objects.filter(
-        Q(assignee__isnull=False)
-        & ~Q(status=TICKET_STATUS_CLOSED)
-        & (Q(last_commenter=F("sender")) | Q(messages__sender=None))
-        & Q(comment_date__date__lt=time_span)
-    ).order_by("created")
+    tt = (
+        Ticket.objects.filter(
+            Q(assignee__isnull=False)
+            & ~Q(status=TICKET_STATUS_CLOSED)
+            & (Q(last_commenter=F("sender")) | Q(messages__sender=None))
+            & Q(comment_date__date__lt=time_span)
+        )
+        .exclude(sound=None)
+        .order_by("created")
+    )
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 
@@ -311,12 +321,16 @@ def _get_tardy_moderator_tickets_and_count(num=None, include_mod_messages=True):
 def _get_tardy_user_tickets_and_count(num=None, include_mod_messages=True):
     """Get tickets for users that haven't responded in the last 2 days"""
     time_span = datetime.date.today() - datetime.timedelta(days=2)
-    tt = Ticket.objects.filter(
-        Q(assignee__isnull=False)
-        & ~Q(status=TICKET_STATUS_CLOSED)
-        & ~Q(last_commenter=F("sender"))
-        & Q(comment_date__date__lt=time_span)
-    ).order_by("created")
+    tt = (
+        Ticket.objects.filter(
+            Q(assignee__isnull=False)
+            & ~Q(status=TICKET_STATUS_CLOSED)
+            & ~Q(last_commenter=F("sender"))
+            & Q(comment_date__date__lt=time_span)
+        )
+        .exclude(sound=None)
+        .order_by("created")
+    )
     count = tt.count()
     return _annotate_tickets_queryset_with_message_info(tt[:num], include_mod_messages=include_mod_messages), count
 

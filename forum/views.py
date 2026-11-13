@@ -197,6 +197,7 @@ def get_hot_threads(n=None, days=15):
             "last_post__author__profile",
             "last_post__thread",
             "last_post__thread__forum",
+            "first_post",
         )[:n]
     )
 

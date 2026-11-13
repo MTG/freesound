@@ -26,6 +26,7 @@ import time
 
 from django.template import Library
 from django.template.defaultfilters import stringfilter
+from django.utils.formats import number_format
 from django.utils.safestring import mark_safe
 
 register = Library()
@@ -51,6 +52,17 @@ def duration(value):
     duration_seconds = int(value) % 60
     duration_milliseconds = int((value - int(value)) * 1000)
     return "%d:%02d.%03d" % (duration_minutes, duration_seconds, duration_milliseconds)
+
+
+@register.filter
+def samplerate_with_units(value):
+    """Show positive sample rates in kHz with at most three decimal places."""
+    unit = "Hz"
+    if value > 0:
+        value = round(value / 1000, 3)
+        unit = "kHz"
+    rate = int(value) if value == int(value) else value
+    return f"{number_format(rate)} {unit}"
 
 
 @register.filter

@@ -93,6 +93,11 @@ urlpatterns = [
         name="pack-stats-section",
     ),
     path("people/<username>/packs/<int:pack_id>/edit/", sounds.views.pack_edit, name="pack-edit"),
+    path(
+        "people/<username>/packs/<int:pack_id>/edit/render-cards/",
+        sounds.views.render_pack_edit_cards,
+        name="pack-render-cards",
+    ),
     path("people/<username>/packs/<int:pack_id>/download/", sounds.views.pack_download, name="pack-download"),
     path("people/<username>/packs/<int:pack_id>/downloaders/", sounds.views.pack_downloaders, name="pack-downloaders"),
     path("people/<username>/packs/<int:pack_id>/licenses/", sounds.views.pack_licenses, name="pack-licenses"),
@@ -163,12 +168,12 @@ urlpatterns = [
     path("donate/", donations.views.donate_redirect, name="donate-redirect"),
     path("s/<int:sound_id>/", sounds.views.sound_short_link, name="short-sound-link"),
     path("p/<int:pack_id>/", sounds.views.pack_short_link, name="short-pack-link"),
-    # old url format redirects
-    path("usersViewSingle", accounts.views.old_user_link_redirect, name="old-account-page"),
-    path("samplesViewSingle", sounds.views.old_sound_link_redirect, name="old-sound-page"),
-    path("packsViewSingle", sounds.views.old_pack_link_redirect, name="old-pack-page"),
-    path("tagsViewSingle", tags.views.old_tag_link_redirect, name="old-tag-page"),
-    path("forum/viewtopic", forum.views.old_topic_link_redirect, name="old-topic-page"),
+    # Legacy PHP URLs use prefix matching, including their .php suffix.
+    path("usersViewSingle.php", accounts.views.old_user_link_redirect, name="old-account-page"),
+    path("samplesViewSingle.php", sounds.views.old_sound_link_redirect, name="old-sound-page"),
+    path("packsViewSingle.php", sounds.views.old_pack_link_redirect, name="old-pack-page"),
+    path("tagsViewSingle.php", tags.views.old_tag_link_redirect, name="old-tag-page"),
+    path("forum/viewtopic.php", forum.views.old_topic_link_redirect, name="old-topic-page"),
     # sitemaps
     path(
         "sitemap.xml",

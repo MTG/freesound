@@ -35,10 +35,14 @@ Values are retrieved all at once with the :ref:`sound-analysis` resource, or one
 
 
 Main set of descriptors
->>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>
 
 beat_count
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=beat_count&token=YOUR_API_KEY"
 
 **Description:** Number of beats in the audio signal, derived from the total detected beat positions and expresses a measure of rhythmic density or tempo-related activity.
 
@@ -55,6 +59,10 @@ beat_count
 beat_times
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=beat_times&token=YOUR_API_KEY"
+
 **Description:** Beat timestamps (in seconds) for the audio signal, which can vary according to the amount (count) of beats identified in the audio.
 
 **Mode:** VL
@@ -66,6 +74,10 @@ beat_times
 
 boominess
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=boominess&token=YOUR_API_KEY"
 
 **Description:** Boominess of the audio signal. A boomy sound is one that conveys a sense of loudness, depth and resonance.
 
@@ -82,7 +94,11 @@ boominess
 bpm
 -------------------------
 
-**Description:** BPM value of the audio, estimated by a beat tracking algorithm.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=bpm&token=YOUR_API_KEY"
+
+**Description:** BPM value estimated by beat tracking algorithm.
 
 **Type:** integer
 
@@ -96,6 +112,10 @@ bpm
 
 bpm_confidence
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=bpm_confidence&token=YOUR_API_KEY"
 
 **Description:** Confidence score on how reliable the tempo (BPM) estimation is.
 
@@ -112,6 +132,10 @@ bpm_confidence
 brightness
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=brightness&token=YOUR_API_KEY"
+
 **Description:** Brightness of the audio signal. A bright sound is one that is clear/vibrant and/or contains significant high-pitched elements.
 
 **Type:** numeric
@@ -127,6 +151,10 @@ brightness
 depth
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=depth&token=YOUR_API_KEY"
+
 **Description:** Depth of the audio signal. A deep sound is one that conveys the sense of having been made far down below the surface of its source.
 
 **Type:** numeric
@@ -141,6 +169,10 @@ depth
 
 dissonance
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=dissonance&token=YOUR_API_KEY"
 
 **Description:** Sensory dissonance of the audio signal given its spectral peaks.
 
@@ -161,6 +193,10 @@ dissonance
 dynamic_range
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=dynamic_range&token=YOUR_API_KEY"
+
 **Description:** Loudness range (dB, LU) of the audio signal measured using the EBU R128 standard.
 
 **Type:** numeric
@@ -173,6 +209,10 @@ dynamic_range
 
 hardness
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=hardness&token=YOUR_API_KEY"
 
 **Description:** Hardness of the audio signal. A hard sound is one that conveys the sense of having been made (i) by something solid, firm or rigid; or (ii) with a great deal of force.
 
@@ -190,6 +230,10 @@ hardness
 
 inharmonicity
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=inharmonicity&token=YOUR_API_KEY"
 
 **Description:** Deviation of spectral components from perfect harmonicity, computed as the energy-weighted divergence from their closest multiples of the fundamental frequency.
 
@@ -210,6 +254,10 @@ inharmonicity
 loopable
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=loopable&token=YOUR_API_KEY"
+
 **Description:** Whether the audio signal is loopable, i.e. it begins and ends in a way that sounds smooth when repeated.
 
 **Type:** boolean
@@ -226,6 +274,10 @@ loopable
 
 loudness
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=loudness&token=YOUR_API_KEY"
 
 **Description:** Overall loudness (LUFS) of the audio signal measured using the EBU R128 standard.
 
@@ -244,6 +296,10 @@ loudness
 note_confidence
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=note_confidence&token=YOUR_API_KEY"
+
 **Description:** Confidence score on how reliable the note name/MIDI estimation is.
 
 **Type:** numeric
@@ -258,6 +314,10 @@ note_confidence
 
 note_midi
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=note_midi&token=YOUR_API_KEY"
 
 **Description:** MIDI value corresponding to the estimated note (computed by the note_name descriptor).
 
@@ -274,6 +334,10 @@ note_midi
 note_name
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=note_name&token=YOUR_API_KEY"
+
 **Description:** Pitch note name that includes one of the 12 western notes ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"] and the octave number, e.g. "A4", "E#7". It is computed by the median of the estimated fundamental frequency.
 
 **Type:** string
@@ -286,6 +350,10 @@ note_name
 
 onset_count
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=onset_count&token=YOUR_API_KEY"
 
 **Description:** Number of detected onsets in the audio signal.
 
@@ -302,7 +370,11 @@ onset_count
 onset_times
 -------------------------
 
-**Description:** Timestamps for the detected onsets in the audio signal in seconds, which can vary according to the amount of onsets (computed by the onset_count descriptor).
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=onset_times&token=YOUR_API_KEY"
+
+**Description:** Timestamps of the detected onsets in the audio signal, in seconds. One timestamp per onset reported by ``onset_count``.
 
 **Mode:** VL
 
@@ -314,7 +386,11 @@ onset_times
 pitch
 -------------------------
 
-**Description:** Mean (average) fundamental frequency (Hz) derived from the audio signal, computed with the YinFFT algorithm.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch&token=YOUR_API_KEY"
+
+**Description:** Mean (average) fundamental frequency derived from the audio signal, computed with the YinFFT algorithm.
 
 **Mode:** mean
 
@@ -333,7 +409,11 @@ pitch
 pitch_confidence
 -------------------------
 
-**Description:** A measure of the confidence with which the pitch was estimated. If the output is near 1, there exist just one pitch in the mixture, an output near 0 indicates multiple, not distinguishable pitches.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_salience&token=YOUR_API_KEY"
+
+**Description:** Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.
 
 **Mode:** mean
 
@@ -352,7 +432,11 @@ pitch_confidence
 pitch_salience
 -------------------------
 
-**Description:** Pitch salience (i.e. tone sensation) given by the ratio of the highest auto correlation value of the spectrum to the non-shifted auto correlation value. Unpitched sounds and pure tones have value close to 0.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_confidence&token=YOUR_API_KEY"
+
+**Description:** A measure of the confidence with which the pitch was estimated. If the output is near 1, there is only one pitch in the mixture. An output near 0 indicates multiple, indistinguishable pitches.
 
 **Mode:** mean
 
@@ -371,6 +455,10 @@ pitch_salience
 reverbness
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=reverbness&token=YOUR_API_KEY"
+
 **Description:** Whether the signal is reverberated or not.
 
 **Type:** boolean
@@ -388,6 +476,10 @@ reverbness
 roughness
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=roughness&token=YOUR_API_KEY"
+
 **Description:** Roughness of the audio signal. A rough sound is one that has an uneven or irregular sonic texture.
 
 **Type:** numeric
@@ -403,6 +495,10 @@ roughness
 sharpness
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=sharpness&token=YOUR_API_KEY"
+
 **Description:** Sharpness of the audio signal. A sharp sound is one that suggests it might cut if it were to take on physical form.
 
 **Type:** numeric
@@ -417,6 +513,10 @@ sharpness
 
 silence_rate
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=silence_rate&token=YOUR_API_KEY"
 
 **Description:** Amount of silence in the audio signal, computed by the fraction of frames with instant power below 30dB.
 
@@ -437,6 +537,10 @@ silence_rate
 single_event
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=single_event&token=YOUR_API_KEY"
+
 **Description:** Whether the audio signal contains one single audio event or more than one. This computation is based on the loudness of the signal and does not do any frequency analysis.
 
 **Type:** boolean
@@ -451,6 +555,10 @@ single_event
 
 start_time
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=start_time&token=YOUR_API_KEY"
 
 **Description:** The moment at which sound begins in seconds, i.e. when the audio signal first rises above silence.
 
@@ -467,6 +575,10 @@ start_time
 tonality
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=tonality&token=YOUR_API_KEY"
+
 **Description:** Key (tonality) estimated by a key detection algorithm. The key name includes the root note of the scale, which is one of ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"], and the scale mode, which is one of ["major", "minor"], e.g. "C minor", "F# major".
 
 **Type:** string
@@ -481,6 +593,10 @@ tonality
 
 tonality_confidence
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=tonality_confidence&token=YOUR_API_KEY"
 
 **Description:** Confidence score on how reliable the key estimation is (computed by the tonality descriptor).
 
@@ -497,6 +613,10 @@ tonality_confidence
 warmth
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=warmth&token=YOUR_API_KEY"
+
 **Description:** Warmth of the audio signal. A warm sound is one that promotes a sensation analogous to that caused by a physical increase in temperature.
 
 **Type:** numeric
@@ -510,10 +630,14 @@ warmth
 
 
 Advanced set of descriptors
->>>>>>>>>>>>>>>>
+>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 amplitude_peak_ratio
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=amplitude_peak_ratio&token=YOUR_API_KEY"
 
 **Description:** Ratio between the position of the peak in the amplitude envelope and the total envelope duration, indicating whether the maximum magnitude of the audio signal occurs early (impulsive or decrescendo) or late (crescendo).
 
@@ -532,6 +656,10 @@ amplitude_peak_ratio
 beat_loudness
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=beat_loudness&token=YOUR_API_KEY"
+
 **Description:** Spectral energy measured at the beat positions of the audio signal. It measures the strength of the rhythmic beats of the sound.
 
 **Mode:** mean
@@ -549,6 +677,10 @@ beat_loudness
 decay_strength
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=decay_strength&token=YOUR_API_KEY"
+
 **Description:** Rate at which the audio signal's energy decays (i.e. how quickly it decreases) after the initial attack. It is computed from a non-linear combination of the signal's energy and its temporal centroid (the balance point of the signal's absolute amplitude).
 
 **Type:** numeric
@@ -564,6 +696,10 @@ decay_strength
 duration_effective
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=duration_effective&token=YOUR_API_KEY"
+
 **Description:** Duration of the audio signal (in seconds) during which the envelope amplitude is perceptually significant (above 40% of peak and 90dB), e.g. for distinguishing short/percussive from sustained sounds.
 
 **Type:** numeric
@@ -578,6 +714,10 @@ duration_effective
 
 hpcp
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=hpcp&token=YOUR_API_KEY"
 
 **Description:** Frame by frame average of the Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).
 
@@ -668,6 +808,10 @@ hpcp
 hpcp_var
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=hpcp_var&token=YOUR_API_KEY"
+
 **Description:** Frame by frame variance of the Harmonic Pitch Class Profile (HPCP) computed from the spectral peaks of the audio signal, representing the energy distribution across 36 pitch classes (3 subdivisions per semitone).
 
 **Mode:** var (36)
@@ -757,6 +901,10 @@ hpcp_var
 hpcp_crest
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=hpcp_crest&token=YOUR_API_KEY"
+
 **Description:** Dominance of the strongest pitch class (crest) compared to the rest, computed as the ratio between the maximum HPCP value and the mean HPCP value (computed by the hpcp descriptor).
 
 **Mode:** mean
@@ -774,7 +922,11 @@ hpcp_crest
 hpcp_entropy
 -------------------------
 
-**Description:** Uniformity of the pitch-class distribution, computed as the Shannon entropy (base 2) of the HPCP (computed by the hpcp descriptor). Max log2(36) = 5.17.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=hpcp_entropy&token=YOUR_API_KEY"
+
+**Description:** Uniformity of the pitch-class distribution, computed as the Shannon entropy of the HPCP (computed by the hpcp descriptor).
 
 **Mode:** mean
 
@@ -793,7 +945,11 @@ hpcp_entropy
 log_attack_time
 -------------------------
 
-**Description:** Log (base 10) of the attack time (in seconds) of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=log_attack_time&token=YOUR_API_KEY"
+
+**Description:** Log (base 10) of the attack time of the audio signal's envelope, where the attack time is defined as the time duration from when the sound becomes perceptually audible to when it reaches its maximum intensity.
 
 **Type:** numeric
 
@@ -807,6 +963,10 @@ log_attack_time
 
 mfcc
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=mfcc&token=YOUR_API_KEY"
 
 **Description:** Frame by frame average of the 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).
 
@@ -849,6 +1009,10 @@ mfcc
 mfcc_var
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=mfcc_var&token=YOUR_API_KEY"
+
 **Description:** Frame by frame variance of the 13 mel-frequency cepstrum coefficients of a spectrum (MFCC-FB40).
 
 **Mode:** var (13)
@@ -890,7 +1054,11 @@ mfcc_var
 pitch_max
 -------------------------
 
-**Description:** Maximum fundamental frequency (Hz) observed throughout the audio signal.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_max&token=YOUR_API_KEY"
+
+**Description:** Maximum fundamental frequency observed throughout the audio signal.
 
 **Mode:** max
 
@@ -909,7 +1077,11 @@ pitch_max
 pitch_min
 -------------------------
 
-**Description:** Minimum fundamental frequency (Hz) observed throughout the audio signal.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_min&token=YOUR_API_KEY"
+
+**Description:** Minimum fundamental frequency observed throughout the audio signal.
 
 **Mode:** min
 
@@ -928,7 +1100,11 @@ pitch_min
 pitch_var
 -------------------------
 
-**Description:** Variance (Hz²) of the fundamental frequency of the audio signal.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=pitch_var&token=YOUR_API_KEY"
+
+**Description:** Variance of the fundamental frequency of the audio signal.
 
 **Mode:** var
 
@@ -945,7 +1121,11 @@ pitch_var
 spectral_centroid
 -------------------------
 
-**Description:** Spectral centroid (Hz) of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_centroid&token=YOUR_API_KEY"
+
+**Description:** Spectral centroid of the audio signal, indicating where the "center of mass" of the spectrum is. It correlates with the perception of "brightness" of a sound, making it useful for characterizing musical timbre. It is computed as the weighted mean of the signal's frequencies, weighted by their magnitudes.
 
 **Mode:** mean
 
@@ -964,6 +1144,10 @@ spectral_centroid
 spectral_complexity
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_complexity&token=YOUR_API_KEY"
+
 **Description:** Spectral complexity of the audio signal's spectrum, based on the number of peaks in the spectrum.
 
 **Mode:** mean
@@ -980,6 +1164,10 @@ spectral_complexity
 
 spectral_crest
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_crest&token=YOUR_API_KEY"
 
 **Description:** Dominance of the strongest spectral peak (crest) compared to the rest, computed as the ratio between the maximum and mean spectral magnitudes.
 
@@ -998,6 +1186,10 @@ spectral_crest
 spectral_energy
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_energy&token=YOUR_API_KEY"
+
 **Description:** Energy in the spectrum of the audio signal. It represents the total magnitude of all frequency components and indicates how much power is present across the spectrum.
 
 **Mode:** mean
@@ -1015,7 +1207,11 @@ spectral_energy
 spectral_entropy
 -------------------------
 
-**Description:** Shannon entropy (base 2) in the frequency domain of the audio signal, measuring the unpredictability in the spectrum. Max log2(1025 bins) = 10.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_entropy&token=YOUR_API_KEY"
+
+**Description:** Shannon entropy in the frequency domain of the audio signal, measuring the unpredictability in the spectrum.
 
 **Mode:** mean
 
@@ -1033,6 +1229,10 @@ spectral_entropy
 
 spectral_flatness
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_flatness&token=YOUR_API_KEY"
 
 **Description:** Flatness of the spectrum measured as the ratio of its geometric mean to its arithmetic mean (in dB). High values indicate a noise-like, flat spectrum with evenly distributed power, while low values indicate a tone-like, spiky spectrum with power concentrated in a few frequency bands.
 
@@ -1053,7 +1253,11 @@ spectral_flatness
 spectral_rolloff
 -------------------------
 
-**Description:** Roll-off frequency (Hz) of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_rolloff&token=YOUR_API_KEY"
+
+**Description:** Roll-off frequency of the spectrum, defined as the frequency under which some percentage (cutoff) of the total energy of the spectrum is contained. It can be used to distinguish between harmonic (below roll-off) and noisy sounds (above roll-off).
 
 **Mode:** mean
 
@@ -1072,6 +1276,10 @@ spectral_rolloff
 spectral_skewness
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_skewness&token=YOUR_API_KEY"
+
 **Description:** Skewness of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.
 
 **Mode:** mean
@@ -1089,7 +1297,11 @@ spectral_skewness
 spectral_spread
 -------------------------
 
-**Description:** Spread (variance in Hz²) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=spectral_spread&token=YOUR_API_KEY"
+
+**Description:** Spread (variance) of the spectrum given its central moments. It measures how the values of the spectrum are dispersed around the mean and is a key indicator of the distribution's shape.
 
 **Mode:** mean
 
@@ -1106,7 +1318,11 @@ spectral_spread
 temporal_centroid
 -------------------------
 
-**Description:** Temporal centroid of the audio signal, defined as the time point at which the temporal balancing position of the sound event energy.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=temporal_centroid&token=YOUR_API_KEY"
+
+**Description:** Temporal centroid of the audio signal, defined as the temporal balancing position of the sound event energy.
 
 **Type:** numeric
 
@@ -1123,7 +1339,11 @@ temporal_centroid
 temporal_centroid_ratio
 -------------------------
 
-**Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is 'balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=temporal_centroid_ratio&token=YOUR_API_KEY"
+
+**Description:** Ratio of the temporal centroid to the total length of the audio signal's envelope, which shows how the sound is ‘balanced'. Values close to 0 indicate most of the energy is concentrated early (decrescendo or impulsive), while values close to 1 indicate energy concentrated late (crescendo).
 
 **Type:** numeric
 
@@ -1139,6 +1359,10 @@ temporal_centroid_ratio
 
 temporal_decrease
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=temporal_decrease&token=YOUR_API_KEY"
 
 **Description:** Overall decrease of the audio signal's amplitude over time, computed as the linear regression coefficient.
 
@@ -1157,6 +1381,10 @@ temporal_decrease
 temporal_skewness
 -------------------------
 
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=temporal_skewness&token=YOUR_API_KEY"
+
 **Description:** Skewness of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.
 
 **Mode:** mean
@@ -1174,7 +1402,11 @@ temporal_skewness
 temporal_spread
 -------------------------
 
-**Description:** Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean on a time axis (normalized to 0-1) and is a key indicator of the distribution's shape.
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=temporal_spread&token=YOUR_API_KEY"
+
+**Description:** Spread (variance) of the audio signal in the time domain given its central moments. It measures how the amplitude values of the signal are dispersed around the mean and is a key indicator of the distribution's shape.
 
 **Mode:** mean
 
@@ -1192,6 +1424,10 @@ temporal_spread
 
 tristimulus
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=tristimulus&token=YOUR_API_KEY"
 
 **Description:** Tristimulus of the audio signal given its harmonic peaks. It measures the relative contribution of harmonic groups in a signal's spectrum, where the first value captures the first harmonic, the second captures harmonics 2-4, and the third captures all remaining harmonics. It is a timbre equivalent to the color attributes in the vision.
 
@@ -1213,6 +1449,10 @@ tristimulus
 
 zero_crossing_rate
 -------------------------
+
+::
+
+    curl "https://freesound.org/apiv2/sounds/<sound_id>/?fields=zero_crossing_rate&token=YOUR_API_KEY"
 
 **Description:** Zero-crossing rate of the audio signal. It is the number of sign changes between consecutive samples divided by the total number of samples. Noisy signals tend to have a higher value. For monophonic tonal signals, it can be used as a primitive pitch detection algorithm.
 

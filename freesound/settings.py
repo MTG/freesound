@@ -92,11 +92,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 AUTHENTICATION_BACKENDS = ("accounts.modelbackend.CustomModelBackend",)
 
-# This was the default serializer in django 1.6. Now we keep using it because
-# we saw some errors when running tests, in the future we should change to the
-# new one.
-SESSION_SERIALIZER = "django.contrib.sessions.serializers.PickleSerializer"
-
 TIME_ZONE = "Europe/Brussels"
 
 LANGUAGE_CODE = "en-us"
@@ -159,6 +154,9 @@ LOGOUT_URL = "/home/logout/"
 LOGIN_REDIRECT_URL = "/home/"
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTOCOL", "https")
+# Send the origin as Referer on cross-origin requests (Django default is "same-origin", which sends none).
+# Needed because the Mapbox access token is URL-restricted and Mapbox validates it against the Referer header.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 IGNORABLE_404_URLS = (
     # for each <prefix> in IGNORABLE_404_STARTS
@@ -186,7 +184,7 @@ SILENCED_SYSTEM_CHECKS = ["urls.W002"]
 
 INTERNAL_IPS = ["127.0.0.1"]
 
-# Bearer token to pull data from /metrics. If empty, the endpoint returns 404
+# Shared bearer token for web and worker metrics. Empty disables both endpoints.
 PROMETHEUS_METRICS_TOKEN = ""
 # Management commands push stats to a pushgateway if this value is set
 PROMETHEUS_PUSHGATEWAY_URL = ""
@@ -196,11 +194,6 @@ MESSAGE_STORAGE = "django.contrib.messages.storage.cookie.CookieStorage"
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
-    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
-    "django.contrib.auth.hashers.Argon2PasswordHasher",
-    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
-    "django.contrib.auth.hashers.BCryptPasswordHasher",
-    "django.contrib.auth.hashers.SHA1PasswordHasher",
 ]
 
 # Password validation
@@ -320,6 +313,7 @@ DONATIONS_PER_PAGE = 40
 FOLLOW_ITEMS_PER_PAGE = 5
 MESSAGES_PER_PAGE = 10
 BOOKMARKS_PER_PAGE = 12
+COLLECTIONS_PER_PAGE = 12
 SOUNDS_PER_PAGE_PROFILE_PACK_PAGE = 12
 NUM_SIMILAR_SOUNDS_PER_PAGE = 9
 NUM_SIMILAR_SOUNDS_PAGES = 1  # In the modal we only show one page, full results can be seen in search page
@@ -418,6 +412,8 @@ LOG_DOWNLOADS = False
 
 # Use external CDN for downloading sounds and serving previews/displays
 USE_CDN_FOR_DOWNLOADS = False
+# None inherits USE_CDN_FOR_DOWNLOADS after local_settings has been imported.
+USE_CDN_FOR_API_DOWNLOADS = None
 USE_CDN_FOR_PREVIEWS = False
 USE_CDN_FOR_DISPLAYS = False
 CDN_DOWNLOADS_BASE_URL = "https://cdn.freesound.org"
@@ -567,6 +563,7 @@ SEARCH_SOUNDS_FIELD_CHANNELS = "channels"
 SEARCH_SOUNDS_FIELD_LICENSE_NAME = "license"
 SEARCH_SOUNDS_FIELD_CATEGORY = "category"
 SEARCH_SOUNDS_FIELD_SUBCATEGORY = "subcategory"
+SEARCH_SOUNDS_FIELD_COLLECTION_NAMES = "collection_names"
 SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING = "collection_grouping"
 
 # Default weights for fields to match
@@ -677,6 +674,9 @@ SEARCH_EMPTY_QUERY_CACHE_TIME = (
 
 SEARCH_LOG_SLOW_QUERIES_MS_THRESHOLD = 1000  # Log search queries that take longer than this threshold in milliseconds. Set it to -1 to disable logging of slow queries.
 SEARCH_LOG_SLOW_QUERIES_QUERY_BASE_URL = "http://localhost:8983/solr/freesound/select/"
+SEARCH_ARCHIVE_ENABLED = False
+SEARCH_ARCHIVE_HOST = os.environ.get("SEARCH_ARCHIVE_HOST", "search-archive")
+SEARCH_ARCHIVE_PORT = int(os.environ.get("SEARCH_ARCHIVE_PORT", "5515"))
 
 # -------------------------------------------------------------------------------
 # AI preferences panel
@@ -836,19 +836,14 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
-        "rest_framework_yaml.renderers.YAMLRenderer",
-        "rest_framework_jsonp.renderers.JSONPRenderer",
-        "rest_framework_xml.renderers.XMLRenderer",
+        "apiv2.renderers.XMLRenderer",
     ),
     "DEFAULT_THROTTLE_CLASSES": (
         "apiv2.throttling.ClientBasedThrottlingBurst",
         "apiv2.throttling.ClientBasedThrottlingSustained",
-        "apiv2.throttling.IpBasedThrottling",
     ),
     "VIEW_DESCRIPTION_FUNCTION": "apiv2.apiv2_utils.get_view_description",
 }
-
-API_DOWNLOAD_TOKEN_LIFETIME = 60 * 60  # 1 hour
 
 OAUTH2_PROVIDER = {
     "ACCESS_TOKEN_EXPIRE_SECONDS": 60 * 60 * 24,
@@ -921,20 +916,18 @@ RABBITMQ_USER = "guest"
 RABBITMQ_PASS = "guest"  # noqa: S105
 RABBITMQ_HOST = "rabbitmq"
 RABBITMQ_PORT = "5672"
-RABBITMQ_API_PORT = "5673"
+RABBITMQ_API_PORT = "15672"
+# Browser-facing URL for the RabbitMQ management UI (used by monitor dashboard links). No trailing slash.
+RABBITMQ_MANAGEMENT_URL = ""
 
 # -------------------------------------------------------------------------------
 # Collections
-ENABLE_COLLECTIONS = False
-MAX_SOUNDS_PER_COLLECTION = 250
+ENABLE_COLLECTIONS = True
+ENABLE_CREATE_EDIT_BOOKMARKS = (
+    True  # This will only be used while collection objects are created and the feature is not shown to public yet
+)
+MAX_SOUNDS_PER_COLLECTION = 500
 MAX_FEATURED_SOUNDS_PER_COLLECTION = 6
-COLLECTION_SORT_OPTIONS = {
-    "featured": ("Featured first", "featured_order"),
-    "created_desc": ("Date added (newest first)", "-collectionsound__created"),
-    "created_asc": ("Date added (oldest first)", "collectionsound__created"),
-    "name": ("Name (A to Z)", "original_filename"),
-}
-COLLECTION_SORT_DEFAULT = "featured"
 
 # -------------------------------------------------------------------------------
 # Import local settings
@@ -942,17 +935,24 @@ COLLECTION_SORT_DEFAULT = "featured"
 from .local_settings import *  # noqa: F403
 
 # -------------------------------------------------------------------------------
+# Resolve the API default using the final site setting, preserving explicit overrides.
+if USE_CDN_FOR_API_DOWNLOADS is None:
+    USE_CDN_FOR_API_DOWNLOADS = USE_CDN_FOR_DOWNLOADS
+
 # CDN secret validation (must be after local_settings import)
-if USE_CDN_FOR_DOWNLOADS and not CDN_SECURE_LINK_SECRET:
+if (USE_CDN_FOR_DOWNLOADS or USE_CDN_FOR_API_DOWNLOADS) and not CDN_SECURE_LINK_SECRET:
     from django.core.exceptions import ImproperlyConfigured
 
-    raise ImproperlyConfigured("CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS is True")
+    raise ImproperlyConfigured(
+        "CDN_SECURE_LINK_SECRET must be set when USE_CDN_FOR_DOWNLOADS or USE_CDN_FOR_API_DOWNLOADS is True"
+    )
 
 # -------------------------------------------------------------------------------
 # More collections stuff
 
 if ENABLE_COLLECTIONS:
     SEARCH_SOUNDS_DEFAULT_FACETS[SEARCH_SOUNDS_FIELD_COLLECTION_GROUPING] = {"limit": 10, "title": "Collections"}
+    SEARCH_SOUNDS_DEFAULT_FIELD_WEIGHTS[SEARCH_SOUNDS_FIELD_COLLECTION_NAMES] = 2
 
 # -------------------------------------------------------------------------------
 # Celery
@@ -961,6 +961,8 @@ CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{CELERY_BROKER_REDIS
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_WORKER_SEND_TASK_EVENTS = True
+CELERY_TASK_SEND_SENT_EVENT = True
 CELERY_ASYNC_TASKS_QUEUE_NAME = "async_tasks_queue"
 CELERY_SOUND_PROCESSING_QUEUE_NAME = "sound_processing_queue"
 CELERY_CLUSTERING_TASK_QUEUE_NAME = "clustering_queue"
@@ -995,6 +997,8 @@ ANALYSIS_PATH = os.path.join(DATA_PATH, "analysis/")
 FILE_UPLOAD_TEMP_DIR = os.path.join(DATA_PATH, "tmp_uploads/")
 PROCESSING_TEMP_DIR: str = os.path.join(DATA_PATH, "tmp_processing/")
 PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
+DATA_PACKS_PATH = os.path.join(DATA_PATH, "data_packs/")
+ARCHIVED_DATA_PATH = os.path.join(DATA_PATH, "archived_data/")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"

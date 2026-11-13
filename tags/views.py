@@ -18,7 +18,6 @@
 #     See AUTHORS file.
 #
 
-import json
 import logging
 
 import sentry_sdk
@@ -31,9 +30,9 @@ from django.urls import reverse
 from search.abuse import PaginationAbuseBlocked
 from search.views import search_view_helper
 from tags.models import FS1Tag, Tag
-from utils.logging_filters import get_client_ip
 from utils.search import SearchEngineException, SearchEngineTimeoutException
 from utils.search.search_sounds import perform_search_engine_query
+from utils.search_metrics import record_search
 
 search_logger = logging.getLogger("search")
 
@@ -69,17 +68,10 @@ def tag_cloud(request):
                 )
             )
         except SearchEngineTimeoutException as e:
+            record_search("tag_cloud", outcome="timeout")
             search_logger.info(
-                "SearchTimeout (%s)"
-                % json.dumps(
-                    {
-                        "ip": get_client_ip(request),
-                        "url": request.get_full_path(),
-                        "query": "",
-                        "filter": "*:*",
-                        "tags_mode": True,
-                    }
-                )
+                "Tag cloud search timeout",
+                extra={"url": request.get_full_path(), "error": str(e)},
             )
             tvars.update({"error_text": "Search is overloaded, please try again later."})
         except SearchEngineException as e:
@@ -88,6 +80,7 @@ def tag_cloud(request):
             sentry_sdk.capture_exception(e)
             tvars.update({"error_text": "The search server could not be reached, please try again later."})
         else:
+            record_search("tag_cloud", query_time_ms=results.q_time)
             if settings.SEARCH_SOUNDS_FIELD_TAGS in results.facets:
                 initial_tagcloud = [
                     dict(name=f[0], count=f[1], browse_url=reverse("tags", args=[f[0]]))

@@ -80,7 +80,7 @@ class DeletedUserAdmin(admin.ModelAdmin):
     list_filter = ("reason",)
     readonly_fields = ("user", "username", "email", "date_joined", "last_login", "deletion_date", "reason")
     list_display = ("get_object_link", "get_view_link", "deletion_date", "reason")
-    search_fields = ("=username",)
+    search_fields = ("=username", "=email")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -363,12 +363,18 @@ class FreesoundUserAdmin(DjangoObjectActions, UserAdmin):
     def edit_profile_admin(self, request, obj):
         return HttpResponseRedirect(reverse("admin:accounts_profile_change", args=[obj.profile.id]))
 
+    @action(description="View API clients created by this user", label="View API clients")
+    def view_apiv2_clients(self, request, obj):
+        url = reverse("admin:apiv2_apiv2client_changelist") + f"?user__id__exact={obj.id}"
+        return HttpResponseRedirect(url)
+
     # NOTE: in the line below we removed the 'full_delete' option as ideally we should never need to use it. In for
     # some unexpected reason we happen to need it, we can call the .delete() method on a user object using the terminal.
     # If we observe a real need for that, we can re-add the option to the admin.
     change_actions = (
         "edit_profile_admin",
         "view_on_site_action",
+        "view_apiv2_clients",
         "clear_spam_flags",
         "delete_spammer",
         "delete_include_sounds",

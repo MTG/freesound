@@ -10,7 +10,7 @@
     <h1>Sound Processing</h1>
     <ul class="v-spacing-4">
         <li>{{ sounds_pending_count }} sound{{ sounds_pending_count|pluralize }} pending to process - <a href="{% url "monitor-processing-process" %}?prs=PE">send to process</a></li>
-        <li>{{ sounds_queued_count }} sound{{ sounds_queued_count|pluralize }} are queued for processing - <a href="{% url "monitor-processing-process" %}?pros=QU">send to process</a></li>
+        <li>{{ sounds_queued_count }} sound{{ sounds_queued_count|pluralize }} {{ sounds_queued_count|pluralize:"is,are" }} queued for processing - <a href="{% url "monitor-processing-process" %}?pros=QU">send to process</a></li>
         <li>{{ sounds_processing_count }} sound{{ sounds_processing_count|pluralize }} currently processing - <a href="{% url "monitor-processing-process" %}?pros=PR">send to process</a></li>
         <li>{{ sounds_failed_count }} sound{{ sounds_failed_count|pluralize }} failed processing - <a href="{% url "monitor-processing-process" %}?prs=FA">send to process</a></li>
         <li>{{ sounds_ok_count }} sound{{ sounds_ok_count|pluralize }} processed ok</li>
@@ -19,6 +19,6 @@
     <h1>RabbitMQ queue status</h1>
     <div class="v-spacing-4">
         <div id="queuesStatus" data-url="{{ queues_stats_url }}"></div>
-        <a href="/rabbitmq-admin/">More RabbitMQ stats</a>
+        {% if RABBITMQ_MANAGEMENT_URL %}<a href="{{ RABBITMQ_MANAGEMENT_URL }}/">More RabbitMQ stats</a>{% endif %}
     </div>
 {% endblock %}

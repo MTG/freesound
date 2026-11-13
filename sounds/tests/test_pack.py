@@ -24,11 +24,40 @@ from unittest import mock
 import pytest
 from django.contrib.auth.models import User
 from django.core.management import call_command
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 
 from sounds.models import Pack, Sound
 from utils.test_helpers import create_user_and_sounds
+
+
+@pytest.mark.django_db
+def test_name_can_be_reused_after_repeated_deletion():
+    call_command("loaddata", "users", verbosity=0)
+    user = User.objects.get(username="User1")
+    for _ in range(2):
+        pack = Pack.objects.create(user=user, name="Birds")
+        pack.delete_pack(remove_sounds=False)
+    Pack.objects.create(user=user, name="Birds")
+    assert Pack.objects.filter(user=user, name="Birds", is_deleted=True).count() == 2
+    with pytest.raises(IntegrityError), transaction.atomic():
+        Pack.objects.create(user=user, name="Birds")
+    Pack.objects.create(user=User.objects.get(username="User2"), name="Birds")
+
+
+def test_license_summary_without_bulk_loading(load_fixtures):
+    load_fixtures(["licenses"])
+    _, packs, sounds = create_user_and_sounds(num_sounds=2, num_packs=1)
+    pack = packs[0]
+    license = sounds[0].license
+
+    assert pack.licenses_data == [
+        {"id": license.id, "name": license.name},
+        {"id": license.id, "name": license.name},
+    ]
+    assert pack.license_summary_name_and_id == (license.name, license.id)
+    assert pack.license_summary == license
 
 
 class PackNumSoundsTestCase(TestCase):
@@ -89,14 +118,12 @@ class PackNumSoundsTestCase(TestCase):
         self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 2)
 
         # Move one sound from one pack to the other
-        sound_ids_pack1 = [s.id for s in pack1.sounds.all()]
-        sound_ids_pack2 = [s.id for s in pack2.sounds.all()]
-        sound_ids_pack2.append(sound_ids_pack1.pop())
+        moved_sound_id = [s.id for s in pack1.sounds.all()][-1]
         self.client.force_login(user)
         resp = self.client.post(
             reverse("pack-edit", args=[pack2.user.username, pack2.id]),
             {
-                "pack_sounds": ",".join([str(sid) for sid in sound_ids_pack2]),
+                "added_sounds": str(moved_sound_id),
                 "name": "Test pack 1 (edited)",
                 "description": "A new description",
             },
@@ -113,9 +140,7 @@ class PackNumSoundsTestCase(TestCase):
         resp = self.client.post(
             reverse("pack-edit", args=[pack2.user.username, pack2.id]),
             {
-                "pack_sounds": ",".join(
-                    [str(snd.id) for snd in Pack.objects.get(id=pack2.id).sounds.all()] + [str(sound.id)]
-                ),
+                "added_sounds": str(sound.id),
                 "name": "Test pack 1 (edited again)",
                 "description": "A new description",
             },
@@ -124,6 +149,20 @@ class PackNumSoundsTestCase(TestCase):
         self.assertEqual(Pack.objects.get(id=pack1.id).num_sounds, 1)
         self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 4)
         self.assertEqual(Sound.objects.get(id=sound.id).pack.id, pack2.id)
+
+        # Remove a sound from the pack
+        removed_sound_id = [s.id for s in Pack.objects.get(id=pack2.id).sounds.all()][0]
+        resp = self.client.post(
+            reverse("pack-edit", args=[pack2.user.username, pack2.id]),
+            {
+                "removed_sounds": str(removed_sound_id),
+                "name": "Test pack 1 (edited again)",
+                "description": "A new description",
+            },
+        )
+        self.assertRedirects(resp, reverse("pack", args=[pack2.user.username, pack2.id]))
+        self.assertEqual(Pack.objects.get(id=pack2.id).num_sounds, 3)
+        self.assertIsNone(Sound.objects.get(id=removed_sound_id).pack)
 
 
 class PackViewsTestCase(TestCase):

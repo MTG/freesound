@@ -18,7 +18,7 @@
 #     See AUTHORS file.
 #
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from utils.forms import TagField, filename_has_valid_extension
 
@@ -39,7 +39,7 @@ class UtilsTest(TestCase):
             self.assertEqual(filename_has_valid_extension(filename), expected_result)
 
 
-class TagFieldTest(TestCase):
+class TagFieldTest(SimpleTestCase):
     def test_tag_field(self):
         f = TagField()
         # Split on spaces
@@ -79,3 +79,16 @@ class TagFieldTest(TestCase):
 
         # duplicate tags removed
         self.assertEqual({"one", "two", "three"}, f.clean("three one two three one"))
+
+    def test_tag_length_boundary(self):
+        field = TagField()
+        tag = "x" * 100
+        self.assertEqual(field.clean(f"{tag} two three"), {tag, "two", "three"})
+        with self.assertRaisesMessage(
+            ValidationError, "One of the tags is too long. Each tag can have at most 100 characters."
+        ):
+            field.clean(f"{tag}x two three")
+
+    def test_length_is_checked_after_cleaning(self):
+        tag = "x" * 98 + "-y"
+        self.assertEqual(TagField().clean(f"--{'x' * 98}---y-- two three"), {tag, "two", "three"})

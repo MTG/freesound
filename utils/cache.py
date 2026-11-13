@@ -34,8 +34,6 @@ def invalidate_template_cache(fragment_name, *variables):
 
 
 def invalidate_user_template_caches(user_id):
-    invalidate_template_cache("user_header", user_id)
-    invalidate_template_cache("bw_user_header", user_id)
     invalidate_template_cache("bw_user_profile_tags", user_id)
     invalidate_template_cache("bw_user_profile_followers_count", user_id)
     invalidate_template_cache("bw_user_profile_following_count", user_id)

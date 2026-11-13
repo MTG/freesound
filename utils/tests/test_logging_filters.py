@@ -140,19 +140,20 @@ class LoggingFiltersTest(TestCase):
                 self.assertEqual(getattr(log_record, prop), value)
 
     def test_api_view_with_logging(self):
-        user, _, _ = create_user_and_sounds(num_sounds=1, num_packs=0)
+        user, _, sounds = create_user_and_sounds(
+            num_sounds=1, num_packs=0, processing_state="OK", moderation_state="OK"
+        )
         self.client.force_login(user)
         logs_list = []
         logger = logging.getLogger("api")
         logger.addHandler(LogRecordsStoreHandler(logs_list))
         logger.addFilter(APILogsFilter())
         query_params = {
-            "query": "dogs",
             "fields": "id,url,name,duration,download,previews",
-            "filter": 'license:"Creative Commons 0"',
         }
         params = "&".join([f"{key}={value}" for key, value in query_params.items()])
-        self.client.get(reverse("apiv2-sound-search") + f"?{params}")
+        self.client.get(reverse("apiv2-sound-instance", kwargs={"pk": sounds[0].id}) + f"?{params}")
+        self.assertTrue(logs_list)
         log_record = logs_list[0]
 
         for prop, value in query_params.items():

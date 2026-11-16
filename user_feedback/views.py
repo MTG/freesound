@@ -3,6 +3,7 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.views.decorators.http import require_POST
 
 from user_feedback.experiments import get_experiment
+from utils.geoip import get_country_iso_code
 from utils.logging_filters import get_client_ip
 
 
@@ -25,10 +26,9 @@ def submit(request):
     is_ajax = bool(request.GET.get("ajax"))
     form = experiment.form_class(request.POST)
     if form.is_valid():
-        # get_client_ip returns "-" when there is no proxy header; store NULL then,
-        # since "-" is not a valid value for the ip column.
-        ip = get_client_ip(request)
-        experiment.save_response(request.user, form.cleaned_data, ip=ip if ip != "-" else None)
+        # Only the country of the IP is stored, never the IP itself.
+        country_iso_code = get_country_iso_code(get_client_ip(request))
+        experiment.save_response(request.user, form.cleaned_data, country_iso_code=country_iso_code)
         if is_ajax:
             return JsonResponse({"success": True})
     elif is_ajax:

@@ -81,7 +81,7 @@ class CategoryValidation(SingleSoundExperiment):
             "bst_top_level_categories": settings.BST_CATEGORY_CHOICES,
         }
 
-    def save_response(self, user, data, ip=None):
+    def save_response(self, user, data, country_iso_code=""):
         # Save the category that was asked about and its source.
         # "u" = user gave it, "a" = automatically added.
         sound = Sound.objects.get(id=data["sound_id"])
@@ -90,4 +90,4 @@ class CategoryValidation(SingleSoundExperiment):
             "sound_category": sound.category_code,
             "sound_category_source": "u" if sound.bst_category else "a",
         }
-        return super().save_response(user, data, ip=ip)
+        return super().save_response(user, data, country_iso_code=country_iso_code)

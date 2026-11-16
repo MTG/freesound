@@ -8,10 +8,10 @@ from .models import FeedbackExperiment, FeedbackOptOut, UserFeedback
 @admin.register(UserFeedback)
 class UserFeedbackAdmin(admin.ModelAdmin):
     raw_id_fields = ("user",)
-    list_display = ("experiment_id", "user", "ip", "created")
+    list_display = ("experiment_id", "user", "country_iso_code", "created")
     list_filter = ("experiment_id", "created")
     search_fields = ("=user__username", "experiment_id")
-    readonly_fields = ("experiment_id", "user", "ip", "data", "created")
+    readonly_fields = ("experiment_id", "user", "country_iso_code", "data", "created")
 
     def has_add_permission(self, request):
         return False
@@ -42,7 +42,7 @@ class FeedbackExperimentAdmin(DjangoObjectActions, admin.ModelAdmin):
     def download_feedback(self, request, obj):
         # One item per UserFeedback of the experiment, with all its fields
         feedback = UserFeedback.objects.filter(experiment_id=obj.experiment_id).order_by("created")
-        rows = list(feedback.values("id", "experiment_id", "user_id", "ip", "data", "created"))
+        rows = list(feedback.values("id", "experiment_id", "user_id", "country_iso_code", "data", "created"))
         response = JsonResponse(rows, safe=False, json_dumps_params={"indent": 2})
         response["Content-Disposition"] = f'attachment; filename="{obj.experiment_id}_feedback.json"'
         return response

@@ -34,6 +34,7 @@ dependencies = [
     "luqum==1.0.0",
     "mapbox==0.18.1",
     "markdown==3.8.1",
+    "maxminddb==2.8.2", # country lookup from IP (GeoLite2-Country)
     "networkx==3.2.1",
     "numpy==1.24.3",
     "oauthlib>=4.0.0",

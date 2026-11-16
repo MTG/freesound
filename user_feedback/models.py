@@ -25,7 +25,8 @@ class UserFeedback(models.Model):
         on_delete=models.SET_NULL,
         related_name="user_feedback",
     )
-    ip = models.GenericIPAddressField(null=True, blank=True)
+    # Country of the request's IP (ISO 3166-1 alpha-2, "" if unknown). The IP itself is not stored.
+    country_iso_code = models.CharField(max_length=2, blank=True, default="")
     data = models.JSONField(default=dict, blank=True)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
 
@@ -33,7 +34,7 @@ class UserFeedback(models.Model):
         ordering = ("-created",)
 
     def __str__(self):
-        who = self.user or self.ip or "deleted user"
+        who = self.user or "deleted user"
         return f"{who} / {self.experiment_id} @ {self.created:%Y-%m-%d}"
 
 

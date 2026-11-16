@@ -1011,6 +1011,9 @@ PROCESSING_TEMP_DIR: str = os.path.join(DATA_PATH, "tmp_processing/")
 PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
 DATA_PACKS_PATH = os.path.join(DATA_PATH, "data_packs/")
 ARCHIVED_DATA_PATH = os.path.join(DATA_PATH, "archived_data/")
+# MaxMind GeoLite2-Country database used to get a country code from an IP (see utils.geoip). This is a file
+# (not a directory) kept up to date by geoipupdate; if it is missing, country lookups return an empty value.
+GEOIP_COUNTRY_DATABASE_PATH = os.path.join(DATA_PATH, "geoip/GeoLite2-Country.mmdb")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"

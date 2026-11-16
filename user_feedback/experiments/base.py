@@ -92,9 +92,11 @@ class Experiment:
             return False
         return True
 
-    def save_response(self, user, data, ip=None):
+    def save_response(self, user, data, country_iso_code=""):
         """Store one answer as a UserFeedback row."""
-        return UserFeedback.objects.create(user=user, experiment_id=self.experiment_id, data=data, ip=ip)
+        return UserFeedback.objects.create(
+            user=user, experiment_id=self.experiment_id, data=data, country_iso_code=country_iso_code
+        )
 
     def has_opted_out(self, user):
         """True if this user has permanently opted out of this experiment."""

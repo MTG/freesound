@@ -27,7 +27,7 @@ from django.urls import reverse
 from zenpy.lib.api import serialize
 
 from comments.models import Comment
-from support.views import create_zendesk_ticket, send_email_to_support
+from support.views import _should_add_api_datapacks_tag, create_zendesk_ticket, send_email_to_support
 
 
 @pytest.fixture
@@ -105,3 +105,81 @@ def test_create_zendesk_ticket(moderation_test_users):
     assert "custom_fields" not in sticket  # no custom fields
     assert sticket["description"] == message  # No extra description
     assert sticket["subject"] == subject
+
+
+def test_api_datapacks_tag_matching():
+    """Test the keyword matching logic for API and datapacks tags"""
+    # Should match "api" as a full word (case-insensitive)
+    assert _should_add_api_datapacks_tag("Problem with API")
+    assert _should_add_api_datapacks_tag("api request")
+    assert _should_add_api_datapacks_tag("API AUTHENTICATION")
+    assert _should_add_api_datapacks_tag("Help with the API please")
+
+    # Should not match "api" when it's part of another word
+    assert not _should_add_api_datapacks_tag("Graphic problem")
+    assert not _should_add_api_datapacks_tag("Captcha issues")
+
+    # Should match "data pack" as full words
+    assert _should_add_api_datapacks_tag("Issue with data pack")
+    assert _should_add_api_datapacks_tag("Data pack download")
+    assert _should_add_api_datapacks_tag("DATA PACK help")
+
+    # Should match "datapack" as a full word
+    assert _should_add_api_datapacks_tag("Question about datapack")
+    assert _should_add_api_datapacks_tag("DATAPACK issues")
+
+    # Should match "commercial"
+    assert _should_add_api_datapacks_tag("Commercial use inquiry")
+    assert _should_add_api_datapacks_tag("commercial API")
+    assert _should_add_api_datapacks_tag("COMMERCIAL license")
+
+    # Should not match partial words
+    assert not _should_add_api_datapacks_tag("datapacking issues")
+
+    # Should not match unrelated subjects
+    assert not _should_add_api_datapacks_tag("Account issue")
+    assert not _should_add_api_datapacks_tag("Audio quality question")
+
+
+def test_create_zendesk_ticket_with_api_tag(moderation_test_users):
+    """Test that API-related subjects get the api-datapacks tag"""
+    request_email = "test.user+1@gmail.com"
+
+    # Test with API in subject
+    subject = "Problem with API authentication"
+    message = "I'm having trouble with the API"
+    ticket = create_zendesk_ticket(request_email, subject, message)
+    sticket = serialize(ticket)
+    assert "tags" in sticket
+    assert "api-datapacks" in sticket["tags"]
+
+    # Test with data pack in subject
+    subject = "Download data pack"
+    message = "How do I download the data pack?"
+    ticket = create_zendesk_ticket(request_email, subject, message)
+    sticket = serialize(ticket)
+    assert "tags" in sticket
+    assert "api-datapacks" in sticket["tags"]
+
+    # Test with datapack in subject
+    subject = "Datapack license"
+    message = "Question about datapack"
+    ticket = create_zendesk_ticket(request_email, subject, message)
+    sticket = serialize(ticket)
+    assert "tags" in sticket
+    assert "api-datapacks" in sticket["tags"]
+
+    # Test with commercial in subject
+    subject = "Commercial API usage"
+    message = "We want to use the API commercially"
+    ticket = create_zendesk_ticket(request_email, subject, message)
+    sticket = serialize(ticket)
+    assert "tags" in sticket
+    assert "api-datapacks" in sticket["tags"]
+
+    # Test without API/datapack keywords
+    subject = "Account issue"
+    message = "I cannot log in"
+    ticket = create_zendesk_ticket(request_email, subject, message)
+    sticket = serialize(ticket)
+    assert "tags" not in sticket or "api-datapacks" not in sticket.get("tags", [])

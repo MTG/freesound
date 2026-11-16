@@ -111,7 +111,6 @@
                                                                                                                                                     
  prometheus_client              0.25.0             Apache-2.0 AND BSD-2-Clause                                                                      
  prompt_toolkit                 3.0.52             BSD License                                                                                      
- psutil                         7.0.0              BSD License                                                                                      
  psycopg                        3.2.13             LGPL-3.0-only                                                                                    
  ptyprocess                     0.7.0              ISC License (ISCL)                                                                               
  pure_eval                      0.2.3              MIT License                                                                                      
@@ -156,7 +155,6 @@
  types-html5lib                 1.1.11.20260518    Apache-2.0                                                                                       
  types-oauthlib                 3.3.0.20260518     Apache-2.0                                                                                       
  types-openpyxl                 3.1.5.20260518     Apache-2.0                                                                                       
- types-psutil                   7.2.2.20260518     Apache-2.0                                                                                       
  types-python-dateutil          2.9.0.20260716     Apache-2.0                                                                                       
  types-pytz                     2026.2.0.20260518  Apache-2.0                                                                                       
  types-requests                 2.31.0.6           Apache Software License                                                                          

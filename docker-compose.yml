@@ -34,6 +34,9 @@ services:
             platforms:
               - linux/amd64
         image: freesound
+        user: root
+        init: true
+        entrypoint: ["dev-entrypoint.sh"]
         command: python manage.py runserver 0.0.0.0:8000
         volumes:
             - .:/code
@@ -93,6 +96,8 @@ services:
     # Worker for async tasks and sound processing
     worker_celery:
         image: freesound
+        user: root
+        entrypoint: ["dev-entrypoint.sh"]
         init: true
         command: celery -A freesound worker --concurrency=2 -l info -Q async_tasks_queue,sound_processing_queue,sound_analysis_old_queue,clustering_queue
         volumes:

@@ -3,7 +3,7 @@
 set -e
 
 if [[ $(id -u) != 0 ]]; then
-    echo Must run entrypoint.sh as root
+    echo Must run dev-entrypoint.sh as root
     exit 1
 fi
 

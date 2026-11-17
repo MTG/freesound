@@ -1,0 +1,28 @@
+{% extends "admin/change_form.html" %}
+{# Experiment page in the admin, with the dates to download its feedback. #}
+{# The dates use the form at the end, so they are not sent when saving the experiment. #}
+
+{% block after_field_sets %}
+    {{ block.super }}
+    {% if original %}
+        {% now "Y-m-d" as today %}
+        <fieldset class="module aligned">
+            <h2>Download feedback</h2>
+            <div class="form-row" style="display: flex; align-items: center; gap: 10px;"
+                 title="Both days included. Leave a date empty to have no limit on that side.">
+                <span>From</span>
+                <input type="date" name="date_from" aria-label="From" form="download-feedback">
+                <span>to</span>
+                <input type="date" name="date_to" value="{{ today }}" aria-label="To" form="download-feedback">
+                <input type="submit" value="Download" class="default" form="download-feedback">
+            </div>
+        </fieldset>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+    {% if original %}
+        <form id="download-feedback" method="get" action="{% url 'admin:user_feedback_feedbackexperiment_actions' original.pk 'download_feedback' %}"></form>
+    {% endif %}
+{% endblock %}

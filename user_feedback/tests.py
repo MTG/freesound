@@ -579,3 +579,19 @@ class FeedbackExperimentTest(TestCase):
         # Check the file has only the feedback of this experiment
         rows = self.client.post(url).json()
         self.assertEqual([row["data"] for row in rows], [{"answer": "yes"}])
+
+    def test_download_feedback_between_dates(self):
+        user = User.objects.create_superuser("admin", email="admin@freesound.org", password="testpass")
+        for day in ["2026-11-01", "2026-11-05", "2026-11-09"]:
+            feedback = UserFeedback.objects.create(experiment_id="category_validation", data={"day": day})
+            UserFeedback.objects.filter(id=feedback.id).update(created=f"{day}T12:00:00+01:00")
+        experiment = FeedbackExperiment.objects.get(experiment_id="category_validation")
+        self.client.force_login(user)
+        url = reverse("admin:user_feedback_feedbackexperiment_actions", args=[experiment.id, "download_feedback"])
+
+        def days(**dates):
+            return [row["data"]["day"] for row in self.client.get(url, dates).json()]
+
+        # Check both days are included, and an empty date has no limit
+        self.assertEqual(days(date_from="2026-11-05", date_to="2026-11-09"), ["2026-11-05", "2026-11-09"])
+        self.assertEqual(days(date_to="2026-11-05"), ["2026-11-01", "2026-11-05"])

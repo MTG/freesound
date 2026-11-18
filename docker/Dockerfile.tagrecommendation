@@ -1,5 +1,8 @@
 FROM python:3.12-slim-bookworm
 
+RUN groupadd --gid 1000 fsweb \
+    && adduser -q --gecos "" --disabled-password --uid 1000 --gid 1000 fsweb
+
 RUN mkdir /code
 RUN mkdir /tag_recommendation_models
 WORKDIR /code
@@ -8,3 +11,5 @@ COPY --chown=fsweb:fsweb tagrecommendation/requirements.txt /code/requirements.t
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=fsweb:fsweb tagrecommendation/ /code
+
+USER fsweb

@@ -712,6 +712,7 @@ TRACES_SAMPLE_RATE = 0.1
 USE_ZENDESK_FOR_SUPPORT_REQUESTS = False
 ZENDESK_EMAIL = ""
 ZENDESK_TOKEN = ""
+ZENDESK_API_REQUESTS_ASIGNEE_ID = ""
 
 # -------------------------------------------------------------------------------
 # Graylog settings

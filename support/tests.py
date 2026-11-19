@@ -183,3 +183,20 @@ def test_create_zendesk_ticket_with_api_tag(moderation_test_users):
     ticket = create_zendesk_ticket(request_email, subject, message)
     sticket = serialize(ticket)
     assert "tags" not in sticket or "api-datapacks" not in sticket.get("tags", [])
+
+
+def test_create_zendesk_ticket_api_assignee(moderation_test_users, settings):
+    """Test that API-related tickets are assigned to ZENDESK_API_REQUESTS_ASIGNEE_ID"""
+    request_email = "test.user+1@gmail.com"
+    settings.ZENDESK_API_REQUESTS_ASIGNEE_ID = 123456
+
+    ticket = create_zendesk_ticket(request_email, "Problem with API authentication", "Help")
+    assert serialize(ticket)["assignee_id"] == 123456
+
+    ticket = create_zendesk_ticket(request_email, "Account issue", "I cannot log in")
+    assert "assignee_id" not in serialize(ticket)
+
+    # If the setting is empty, no assignee is set
+    settings.ZENDESK_API_REQUESTS_ASIGNEE_ID = ""
+    ticket = create_zendesk_ticket(request_email, "Problem with API authentication", "Help")
+    assert "assignee_id" not in serialize(ticket)

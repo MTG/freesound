@@ -60,6 +60,7 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
     requester.name = "Unknown username"
     custom_fields = []
     tags = []
+    assignee_id = None
 
     if user:
         is_active = user.is_active
@@ -87,9 +88,15 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
 
     if _should_add_api_datapacks_tag(subject):
         tags = ["api-datapacks"]
+        assignee_id = settings.ZENDESK_API_REQUESTS_ASIGNEE_ID or None
 
     return zendesk_api.Ticket(
-        requester=requester, subject=subject, description=message, custom_fields=custom_fields, tags=tags
+        requester=requester,
+        subject=subject,
+        description=message,
+        custom_fields=custom_fields,
+        tags=tags,
+        assignee_id=assignee_id,
     )
 
 

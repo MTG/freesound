@@ -2,6 +2,7 @@ import { showToast } from './toast';
 import { makePostRequest } from '../utils/postRequest';
 import { dismissModal, activateModal } from './modal';
 import { prepareCategoryFormFields } from './bstCategoryFormField';
+import { getCookie } from '../utils/cookies';
 
 // Generic wiring for inline "feedback experiment" boxes (see user_feedback). Nothing
 // experiment-specific lives here: every box declares its own behaviour with data-
@@ -74,6 +75,127 @@ const fillPlayInputs = () => {
       .join(',')
   );
   fill('[data-experiment-seconds-in-page]', secondsInPage());
+};
+
+// Seconds when the page is hidden and seen again (hide, show, hide...).
+// After an answer, they are sent every time the page is hidden.
+const hideShowSeconds = [];
+// The page starts visible, so the first one is a hide
+let pageHidden = false;
+const answeredExperimentIds = new Set();
+
+const sendPageEvents = () => {
+  answeredExperimentIds.forEach(experimentId => {
+    const shared = document.querySelector(
+      `[data-experiment-shared="${experimentId}"]`
+    );
+    if (!shared || !shared.dataset.experimentPageViewField) return;
+    fillPlayInputs();
+    const sharedInputs = collectNamedInputs(shared);
+    const data = new FormData();
+    data.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    data.append('experiment_id', experimentId);
+    data.append(
+      'page_view_id',
+      sharedInputs[shared.dataset.experimentPageViewField]
+    );
+    data.append('hide_show_seconds', hideShowSeconds.join(','));
+    data.append('played_sounds', sharedInputs.played_sounds || '');
+    data.append('seconds_in_page', secondsInPage());
+    // sendBeacon also works when the page is closing
+    navigator.sendBeacon(shared.dataset.experimentPageEventsUrl, data);
+  });
+};
+
+let trackingPageEvents = false;
+const trackPageEvents = () => {
+  if (trackingPageEvents) return;
+  trackingPageEvents = true;
+  // Only when it changes, so they alternate
+  const hide = () => {
+    if (!pageHidden) hideShowSeconds.push(secondsInPage());
+    pageHidden = true;
+    sendPageEvents();
+  };
+  const show = () => {
+    if (pageHidden) hideShowSeconds.push(secondsInPage());
+    pageHidden = false;
+  };
+  document.addEventListener('visibilitychange', () =>
+    document.visibilityState === 'hidden' ? hide() : show()
+  );
+  // Leaving the page hides it, and coming back with the back button shows it
+  window.addEventListener('pagehide', hide);
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) show();
+  });
+};
+
+// What the user did from the query until filtering by a category: seconds, sounds played and pages seen.
+// It is kept in the tab and only sent with an answer. It is empty if not known (e.g. a link to the filtered page).
+/* global userIsAuthenticated */
+const BEFORE_CATEGORY_KEY = 'experimentsBeforeCategory';
+let beforeCategory = '';
+
+const readBeforeCategory = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(BEFORE_CATEGORY_KEY));
+  } catch (error) {
+    return null;
+  }
+};
+
+const writeBeforeCategory = state => {
+  try {
+    sessionStorage.setItem(BEFORE_CATEGORY_KEY, JSON.stringify(state));
+  } catch (error) {
+    // Then it is not known
+  }
+};
+
+const trackSearchBeforeCategory = () => {
+  if (typeof userIsAuthenticated === 'undefined' || !userIsAuthenticated)
+    return;
+  const params = new URLSearchParams(window.location.search);
+  const query = params.get('q') || '';
+  const hasCategory = (params.get('f') || '').includes('category:');
+  // A reload or the back button is not a new page
+  const navigation = performance.getEntriesByType('navigation')[0];
+  const isNewPage = !navigation || navigation.type === 'navigate';
+  let state = readBeforeCategory();
+
+  if (hasCategory) {
+    // The first page with a category ends the count
+    if (state && state.query === query) {
+      if (!state.categorySeconds) {
+        state.categorySeconds = Math.round((Date.now() - state.start) / 1000);
+        writeBeforeCategory(state);
+      }
+      beforeCategory = `${state.categorySeconds}:${state.plays.length}:${state.pages}`;
+    }
+    return;
+  }
+
+  // A new query starts the count, another page of the same query adds one
+  if (!state || state.query !== query) {
+    state = { query, start: Date.now(), plays: [], pages: 1 };
+  } else if (state.categorySeconds) {
+    // Already counted until the category
+    return;
+  } else if (isNewPage) {
+    state.pages += 1;
+  }
+  writeBeforeCategory(state);
+  document.addEventListener(
+    'play',
+    event => {
+      const player = event.target.closest('[data-sound-id]');
+      if (!player || state.plays.includes(player.dataset.soundId)) return;
+      state.plays.push(player.dataset.soundId);
+      writeBeforeCategory(state);
+    },
+    true
+  );
 };
 
 // Runs the callback Y seconds after X different sounds are played in the page.
@@ -201,11 +323,13 @@ const bindFeedbackBox = box => {
       `${box.dataset.submitUrl}?ajax=1`,
       {
         ...collectSharedInputs(box.dataset.experimentId),
+        before_category: beforeCategory,
         ...collectNamedInputs(box),
         experiment_id: box.dataset.experimentId,
         [answerName]: chosenAnswer,
       },
       () => {
+        answeredExperimentIds.add(box.dataset.experimentId);
         box.innerHTML = `${box.dataset.thanks || 'Thanks for your feedback!'}`;
         // Hide the answered toast and boxes a bit after the thanks.
         if (isToast) setTimeout(() => hideToastBox(box), HIDE_AFTER_THANKS_MS);
@@ -286,9 +410,10 @@ const bindOnce = (selector, bind) =>
 
 const bindFeedbackExperimentBoxes = () => {
   trackPlays();
+  trackPageEvents();
   bindOnce('[data-experiment-box]', bindFeedbackBox);
   bindOnce('form[data-experiment-optout]', bindOptOut);
   bindOnce('[data-info-modal]', bindInfoButton);
 };
 
-export { bindFeedbackExperimentBoxes };
+export { bindFeedbackExperimentBoxes, trackSearchBeforeCategory };

@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.http import require_POST
 
 from user_feedback.experiments import get_experiment
+from user_feedback.experiments.base import PageEventsForm
 from utils.geoip import get_country_iso_code
 from utils.logging_filters import get_client_ip
 
@@ -48,3 +49,18 @@ def opt_out(request):
     if request.GET.get("ajax"):
         return JsonResponse({"success": True})
     return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
+
+
+@login_required
+@require_POST
+def page_events(request):
+    """Save when the page of a sound list experiment was hidden and seen again (see PageEventsForm)."""
+    experiment = get_experiment(request.POST.get("experiment_id", ""))
+    if experiment is None or not hasattr(experiment, "save_page_events"):
+        raise Http404("Unknown experiment")
+    form = PageEventsForm(request.POST)
+    if not form.is_valid():
+        return HttpResponse(status=400)
+    country_iso_code = get_country_iso_code(get_client_ip(request))
+    experiment.save_page_events(request.user, form.cleaned_data, country_iso_code=country_iso_code)
+    return HttpResponse(status=204)

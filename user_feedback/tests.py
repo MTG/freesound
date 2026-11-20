@@ -560,6 +560,50 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertIn("data-experiment-toast", html)
         self.assertEqual(len(self._question_sound_ids(html)), len(self.sounds))
 
+    def test_before_category_is_saved(self):
+        def saved(value):
+            self._submit(kind="overall", rating="4", before_category=value)
+            return self._rows().first().data["before_category"]
+
+        # Check seconds, plays, and pages before the category are saved, and empty or wrong is not known
+        self.assertEqual(saved("95:3:2"), {"seconds": 95, "plays": 3, "pages": 2})
+        self.assertIsNone(saved(""))
+        self.assertIsNone(saved("95:3"))
+        self.assertIsNone(saved("95:-1:2"))
+
+    def _send_page_events(self, hide_show_seconds="20,35,60", **data):
+        data = {
+            "experiment_id": "category_filter_feedback",
+            "page_view_id": self.SEARCH["search_id"],
+            "hide_show_seconds": hide_show_seconds,
+            "played_sounds": f"{self.sounds[0].id}:5:1",
+            "seconds_in_page": 60,
+            **data,
+        }
+        return self.client.post(reverse("user-feedback-page-events"), data)
+
+    def _page_rows(self):
+        return self._rows().filter(data__kind="page")
+
+    def test_page_events_are_saved_after_an_answer(self):
+        # Check nothing is saved for a page without answers
+        self._send_page_events()
+        self.assertEqual(self._rows().count(), 0)
+        # Check they are saved after an answer, and the last ones sent replace the others
+        self._submit(kind="sound", answer="yes", sound_id=self.sounds[0].id, position=1)
+        self._send_page_events()
+        self._send_page_events(hide_show_seconds="20,35,60,90,120")
+        self.assertEqual(self._page_rows().get().data["hide_show_seconds"], [20, 35, 60, 90, 120])
+        # Check they are not saved for another page
+        self._send_page_events(page_view_id="otherpage")
+        self.assertEqual(self._page_rows().count(), 1)
+
+    def test_wrong_page_events_are_not_saved(self):
+        self._submit(kind="sound", answer="yes", sound_id=self.sounds[0].id, position=1)
+        for wrong in ["20,hide", "-3", "20,10"]:
+            self.assertEqual(self._send_page_events(hide_show_seconds=wrong).status_code, 400)
+        self.assertEqual(self._page_rows().count(), 0)
+
 
 class FeedbackExperimentTest(TestCase):
     def test_experiments_in_settings_have_configuration(self):

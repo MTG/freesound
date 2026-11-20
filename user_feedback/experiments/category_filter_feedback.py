@@ -26,6 +26,19 @@ class CategoryFilterFeedbackForm(SoundListFeedbackForm):
     search_url = forms.CharField(required=False, max_length=4000)
     search_id = forms.CharField(max_length=32)
 
+    # What the user did before filtering by the category
+    before_category = forms.CharField(required=False, max_length=100)
+
+    def clean_before_category(self):
+        # Sent as "95:3:2" (seconds, sounds played, and pages seen)
+        try:
+            seconds, plays, pages = (int(value) for value in self.cleaned_data["before_category"].split(":"))
+        except ValueError:
+            return None
+        if min(seconds, plays, pages) < 0:
+            return None
+        return {"seconds": seconds, "plays": plays, "pages": pages}
+
 
 class CategoryFilterFeedback(SoundListExperiment):
     """Experiment in the search page, shown when the results are filtered by category.
@@ -38,6 +51,7 @@ class CategoryFilterFeedback(SoundListExperiment):
     sound_container = "[data-score]"  # Element of the search page that wraps one result
     overall_question_template = "user_feedback/category_filter_feedback_overall_question.html"
     overall_answer_field = "rating"
+    page_view_field = "search_id"
 
     @staticmethod
     def _filter_value(sqp, field_name):

@@ -236,6 +236,39 @@ class SoundListFeedbackForm(forms.Form):
         return plays
 
 
+class PageEventsForm(forms.Form):
+    """When the page of a sound list was hidden and seen again, sent by experiments.js.
+
+    Fields:
+        page_view_id: id of the page, the same as in its answers.
+        hide_show_seconds: seconds from the page load when the page was hidden and seen again,
+            starting with a hide (e.g. "12,30,41"). An odd count ends with a hide.
+        played_sounds: the sounds played in the page.
+        seconds_in_page: seconds from the page load until it was sent.
+    """
+
+    MAX_EVENTS = 200
+
+    page_view_id = forms.CharField(max_length=32)
+    hide_show_seconds = forms.CharField(max_length=2000)
+    played_sounds = forms.CharField(required=False, max_length=2000)
+    seconds_in_page = forms.IntegerField(min_value=0)
+
+    def clean_hide_show_seconds(self):
+        # Sent as "12,30,41" and saved as a list. The seconds can only go up
+        try:
+            seconds = [int(value) for value in self.cleaned_data["hide_show_seconds"].split(",")]
+        except ValueError:
+            raise forms.ValidationError("Invalid seconds.")
+        if len(seconds) > self.MAX_EVENTS:
+            raise forms.ValidationError("Too many events.")
+        if seconds[0] < 0 or any(later < earlier for earlier, later in zip(seconds, seconds[1:])):
+            raise forms.ValidationError("Invalid seconds.")
+        return seconds
+
+    clean_played_sounds = SoundListFeedbackForm.clean_played_sounds
+
+
 class SoundListExperiment(Experiment):
     """Base class for an experiment about a list of sounds shown in a page, placed with
     {% feedback_experiment "<experiment_id>" sounds=sounds ... %}. It asks two kinds of questions:
@@ -269,6 +302,9 @@ class SoundListExperiment(Experiment):
     # The toast is shown after X different sounds of the page are played, and then Y seconds.
     overall_question_plays = 2
     overall_question_delay_seconds = 2
+    # Field that identifies the page (e.g. "search_id"). If set, we also save when the page was hidden
+    # and seen again, after the user answers something in it
+    page_view_field = None
 
     def get_sounds(self, sounds=None, **kwargs):
         """Returns the sounds of the list, in the order of the page. Default: the `sounds` argument."""
@@ -300,6 +336,28 @@ class SoundListExperiment(Experiment):
     def sampling_key(self, request, **kwargs):
         # Per list, so a user is asked in some of the lists they see.
         return ":".join(str(value) for value in [request.user.id, *self.list_key(**kwargs).values()])
+
+    def save_page_events(self, user, data, country_iso_code=""):
+        """Saves when the page was hidden and seen again, only if the user answered something in it.
+        The last ones sent replace the ones saved before."""
+        if self.page_view_field is None:
+            return False
+        answers = UserFeedback.objects.filter(
+            user=user, experiment_id=self.experiment_id, **{f"data__{self.page_view_field}": data["page_view_id"]}
+        )
+        if not answers.exclude(data__kind="page").exists():
+            return False
+        page_data = {
+            "kind": "page",
+            self.page_view_field: data["page_view_id"],
+            "hide_show_seconds": data["hide_show_seconds"],
+            "played_sounds": data["played_sounds"],
+            "seconds_in_page": data["seconds_in_page"],
+        }
+        updated = answers.filter(data__kind="page").update(data=page_data)
+        if not updated:
+            self.save_response(user, page_data, country_iso_code=country_iso_code)
+        return True
 
     def _answers(self, user, key, kind):
         """Returns the answers of the user of this kind for the list with this key."""
@@ -333,5 +391,6 @@ class SoundListExperiment(Experiment):
             "overall_answer_field": self.overall_answer_field,
             "overall_question_plays": self.overall_question_plays,
             "overall_question_delay_seconds": self.overall_question_delay_seconds,
+            "page_view_field": self.page_view_field,
             **self.overall_context(info, **kwargs),
         }

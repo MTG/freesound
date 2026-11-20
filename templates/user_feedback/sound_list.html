@@ -7,7 +7,8 @@
 {% endfor %}
 
 {# Info about the list. experiments.js sends it with every answer of the experiment. #}
-<div data-experiment-shared="{{ experiment_id }}" style="display: none;">
+<div data-experiment-shared="{{ experiment_id }}" style="display: none;"
+     {% if page_view_field %}data-experiment-page-view-field="{{ page_view_field }}" data-experiment-page-events-url="{% url 'user-feedback-page-events' %}"{% endif %}>
     {% for name, value in info.items %}
         <input type="hidden" name="{{ name }}" value="{{ value }}">
     {% endfor %}

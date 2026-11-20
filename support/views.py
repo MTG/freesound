@@ -19,6 +19,7 @@
 #
 
 import logging
+import re
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -38,6 +39,16 @@ from utils.mail import send_mail_template_to_support
 web_logger = logging.getLogger("web")
 
 
+def _should_add_api_datapacks_tag(subject):
+    """
+    Check if the subject matches API or data packs related keywords.
+    Keywords: "api", "data pack", "datapack", "commercial" (case-insensitive, full word match)
+    """
+    keywords = [r"\bapi\b", r"\bdata pack\b", r"\bdatapack\b", r"\bcommercial\b"]
+    pattern = "|".join(keywords)
+    return bool(re.search(pattern, subject, re.IGNORECASE))
+
+
 def create_zendesk_ticket(request_email, subject, message, user=None):
     if user is None:
         try:
@@ -48,6 +59,8 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
     requester = zendesk_api.User(email=request_email)
     requester.name = "Unknown username"
     custom_fields = []
+    tags = []
+    assignee_id = None
 
     if user:
         is_active = user.is_active
@@ -73,7 +86,18 @@ def create_zendesk_ticket(request_email, subject, message, user=None):
 
         requester.name = user.username
 
-    return zendesk_api.Ticket(requester=requester, subject=subject, description=message, custom_fields=custom_fields)
+    if _should_add_api_datapacks_tag(subject):
+        tags = ["api-datapacks"]
+        assignee_id = settings.ZENDESK_API_REQUESTS_ASIGNEE_ID or None
+
+    return zendesk_api.Ticket(
+        requester=requester,
+        subject=subject,
+        description=message,
+        custom_fields=custom_fields,
+        tags=tags,
+        assignee_id=assignee_id,
+    )
 
 
 def send_to_zendesk(request_email, subject, message, user=None):

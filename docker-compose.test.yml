@@ -30,6 +30,8 @@ services:
 
     test_runner:
         image: freesound-test:ci
+        user: root
+        entrypoint: ["dev-entrypoint.sh"]
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web
@@ -45,6 +47,8 @@ services:
 
     test_runner_search:
         image: freesound-test:ci
+        user: root
+        entrypoint: ["dev-entrypoint.sh"]
         build:
             context: ./
             dockerfile: ./docker/Dockerfile.workers_web

@@ -26,7 +26,7 @@ app = Flask(__name__)
 
 models = ["laion_clap"]
 
-clap_model_path = "/630k-audioset-fusion-best.pt"
+clap_model_path = "/opt/models/630k-audioset-fusion-best.pt"
 model = laion_clap.CLAP_Module(enable_fusion=True)
 model.load_ckpt(clap_model_path)
 

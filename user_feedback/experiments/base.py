@@ -186,7 +186,7 @@ class SoundListFeedbackForm(forms.Form):
         position: hidden field with the position of the sound in the list.
         list_sound_ids: hidden field with the sounds of the list.
         played_sounds: hidden field with the sounds played in the page before answering,
-            each with the second of its first play and its number of plays.
+            each with the second of its first play, its number of plays, and the seconds listened.
         seconds_in_page: hidden field with the seconds from the page load to the answer.
     """
 
@@ -231,14 +231,17 @@ class SoundListFeedbackForm(forms.Form):
             raise forms.ValidationError("Invalid list of results.")
 
     def clean_played_sounds(self):
-        # Plays are sent as "2:9.1:8" and saved as a list of [sound id, seconds, times played].
+        # Plays are sent as "2:9.1:8:20.5" and saved as a list of [sound id, seconds, times played, seconds listened].
         # A wrong list is saved as None (not known).
         played_sounds = self.cleaned_data["played_sounds"]
         if not played_sounds:
             return []
         try:
             plays = [play.split(":") for play in played_sounds.split(",")]
-            return [[int(sound_id), parse_seconds(seconds), int(times)] for sound_id, seconds, times in plays]
+            return [
+                [int(sound_id), parse_seconds(seconds), int(times), parse_seconds(listened)]
+                for sound_id, seconds, times, listened in plays
+            ]
         except ValueError:
             return None
 

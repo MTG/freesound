@@ -447,7 +447,7 @@ class CategoryFilterFeedbackTest(TestCase):
             answer="no",
             sound_id=sound.id,
             position=3,
-            played_sounds=f"{sound.id}:12:3",
+            played_sounds=f"{sound.id}:12:3:20.5",
             seconds_in_page="30",
         )
         self.assertEqual(response.status_code, 200)
@@ -456,7 +456,7 @@ class CategoryFilterFeedbackTest(TestCase):
         self.assertEqual(data["answer"], "no")
         self.assertEqual(data["sound_id"], sound.id)
         self.assertEqual(data["position"], 3)
-        self.assertEqual(data["played_sounds"], [[sound.id, 12, 3]])
+        self.assertEqual(data["played_sounds"], [[sound.id, 12, 3, 20.5]])
         self.assertEqual(data["seconds_in_page"], 30)
         # Check "overall" fields are not saved
         self.assertNotIn("rating", data)
@@ -577,7 +577,7 @@ class CategoryFilterFeedbackTest(TestCase):
             "experiment_id": "category_filter_feedback",
             "page_view_id": self.SEARCH["search_id"],
             "hide_show_seconds": hide_show_seconds,
-            "played_sounds": f"{self.sounds[0].id}:5:1",
+            "played_sounds": f"{self.sounds[0].id}:5:1:3",
             "seconds_in_page": 60,
             **data,
         }

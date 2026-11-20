@@ -55,14 +55,37 @@ const trackPlays = () => {
       const sound = playedSounds.get(soundId);
       if (sound) {
         sound.times += 1;
+        sound.playingSince = performance.now();
         return;
       }
-      playedSounds.set(soundId, { seconds: secondsInPage(), times: 1 });
+      playedSounds.set(soundId, {
+        seconds: secondsInPage(),
+        times: 1,
+        listened: 0,
+        playingSince: performance.now(),
+      });
       playCallbacks.forEach(callback => callback());
     },
     true
   );
+  // Add the time listened when the sound stops (also when it ends)
+  document.addEventListener(
+    'pause',
+    event => {
+      const player = event.target.closest('[data-sound-id]');
+      const sound = player && playedSounds.get(player.dataset.soundId);
+      if (!sound || sound.playingSince === null) return;
+      sound.listened += performance.now() - sound.playingSince;
+      sound.playingSince = null;
+    },
+    true
+  );
 };
+
+// Milliseconds listened to a sound, and if it is still playing
+const listenedTime = sound =>
+  sound.listened +
+  (sound.playingSince === null ? 0 : performance.now() - sound.playingSince);
 
 // Fills in the fields about the plays before an answer is sent.
 const fillPlayInputs = () => {
@@ -73,7 +96,10 @@ const fillPlayInputs = () => {
   fill(
     '[data-experiment-played-sounds]',
     [...playedSounds]
-      .map(([id, sound]) => `${id}:${sound.seconds}:${sound.times}`)
+      .map(
+        ([id, sound]) =>
+          `${id}:${sound.seconds}:${sound.times}:${toSeconds(listenedTime(sound))}`
+      )
       .join(',')
   );
   fill('[data-experiment-seconds-in-page]', secondsInPage());

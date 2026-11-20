@@ -1,4 +1,5 @@
 import re
+from datetime import timedelta
 from unittest import mock
 
 from django.conf import settings
@@ -7,7 +8,7 @@ from django.template import Context, Template
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-from sounds.models import SoundAnalysis
+from sounds.models import Download, SoundAnalysis
 from user_feedback.experiments.base import Experiment
 from user_feedback.experiments.category_filter_feedback import CategoryFilterFeedback
 from user_feedback.experiments.category_validation import CategoryValidation
@@ -606,6 +607,8 @@ class CategoryFilterFeedbackTest(TestCase):
 
 
 class FeedbackExperimentTest(TestCase):
+    fixtures = ["licenses"]
+
     def test_experiments_in_settings_have_configuration(self):
         # Check the migrations created the configuration of every experiment, with sample rate 0
         for experiment_id in settings.FEEDBACK_EXPERIMENTS:
@@ -621,8 +624,25 @@ class FeedbackExperimentTest(TestCase):
         self.client.force_login(user)
         url = reverse("admin:user_feedback_feedbackexperiment_actions", args=[experiment.id, "download_feedback"])
         # Check the file has only the feedback of this experiment
-        rows = self.client.post(url).json()
+        rows = self.client.post(url).json()["answers"]
         self.assertEqual([row["data"] for row in rows], [{"answer": "yes"}])
+
+    def test_download_feedback_has_the_downloads_of_who_answered(self):
+        admin_user = User.objects.create_superuser("admin", email="admin@freesound.org", password="testpass")
+        user, _, sounds = create_user_and_sounds()
+        other_user = User.objects.create_user("other")
+        UserFeedback.objects.create(experiment_id="category_validation", user=user, data={"answer": "yes"})
+        for downloader in [user, other_user]:
+            Download.objects.create(user=downloader, sound=sounds[0], license=sounds[0].license)
+        # A download of the same user, but two hours after the answer
+        late = Download.objects.create(user=user, sound=sounds[0], license=sounds[0].license)
+        Download.objects.filter(id=late.id).update(created=late.created + timedelta(hours=2))
+        experiment = FeedbackExperiment.objects.get(experiment_id="category_validation")
+        self.client.force_login(admin_user)
+        url = reverse("admin:user_feedback_feedbackexperiment_actions", args=[experiment.id, "download_feedback"])
+        # Check only the download of the user that answered, around the answer, is there
+        downloads = self.client.get(url).json()["downloads"]
+        self.assertEqual([(d["user_id"], d["sound_id"]) for d in downloads], [(user.id, sounds[0].id)])
 
     def test_download_feedback_between_dates(self):
         user = User.objects.create_superuser("admin", email="admin@freesound.org", password="testpass")
@@ -634,7 +654,7 @@ class FeedbackExperimentTest(TestCase):
         url = reverse("admin:user_feedback_feedbackexperiment_actions", args=[experiment.id, "download_feedback"])
 
         def days(**dates):
-            return [row["data"]["day"] for row in self.client.get(url, dates).json()]
+            return [row["data"]["day"] for row in self.client.get(url, dates).json()["answers"]]
 
         # Check both days are included, and an empty date has no limit
         self.assertEqual(days(date_from="2026-11-05", date_to="2026-11-09"), ["2026-11-05", "2026-11-09"])

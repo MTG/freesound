@@ -1,10 +1,44 @@
+from datetime import timedelta
+
 from django import forms
 from django.contrib import admin, messages
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django_object_actions import DjangoObjectActions, action
 
+from sounds.models import Download
+
 from .models import FeedbackExperiment, FeedbackOptOut, UserFeedback
+
+# Margin after the end of a search to include its downloads
+DOWNLOADS_MARGIN = timedelta(hours=1)
+
+
+def get_downloads_around_searches(answers):
+    """Returns the downloads of the users that answered, from the start of each search
+    until DOWNLOADS_MARGIN after its end."""
+    # When each page was hidden for the last time (from "page" row)
+    page_ends = {}
+    for answer in answers:
+        if answer["data"].get("kind") == "page" and answer["data"].get("hide_show_seconds"):
+            page_ends[answer["data"]["search_id"]] = answer["data"]["hide_show_seconds"][-1]
+
+    query = Q()
+    for answer in answers:
+        data = answer["data"]
+        if data.get("kind") == "page" or answer["user_id"] is None:
+            continue
+        page_load = answer["created"] - timedelta(seconds=data.get("seconds_in_page") or 0)
+        before_category = data.get("before_category") or {}
+        start = page_load - timedelta(seconds=before_category.get("seconds", 0))
+        last_activity = answer["created"]
+        if data.get("search_id") in page_ends:
+            last_activity = max(last_activity, page_load + timedelta(seconds=page_ends[data["search_id"]]))
+        query |= Q(user_id=answer["user_id"], created__range=(start, last_activity + DOWNLOADS_MARGIN))
+    if not query:
+        return []
+    return list(Download.objects.filter(query).order_by("created").values("user_id", "sound_id", "created"))
 
 
 class DownloadFeedbackForm(forms.Form):
@@ -67,7 +101,8 @@ class FeedbackExperimentAdmin(DjangoObjectActions, admin.ModelAdmin):
         # One item per UserFeedback, with all its fields
         fields = ("id", "experiment_id", "user_id", "country_iso_code", "data", "created")
         rows = list(feedback.order_by("created").values(*fields))
-        response = JsonResponse(rows, safe=False, json_dumps_params={"indent": 2})
+        data = {"answers": rows, "downloads": get_downloads_around_searches(rows)}
+        response = JsonResponse(data, json_dumps_params={"indent": 2})
         response["Content-Disposition"] = f'attachment; filename="{filename}_feedback.json"'
         return response
 

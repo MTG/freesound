@@ -103,7 +103,7 @@ class FeedbackExperimentAdmin(DjangoObjectActions, admin.ModelAdmin):
         rows = list(feedback.order_by("created").values(*fields))
         data = {"answers": rows, "downloads": get_downloads_around_searches(rows)}
         response = JsonResponse(data, json_dumps_params={"indent": 2})
-        response["Content-Disposition"] = f'attachment; filename="{filename}_feedback.json"'
+        response["Content-Disposition"] = f'attachment; filename="{filename}.json"'
         return response
 
     def has_add_permission(self, request):

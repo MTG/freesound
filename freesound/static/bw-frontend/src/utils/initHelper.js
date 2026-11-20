@@ -35,6 +35,7 @@ import { makeTextareaCharacterCounter } from '../components/textareaCharactersCo
 import { bindUnsecureImageCheckListeners } from '../components/unsecureImageCheck.js';
 import { initMap } from '../pages/map.js';
 import { bindCollectionModals } from '../components/collectionsModal.js';
+import { bindFeedbackExperimentBoxes } from '../components/experiments.js';
 
 const initializeStuffInContainer = (container, bindModals, activateModals) => {
   // Make UI elements
@@ -57,6 +58,10 @@ const initializeStuffInContainer = (container, bindModals, activateModals) => {
   bindFlagUserButtons(container);
   bindFollowTagsButtons(container);
   prepareAsyncSections(container);
+
+  // Feedback experiments: place and bind the boxes in the container (each is bound once)
+  if (container.querySelector('[data-experiment-box]'))
+    bindFeedbackExperimentBoxes();
 
   bindConfirmationModalElements(container); // Confirmation modals are also binded as they can work inside another modal
 

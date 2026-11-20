@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "django_recaptcha",
     "adminsortable",
     "fscollections",
+    "user_feedback",
 ]
 
 # Silk is the Request/SQL logging platform. We install it but leave it disabled
@@ -469,6 +470,17 @@ BST_CATEGORY_CHOICES = [
 BST_SUBCATEGORY_CHOICES: list = [
     (key, value["name"]) for key, value in BROAD_SOUND_TAXONOMY.items() if "-" in key
 ]  # Second-level categories
+
+
+# -------------------------------------------------------------------------------
+# User feedback experiments (user_feedback app)
+
+# Registry of feedback experiments: each experiment_id maps to its class (resolved in user_feedback/experiments/__init__.py).
+# The sample rate and the texts of each experiment are in the FeedbackExperiment model, and are edited in the admin.
+FEEDBACK_EXPERIMENTS = {
+    "category_validation": {"class": "user_feedback.experiments.category_validation.CategoryValidation"},
+    "category_filter_feedback": {"class": "user_feedback.experiments.category_filter_feedback.CategoryFilterFeedback"},
+}
 
 # -------------------------------------------------------------------------------
 # Freesound data paths and urls
@@ -1000,6 +1012,9 @@ PROCESSING_TEMP_DIR: str = os.path.join(DATA_PATH, "tmp_processing/")
 PROCESSING_BEFORE_DESCRIPTION_DIR = os.path.join(DATA_PATH, "processing_before_description/")
 DATA_PACKS_PATH = os.path.join(DATA_PATH, "data_packs/")
 ARCHIVED_DATA_PATH = os.path.join(DATA_PATH, "archived_data/")
+# MaxMind GeoLite2-Country database used to get a country code from an IP (see utils.geoip). This is a file
+# (not a directory) kept up to date by geoipupdate; if it is missing, country lookups return an empty value.
+GEOIP_COUNTRY_DATABASE_PATH = os.path.join(DATA_PATH, "geoip/GeoLite2-Country.mmdb")
 
 # URLs (depend on DATA_URL potentially re-defined in local_settings.py)
 AVATARS_URL = DATA_URL + "avatars/"

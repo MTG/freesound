@@ -194,6 +194,63 @@ Please have a look at the documentation of `SearchQueryProcessor` and the variou
 understanding of how all this works.
 
 
+### User feedback experiments
+
+The `user_feedback` app lets us ask logged-in users short questions in some pages (e.g. "does this sound belong to this
+category?") and store their answers as `UserFeedback` rows (the answer goes in the JSON `data` field). Each experiment
+is a Python class, a form to validate its answers, and a template with its HTML. Saving answers (`user_feedback.views.submit`),
+opting out ("don't ask again"), sampling, throttling and all the JavaScript (`components/experiments.js`) are generic,
+so a new experiment does not need new views, URLs or JS.
+
+There are two base classes in `user_feedback/experiments/base.py` (both subclasses of `Experiment`), each with its
+base form:
+
+ * `SingleSoundExperiment` (form `SingleSoundFeedbackForm`): a question about one sound, shown in a box placed in the page.
+   It is not shown again for a sound the user already answered. Example: `CategoryValidation` (in `category_validation.py`),
+   shown in the sound page.
+ * `SoundListExperiment` (form `SoundListFeedbackForm`): questions about a list of sounds shown in a page. It asks two
+   kinds of questions:
+   * *Sound question*: a yes/no question (e.g. "Is this what you were looking for?") displayed after the player of each
+     sound of the list, when that sound is played. It is the same for every experiment: set the text with `sound_question`
+     and, with `sound_container`, the element of the page that wraps each sound (the question is placed after it).
+   * *Overall question*: a question about the whole list, displayed in a toast at the bottom of the page only after
+     `overall_question_plays` sounds of the list are played (plus `overall_question_delay_seconds`). Each experiment
+     defines it: its fields in the form (listed in `OVERALL_FIELDS`), and its question and inputs in the
+     `overall_question_template` (the toast, its close and info buttons are generic). The buttons with
+     `data-experiment-answer` set the field named in `overall_answer_field`. Once answered, the same list is not asked again.
+
+   The base class knows nothing about the page: the page passes what it has to the template tag, and the experiment
+   implements some hooks to tell which sounds are in the list (`get_sounds`), what identifies the list (`list_key`), and
+   other info about it to save with the answers (`list_info`). Example: `CategoryFilterFeedback`
+   (in `category_filter_feedback.py`), shown in the search page when results are filtered by category, which asks a 1-5
+   rating with an optional comment as overall question.
+
+If none fit, subclass `Experiment` directly and implement its hooks (`is_context_eligible`, `inline_context`, `is_throttled`,
+`sampling_key`). An experiment is only shown when the user is logged in, its context is eligible, it is not throttled (e.g.
+the user opted out or already answered) and the user is sampled in (deterministically, using `sampling_key`).
+
+To add a new experiment:
+
+ 1. Create a file in `user_feedback/experiments/` with the experiment class and its form (all experiment-specific code goes
+    in that file). Subclass one of the base classes above and set at least `experiment_id`, `form_class` and the template
+    (`inline_template` for single-sound experiments, `overall_question_template` for sound-list ones), then override the
+    hooks you need. The form subclasses the base form and adds the fields of the experiment.
+ 2. Add the template(s) in `templates/user_feedback/`. The JS behaviour is declared with `data-experiment-*` attributes
+    (see the existing templates and the comments in `components/experiments.js`), and `user_feedback/info_button.html` adds
+    the button that opens the info and opt-out modal.
+ 3. Register the class in `FEEDBACK_EXPERIMENTS` in `settings.py`, using `experiment_id` as key.
+ 4. Place it in a page template with the `feedback_experiment` template tag, passing the experiment id and whatever the
+    experiment needs, e.g. `{% feedback_experiment "category_validation" sound=sound %}` (sound page) or
+    `{% feedback_experiment "category_filter_feedback" docs=docs sqp=sqp %}` (search page). The tag renders nothing when the
+    experiment should not be shown.
+ 5. Create a `FeedbackExperiment` object in the Django admin with the same `experiment_id`. It sets the `sample_rate`
+    (fraction of users that see it, 0 = disabled, which is the default when there is no object) and the title and description
+    shown in the info modal.
+ 6. Add tests in `user_feedback/tests.py` (see the existing ones).
+
+Answers can be inspected in the Django admin (`UserFeedback`), filtering by `experiment_id`.
+
+
 ### Search Engine Backends
 
 The way in which Freesound communicates with a search engine to search for sounds and forum posts is abstracted through

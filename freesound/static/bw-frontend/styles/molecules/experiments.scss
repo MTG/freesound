@@ -1,7 +1,11 @@
+// Washed-out Freesound red for the experiment boxes
+$experiment-background: mix($red, #ffffff, 3%);
+$experiment-border: mix($red, #ffffff, 27%);
+
 .inline-experiment-box {
     position: relative;
-    background-color: rgb(255, 245, 227);
-    border: 1px solid rgb(249, 203, 116);
+    background-color: $experiment-background;
+    border: 1px solid $experiment-border;
     color: black;
     padding: 15px;
     margin-top: 12px;
@@ -11,14 +15,14 @@
 .inline-experiment-small-box {
     padding: 4px 6px 4px 14px; 
     border-radius: 10px; 
-    background: rgb(255, 245, 227);
-    border: 1px solid rgb(249, 203, 116);
+    background: $experiment-background;
+    border: 1px solid $experiment-border;
     color: black;
 }
 
 .toast-experiment {
-    background: #fff5e3;background: rgb(255, 245, 227);
-    border: 1px solid rgb(249, 203, 116);
+    background: $experiment-background;
+    border: 1px solid $experiment-border;
     color: black;
 }
 

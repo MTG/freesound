@@ -485,7 +485,7 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check all the results of the page get the question, placed after them in the results
         self.assertEqual(self._question_sound_ids(html), [sound.id for sound in self.sounds])
         self.assertIn('data-experiment-place-in="[data-score]"', html)
-        self.assertIn("Is this what you were looking for?", html)
+        self.assertIn("Is this the kind of sound you were looking for?", html)
         # Check the question has the sound and its position
         self.assertIn(f'name="sound_id" value="{self.sounds[0].id}"', html)
         self.assertIn('name="position" value="1"', html)

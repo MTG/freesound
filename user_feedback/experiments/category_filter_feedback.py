@@ -52,6 +52,7 @@ class CategoryFilterFeedback(SoundListExperiment):
     sound_container = "[data-score]"  # Element of the search page that wraps one result
     overall_question_template = "user_feedback/category_filter_feedback_overall_question.html"
     overall_answer_field = "rating"
+    sound_question = "Is this the kind of sound you were looking for?"
     page_view_field = "search_id"
 
     @staticmethod

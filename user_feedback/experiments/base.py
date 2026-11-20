@@ -1,4 +1,5 @@
 import hashlib
+import math
 
 from django import forms
 from django.template.loader import render_to_string
@@ -6,6 +7,14 @@ from django.utils.safestring import mark_safe
 
 from sounds.models import Sound
 from user_feedback.models import FeedbackExperiment, FeedbackOptOut, UserFeedback
+
+
+def parse_seconds(value):
+    """Returns seconds sent by experiments.js (e.g. "9.5"), or raises ValueError if they are not valid."""
+    seconds = float(value)
+    if not math.isfinite(seconds) or seconds < 0:
+        raise ValueError("Invalid seconds.")
+    return seconds
 
 
 class Experiment:
@@ -198,7 +207,7 @@ class SoundListFeedbackForm(forms.Form):
 
     # Info about the plays filled by experiments.js
     played_sounds = forms.CharField(required=False, max_length=2000)
-    seconds_in_page = forms.IntegerField(required=False, min_value=0)
+    seconds_in_page = forms.FloatField(required=False, min_value=0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -222,18 +231,16 @@ class SoundListFeedbackForm(forms.Form):
             raise forms.ValidationError("Invalid list of results.")
 
     def clean_played_sounds(self):
-        # Plays are sent as "2:9:8" and saved as a list of [sound id, seconds, times played].
+        # Plays are sent as "2:9.1:8" and saved as a list of [sound id, seconds, times played].
         # A wrong list is saved as None (not known).
         played_sounds = self.cleaned_data["played_sounds"]
         if not played_sounds:
             return []
         try:
-            plays = [[int(value) for value in play.split(":")] for play in played_sounds.split(",")]
+            plays = [play.split(":") for play in played_sounds.split(",")]
+            return [[int(sound_id), parse_seconds(seconds), int(times)] for sound_id, seconds, times in plays]
         except ValueError:
             return None
-        if any(len(play) != 3 for play in plays):
-            return None
-        return plays
 
 
 class PageEventsForm(forms.Form):
@@ -252,17 +259,17 @@ class PageEventsForm(forms.Form):
     page_view_id = forms.CharField(max_length=32)
     hide_show_seconds = forms.CharField(max_length=2000)
     played_sounds = forms.CharField(required=False, max_length=2000)
-    seconds_in_page = forms.IntegerField(min_value=0)
+    seconds_in_page = forms.FloatField(min_value=0)
 
     def clean_hide_show_seconds(self):
-        # Sent as "12,30,41" and saved as a list. The seconds can only go up
+        # Sent as "12.1,30,41.5" and saved as a list. The seconds can only go up
         try:
-            seconds = [int(value) for value in self.cleaned_data["hide_show_seconds"].split(",")]
+            seconds = [parse_seconds(value) for value in self.cleaned_data["hide_show_seconds"].split(",")]
         except ValueError:
             raise forms.ValidationError("Invalid seconds.")
         if len(seconds) > self.MAX_EVENTS:
             raise forms.ValidationError("Too many events.")
-        if seconds[0] < 0 or any(later < earlier for earlier, later in zip(seconds, seconds[1:])):
+        if any(later < earlier for earlier, later in zip(seconds, seconds[1:])):
             raise forms.ValidationError("Invalid seconds.")
         return seconds
 

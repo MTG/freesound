@@ -3,7 +3,7 @@ import uuid
 from django import forms
 
 from sounds.templatetags.bst_category import bst_taxonomy_category_names_to_category_key
-from user_feedback.experiments.base import SoundListExperiment, SoundListFeedbackForm
+from user_feedback.experiments.base import SoundListExperiment, SoundListFeedbackForm, parse_seconds
 
 
 class CategoryFilterFeedbackForm(SoundListFeedbackForm):
@@ -30,9 +30,10 @@ class CategoryFilterFeedbackForm(SoundListFeedbackForm):
     before_category = forms.CharField(required=False, max_length=100)
 
     def clean_before_category(self):
-        # Sent as "95:3:2" (seconds, sounds played, and pages seen)
+        # Sent as "95.3:3:2" (seconds, sounds played, and pages seen)
         try:
-            seconds, plays, pages = (int(value) for value in self.cleaned_data["before_category"].split(":"))
+            seconds, plays, pages = self.cleaned_data["before_category"].split(":")
+            seconds, plays, pages = parse_seconds(seconds), int(plays), int(pages)
         except ValueError:
             return None
         if min(seconds, plays, pages) < 0:

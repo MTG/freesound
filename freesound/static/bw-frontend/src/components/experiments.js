@@ -38,7 +38,9 @@ const collectSharedInputs = experimentId => {
 // Sounds played in the page, when each was first played, and how many times.
 const playedSounds = new Map();
 const playCallbacks = [];
-const secondsInPage = () => Math.round(performance.now() / 1000);
+// Milliseconds to seconds, with one decimal
+const toSeconds = milliseconds => Math.round(milliseconds / 100) / 10;
+const secondsInPage = () => toSeconds(performance.now());
 
 let trackingPlays = false;
 const trackPlays = () => {
@@ -168,7 +170,7 @@ const trackSearchBeforeCategory = () => {
     // The first page with a category ends the count
     if (state && state.query === query) {
       if (!state.categorySeconds) {
-        state.categorySeconds = Math.round((Date.now() - state.start) / 1000);
+        state.categorySeconds = toSeconds(Date.now() - state.start);
         writeBeforeCategory(state);
       }
       beforeCategory = `${state.categorySeconds}:${state.plays.length}:${state.pages}`;

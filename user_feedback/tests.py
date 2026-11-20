@@ -567,7 +567,7 @@ class CategoryFilterFeedbackTest(TestCase):
             return self._rows().first().data["before_category"]
 
         # Check seconds, plays, and pages before the category are saved, and empty or wrong is not known
-        self.assertEqual(saved("95:3:2"), {"seconds": 95, "plays": 3, "pages": 2})
+        self.assertEqual(saved("95.1:3:2"), {"seconds": 95.1, "plays": 3, "pages": 2})
         self.assertIsNone(saved(""))
         self.assertIsNone(saved("95:3"))
         self.assertIsNone(saved("95:-1:2"))
@@ -593,15 +593,15 @@ class CategoryFilterFeedbackTest(TestCase):
         # Check they are saved after an answer, and the last ones sent replace the others
         self._submit(kind="sound", answer="yes", sound_id=self.sounds[0].id, position=1)
         self._send_page_events()
-        self._send_page_events(hide_show_seconds="20,35,60,90,120")
-        self.assertEqual(self._page_rows().get().data["hide_show_seconds"], [20, 35, 60, 90, 120])
+        self._send_page_events(hide_show_seconds="20.4,35,60,90,120.7")
+        self.assertEqual(self._page_rows().get().data["hide_show_seconds"], [20.4, 35, 60, 90, 120.7])
         # Check they are not saved for another page
         self._send_page_events(page_view_id="otherpage")
         self.assertEqual(self._page_rows().count(), 1)
 
     def test_wrong_page_events_are_not_saved(self):
         self._submit(kind="sound", answer="yes", sound_id=self.sounds[0].id, position=1)
-        for wrong in ["20,hide", "-3", "20,10"]:
+        for wrong in ["20,hide", "-3", "20,10", "nan"]:
             self.assertEqual(self._send_page_events(hide_show_seconds=wrong).status_code, 400)
         self.assertEqual(self._page_rows().count(), 0)
 

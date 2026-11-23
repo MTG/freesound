@@ -21,6 +21,7 @@
 """Statistics about donations shown in the Donations panel of the monitor section."""
 
 import bisect
+import calendar
 import datetime
 import statistics
 from collections import defaultdict
@@ -39,6 +40,27 @@ DONATION_REQUESTS_RETENTION_DAYS = 365 * 2
 
 # A donation request "converts" if the same user donates within this number of days after the request
 REQUEST_CONVERSION_DAYS = 30
+
+# Number of past complete years whose monthly distribution is used to project the current year's total
+PROJECTION_YEARS = 3
+
+# Number of past complete days and months used to estimate the current day's and month's totals
+PERIOD_PROJECTION_PAST = {"day": 90, "month": 12}
+
+# A donor is recurrent if they make at least RECURRENT_MIN_DONATIONS donations in a row with intervals within
+# RECURRENT_INTERVAL_TOLERANCE (as a fraction) of the average interval. A series is considered stopped once the next
+# donation is late by more than RECURRENT_STOPPED_TOLERANCE times the interval.
+RECURRENT_MIN_DONATIONS = 3
+RECURRENT_INTERVAL_TOLERANCE = 0.25
+RECURRENT_MIN_INTERVAL_DAYS = 5
+RECURRENT_STOPPED_TOLERANCE = 0.5
+RECURRENT_CADENCES = [
+    ("Weekly", 5, 9),
+    ("Monthly", 24, 37),
+    ("Quarterly", 80, 100),
+    ("Every 6 months", 165, 200),
+    ("Yearly", 330, 400),
+]
 
 AMOUNT_BUCKETS = [(0, 5), (5, 10), (10, 20), (20, 50), (50, 100), (100, None)]
 
@@ -96,7 +118,8 @@ def daily(start, end):
         d = sums.get(day, {})
         data.append({"day": day.isoformat(), "amount": float(d.get("amount", 0)), "count": d.get("count", 0)})
         day += datetime.timedelta(days=1)
-    return dict(_range_summary(start, end), data=data)
+    projection = _current_period_projection("day", data) if end == timezone.localdate() else None
+    return dict(_range_summary(start, end), data=data, projection=projection)
 
 
 def monthly(start, end):
@@ -126,7 +149,8 @@ def monthly(start, end):
             }
         )
         year, month = (year + 1, 1) if month == 12 else (year, month + 1)
-    return dict(_range_summary(start, end), data=data, sources=SOURCE_LABELS)
+    projection = _current_period_projection("month", data) if end == timezone.localdate() else None
+    return dict(_range_summary(start, end), data=data, sources=SOURCE_LABELS, projection=projection)
 
 
 def yearly():
@@ -143,7 +167,131 @@ def yearly():
     for year in range(min(sums), max(max(sums), timezone.localdate().year) + 1):
         d = sums.get(year, {})
         data.append({"year": year, "amount": float(d.get("amount", 0)), "count": d.get("count", 0)})
-    return {"data": data}
+    return {"data": data, "projection": _current_year_projection(data)}
+
+
+def _current_year_projection(yearly_data):
+    """Estimate the total donated amount of the current year from the amount donated so far.
+
+    Uses the monthly distribution of donations in the last PROJECTION_YEARS complete years to estimate which share
+    of a year's donations usually arrives by today (counting the current month proportionally to the days elapsed),
+    and extrapolates the current amount with it. The first year with donations is not used as it is likely
+    incomplete. Without complete years to learn from, the share is the fraction of the year's days elapsed.
+    """
+    today = timezone.localdate()
+    amount_so_far = next((y["amount"] for y in yearly_data if y["year"] == today.year), 0.0)
+    if not yearly_data or amount_so_far <= 0:
+        return None
+
+    first_year = yearly_data[0]["year"]
+    years_used = [y for y in range(today.year - PROJECTION_YEARS, today.year) if y > first_year]
+    month_totals = [0.0] * 12
+    if years_used:
+        rows = (
+            Donation.objects.annotate(month=TruncMonth("created"))
+            .filter(month__gte=datetime.date(years_used[0], 1, 1), month__lt=datetime.date(today.year, 1, 1))
+            .values("month")
+            .order_by()
+            .annotate(amount=Sum("amount"))
+        )
+        for row in rows:
+            month_totals[row["month"].month - 1] += float(row["amount"])
+
+    days_in_month = calendar.monthrange(today.year, today.month)[1]
+    if sum(month_totals) > 0:
+        method = "monthly_distribution"
+        shares = [m / sum(month_totals) for m in month_totals]
+        elapsed_share = sum(shares[: today.month - 1]) + shares[today.month - 1] * today.day / days_in_month
+    else:
+        method = "days_elapsed"
+        years_used = []
+        days_in_year = 366 if calendar.isleap(today.year) else 365
+        elapsed_share = today.timetuple().tm_yday / days_in_year
+
+    if elapsed_share <= 0:
+        return None
+    projected_total = max(amount_so_far / elapsed_share, amount_so_far)
+    return {
+        "year": today.year,
+        "amount_so_far": amount_so_far,
+        "projected_total": projected_total,
+        "remaining": projected_total - amount_so_far,
+        "elapsed_share": elapsed_share,
+        "method": method,
+        "years_used": years_used,
+    }
+
+
+def _period_bounds(kind, date):
+    """Start (inclusive) and end (exclusive) datetimes of the day or month that contains `date`."""
+    if kind == "day":
+        return _day_start(date), _day_start(date + datetime.timedelta(days=1))
+    first = date.replace(day=1)
+    next_first = (first + datetime.timedelta(days=32)).replace(day=1)
+    return _day_start(first), _day_start(next_first)
+
+
+def _current_period_projection(kind, data):
+    """Estimate the total donated amount (and number of donations) of the current day or month.
+
+    Looks at the last PERIOD_PROJECTION_PAST[kind] complete days or months, and computes which share of their
+    donations arrived by the same point of the day or month as now (e.g. 15:00, or 40% of the month). The amount and
+    number of donations so far are extrapolated with that share. Without donations in those past periods, the share
+    is the fraction of the day or month elapsed.
+    """
+    if not data or data[-1]["amount"] <= 0:
+        return None
+    now = timezone.localtime()
+    current_start, current_end = _period_bounds(kind, now.date())
+    elapsed_fraction = (now - current_start) / (current_end - current_start)
+
+    past_periods = []
+    date = now.date()
+    for _ in range(PERIOD_PROJECTION_PAST[kind]):
+        date = _period_bounds(kind, date)[0].date() - datetime.timedelta(days=1)
+        past_periods.append(_period_bounds(kind, date))
+    rows = sorted(
+        Donation.objects.filter(created__gte=past_periods[-1][0], created__lt=current_start).values_list(
+            "created", "amount"
+        )
+    )
+    times = [created for created, _ in rows]
+    cumulative = [0.0]
+    for _, amount in rows:
+        cumulative.append(cumulative[-1] + float(amount))
+
+    def amount_between(start, end):
+        return cumulative[bisect.bisect_left(times, end)] - cumulative[bisect.bisect_left(times, start)]
+
+    before_cutoff = total = 0.0
+    for start, end in past_periods:
+        before_cutoff += amount_between(start, start + (end - start) * elapsed_fraction)
+        total += amount_between(start, end)
+
+    if total > 0:
+        method = "past_distribution"
+        elapsed_share = before_cutoff / total
+    else:
+        method = "time_elapsed"
+        elapsed_share = elapsed_fraction
+    if elapsed_share <= 0:
+        return None
+
+    current = data[-1]
+    projected_total = max(current["amount"] / elapsed_share, current["amount"])
+    projected_count = max(current["count"] / elapsed_share, current["count"])
+    return {
+        "label": current["day"] if kind == "day" else current["month"],
+        "amount_so_far": current["amount"],
+        "projected_total": projected_total,
+        "remaining": projected_total - current["amount"],
+        "count_so_far": current["count"],
+        "projected_count": projected_count,
+        "remaining_count": projected_count - current["count"],
+        "elapsed_share": elapsed_share,
+        "method": method,
+        "past_periods_used": len(past_periods) if method == "past_distribution" else 0,
+    }
 
 
 def _donor_key(user_id, email):
@@ -181,6 +329,130 @@ def _donors_stats(period_donations):
 
     returning["median_days_since_previous"] = _median(days_since_previous)
     return {"unique_donors": len(donors), "first_time": first_time, "returning": returning}
+
+
+def _find_recurrent_series(times):
+    """Find series of donations made at regular intervals in the sorted donation datetimes of one donor.
+
+    A series is a run of at least RECURRENT_MIN_DONATIONS consecutive donations where every interval between
+    consecutive donations is within RECURRENT_INTERVAL_TOLERANCE of the average interval of the series so far.
+    Intervals shorter than RECURRENT_MIN_INTERVAL_DAYS (e.g. duplicated donations) break series. Returns a list of
+    (first index, last index, average interval in days) tuples.
+    """
+    intervals = [(b - a).total_seconds() / 86400 for a, b in zip(times, times[1:], strict=False)]
+    series = []
+    i = 0
+    while i < len(intervals):
+        if intervals[i] < RECURRENT_MIN_INTERVAL_DAYS:
+            i += 1
+            continue
+        average = intervals[i]
+        j = i + 1
+        while j < len(intervals) and abs(intervals[j] - average) <= RECURRENT_INTERVAL_TOLERANCE * average:
+            average = sum(intervals[i : j + 1]) / (j + 1 - i)
+            j += 1
+        if j - i + 1 >= RECURRENT_MIN_DONATIONS:
+            series.append((i, j, average))
+            i = j
+        else:
+            i += 1
+    return series
+
+
+def _cadence_label(interval_days):
+    for label, low, high in RECURRENT_CADENCES:
+        if low <= interval_days <= high:
+            return label
+    return "Other"
+
+
+def _recurrent_stats(period_donations):
+    """Statistics about donations from recurrent donors: donors who make donations at regular intervals.
+
+    Donations are grouped per donor (by user account or, without one, by email) and a donation is recurrent if it
+    belongs to a series found by _find_recurrent_series, looking at all the donor's donations (not only those in the
+    period). The first donations of a series are only detected once the series has enough donations.
+    """
+    donations_by_donor = defaultdict(list)
+    for donation_id, user_id, email, created, amount in Donation.objects.values_list(
+        "id", "user_id", "email", "created", "amount"
+    ).order_by("created", "id"):
+        donations_by_donor[_donor_key(user_id, email)].append((donation_id, created, float(amount)))
+
+    series_of_donation = {}
+    all_series = []
+    for donor, donations in donations_by_donor.items():
+        for first, last, interval in _find_recurrent_series([created for _, created, _ in donations]):
+            series = {
+                "donor": donor,
+                "interval": interval,
+                "donations": donations[first : last + 1],
+                # A donation following the series that does not fit in it means the series stopped too
+                "has_later_donations": last < len(donations) - 1,
+            }
+            all_series.append(series)
+            for donation_id, _, _ in series["donations"]:
+                series_of_donation.setdefault(donation_id, series)
+
+    now = timezone.now()
+    by_cadence = {}
+    for label, _, _ in RECURRENT_CADENCES + [("Other", None, None)]:
+        by_cadence[label] = {"label": label, "donors": set(), "series": 0, "donations": 0, "amount": 0.0}
+    recurrent_amounts = []
+    other_amounts = []
+    period_series = {}
+    for donation_id, amount in period_donations.values_list("id", "amount"):
+        series = series_of_donation.get(donation_id)
+        if series is None:
+            other_amounts.append(float(amount))
+        else:
+            recurrent_amounts.append(float(amount))
+            period_series[id(series)] = series
+            cadence = by_cadence[_cadence_label(series["interval"])]
+            cadence["donations"] += 1
+            cadence["amount"] += float(amount)
+
+    def is_stopped(series):
+        expected_next = series["donations"][-1][1] + datetime.timedelta(
+            days=series["interval"] * (1 + RECURRENT_STOPPED_TOLERANCE)
+        )
+        return series["has_later_donations"] or expected_next < now
+
+    series_list = list(period_series.values())
+    for series in series_list:
+        cadence = by_cadence[_cadence_label(series["interval"])]
+        cadence["donors"].add(series["donor"])
+        cadence["series"] += 1
+
+    intervals = [series["interval"] for series in series_list]
+    stopped = [series for series in series_list if is_stopped(series)]
+    return {
+        "donations": len(recurrent_amounts),
+        "amount": sum(recurrent_amounts),
+        "donors": len({series["donor"] for series in series_list}),
+        "series": len(series_list),
+        "average_amount": sum(recurrent_amounts) / len(recurrent_amounts) if recurrent_amounts else None,
+        "median_amount": _median(recurrent_amounts),
+        "non_recurrent_average_amount": sum(other_amounts) / len(other_amounts) if other_amounts else None,
+        "average_interval_days": sum(intervals) / len(intervals) if intervals else None,
+        "median_interval_days": _median(intervals),
+        "average_series_donations": (
+            sum(len(series["donations"]) for series in series_list) / len(series_list) if series_list else None
+        ),
+        "average_series_amount": (
+            sum(sum(amount for _, _, amount in series["donations"]) for series in series_list) / len(series_list)
+            if series_list
+            else None
+        ),
+        "stopped_series": len(stopped),
+        "by_cadence": [
+            dict(cadence, donors=len(cadence["donors"]))
+            for cadence in by_cadence.values()
+            if cadence["series"] or cadence["donations"]
+        ],
+        "min_donations": RECURRENT_MIN_DONATIONS,
+        "interval_tolerance": RECURRENT_INTERVAL_TOLERANCE,
+    }
 
 
 def _uploaders_stats(period_donations):
@@ -294,6 +566,7 @@ def period(start, end):
     stats.update(
         {
             "uploaders": _uploaders_stats(period_donations),
+            "recurrent": _recurrent_stats(period_donations),
             "amount_distribution": _amount_distribution(period_donations),
             "requests_before_donation": _requests_before_donation(period_donations),
             "request_conversion": _request_conversion(start, end),

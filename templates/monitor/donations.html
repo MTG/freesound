@@ -24,6 +24,7 @@
 </h2>
 <p><span id="daily-donations-range"></span> &middot; Total: <b id="daily-donations-total"></b> &middot; Average per day: <b id="daily-donations-average"></b><br>Number of donations: <b id="daily-donations-count"></b> &middot; Median donation: <b id="daily-donations-median"></b></p>
 <div id="daily-donations-chart"></div>
+<p id="daily-donations-projection" class="text-grey"></p>
 
 <h2 id="monthly-donations" class="v-spacing-top-5">Monthly donations
     <a class="headerlink" href="#monthly-donations" title="Permalink to this headline">¶</a>
@@ -34,6 +35,7 @@
     <label><input type="radio" name="monthly-donations-measure" value="count"> number of donations</label>
 </p>
 <div id="monthly-donations-chart"></div>
+<p id="monthly-donations-projection" class="text-grey"></p>
 
 <h2 id="period-donors" class="v-spacing-top-5">Donors
     <a class="headerlink" href="#period-donors" title="Permalink to this headline">¶</a>
@@ -55,6 +57,28 @@
     <tr><td>Donations without an account</td><td id="period-no-account-count"></td><td id="period-no-account-amount"></td></tr>
 </table>
 <p class="text-grey">Uploader means the user has uploaded sounds by now, not necessarily at the time of the donation.</p>
+
+<h2 id="recurrent-donors" class="v-spacing-top-5">Recurrent donors
+    <a class="headerlink" href="#recurrent-donors" title="Permalink to this headline">¶</a>
+</h2>
+<p class="period-range"></p>
+<table class="donations-table">
+    <tr><td>Donations from recurrent donors</td><td id="recurrent-donations"></td></tr>
+    <tr><td>Recurrent donors</td><td id="recurrent-donors-count"></td></tr>
+    <tr><td>Recurrent donation amount</td><td id="recurrent-amount"></td></tr>
+    <tr><td>Other donations' average amount</td><td id="recurrent-other-amount"></td></tr>
+    <tr><td>Time between recurrent donations</td><td id="recurrent-interval"></td></tr>
+    <tr><td>Donations per recurrent series (so far)</td><td id="recurrent-series-donations"></td></tr>
+    <tr><td>Amount per recurrent series (so far)</td><td id="recurrent-series-amount"></td></tr>
+    <tr><td>Series that seem to have stopped</td><td id="recurrent-stopped"></td></tr>
+</table>
+
+<h3 class="v-spacing-top-3">Recurrent donations by frequency</h3>
+<table class="donations-table">
+    <thead><tr><th>Frequency</th><th>Donors</th><th>Donations</th><th>Amount</th></tr></thead>
+    <tbody id="recurrent-cadence-table"></tbody>
+</table>
+<p class="text-grey">A donor counts as recurrent when they make at least <span id="recurrent-min-donations"></span> donations in a row at regular intervals (each within <span id="recurrent-tolerance"></span>% of the average interval). All the donor's donations are used, not only those in the selected period. A series has stopped when a later donation doesn't fit it, or when the next donation is more than half an interval late. The first donations of a new series are only detected once it has enough donations.</p>
 
 <h2 id="amount-distribution" class="v-spacing-top-5">Donation amounts
     <a class="headerlink" href="#amount-distribution" title="Permalink to this headline">¶</a>
@@ -88,6 +112,7 @@
 </h2>
 <p>All years since the first donation &middot; Total: <b id="yearly-donations-total"></b></p>
 <div id="yearly-donations-chart"></div>
+<p id="yearly-donations-projection" class="text-grey"></p>
 
 <style>
     .donations-table td, .donations-table th { padding: 4px 16px 4px 0; vertical-align: top; }

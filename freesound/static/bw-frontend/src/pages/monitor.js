@@ -583,54 +583,153 @@ if (donationsForm !== null) {
     return point.category !== undefined ? point.category : point.x;
   };
 
-  var euroTooltip = function () {
-    var points = tooltipPoints(this);
-    var text = tooltipCategory(points[0]);
-    for (var i = 0; i < points.length; i++) {
-      text +=
-        '<br>' +
-        (points.length > 1 ? points[i].series.name + ': ' : '') +
-        '<b>' +
-        formatEuros(points[i].y) +
-        '</b>';
-    }
-    return text;
+  // Shared tooltip listing the value of each series. When the hovered bar has
+  // an estimate for the rest of the current day/month/year, it also shows the
+  // projected total.
+  var makeTooltip = function (format) {
+    return function () {
+      var points = tooltipPoints(this);
+      var text = tooltipCategory(points[0]);
+      var total = 0;
+      var hasEstimate = false;
+      var shown = [];
+      var estimates = [];
+      for (var i = 0; i < points.length; i++) {
+        if (points[i].y !== null && points[i].y !== undefined) {
+          total += points[i].y;
+          if (points[i].series.options.isEstimate) {
+            hasEstimate = true;
+            estimates.push(points[i]);
+          } else {
+            shown.push(points[i]);
+          }
+        }
+      }
+      // List the estimate after the actual donations
+      shown = shown.concat(estimates);
+      for (var j = 0; j < shown.length; j++) {
+        text +=
+          '<br>' +
+          (shown.length > 1 ? shown[j].series.name + ': ' : '') +
+          '<b>' +
+          format(shown[j].y) +
+          '</b>';
+      }
+      if (hasEstimate) {
+        text += '<br>Projected total: <b>' + format(total) + '</b>';
+      }
+      return text;
+    };
   };
 
-  var countTooltip = function () {
-    var points = tooltipPoints(this);
-    var text = tooltipCategory(points[0]);
-    for (var i = 0; i < points.length; i++) {
-      text +=
-        '<br>' +
-        (points.length > 1 ? points[i].series.name + ': ' : '') +
-        '<b>' +
-        formatNumber(points[i].y) +
-        '</b>';
+  // Series stacked on top of the last bar with the estimate for the rest of
+  // the current period. In a stack, Highcharts draws the first series on top,
+  // so it has to go first in the series list.
+  var estimateSeries = function (name, numBars, value) {
+    var data = [];
+    for (var i = 0; i < numBars; i++) {
+      data.push(i === numBars - 1 ? value : null);
     }
-    return text;
+    return {
+      name: name,
+      data: data,
+      color: 'rgba(225, 30, 71, 0.25)',
+      borderColor: DONATIONS_COLOR,
+      dashStyle: 'Dash',
+      legendIndex: 100,
+      isEstimate: true,
+    };
   };
 
-  var drawAmountChart = function (containerId, data, labelKey, xAxisTitle) {
+  var drawAmountChart = function (
+    containerId,
+    data,
+    labelKey,
+    xAxisTitle,
+    projection,
+    estimateName
+  ) {
     var categories = [];
     var amounts = [];
     for (var i = 0; i < data.length; i++) {
       categories.push(String(data[i][labelKey]));
       amounts.push(data[i].amount);
     }
-    columnChart(
-      containerId,
-      categories,
-      [{ name: 'Donations', data: amounts, color: DONATIONS_COLOR }],
-      {
-        xAxisTitle: xAxisTitle,
-        yAxisTitle: 'Amount (€)',
-        tooltip: euroTooltip,
-      }
+    var series = [{ name: 'Donations', data: amounts, color: DONATIONS_COLOR }];
+    if (projection) {
+      series.unshift(
+        estimateSeries(estimateName, data.length, projection.remaining)
+      );
+    }
+    columnChart(containerId, categories, series, {
+      xAxisTitle: xAxisTitle,
+      yAxisTitle: 'Amount (€)',
+      stacked: true,
+      tooltip: makeTooltip(formatEuros),
+    });
+  };
+
+  var setProjectionText = function (id, text) {
+    document.getElementById(id).textContent = text || '';
+  };
+
+  var drawDailyChart = function (daily) {
+    var projection = daily.projection;
+    drawAmountChart(
+      'daily-donations-chart',
+      daily.data,
+      'day',
+      'Day',
+      projection,
+      'Estimate for the rest of the day'
+    );
+    setProjectionText(
+      'daily-donations-projection',
+      projection &&
+        'Estimated total for today: ' +
+          formatEuros(projection.projected_total) +
+          ' (' +
+          formatNumber(100 * projection.elapsed_share, 1) +
+          (projection.method === 'past_distribution'
+            ? "% of a day's donations usually arrive by this time, based on the last " +
+              projection.past_periods_used +
+              ' days).'
+            : '% of the day has passed).')
+    );
+  };
+
+  var drawYearlyChart = function (yearly) {
+    var projection = yearly.projection;
+    drawAmountChart(
+      'yearly-donations-chart',
+      yearly.data,
+      'year',
+      'Year',
+      projection,
+      'Projection for the rest of the year'
+    );
+    var basis =
+      projection && projection.method === 'monthly_distribution'
+        ? 'how donations were spread over the months in ' +
+          projection.years_used.join(', ')
+        : 'the share of the year elapsed so far';
+    setProjectionText(
+      'yearly-donations-projection',
+      projection &&
+        'Projected ' +
+          projection.year +
+          ' total: ' +
+          formatEuros(projection.projected_total) +
+          ' (' +
+          formatNumber(100 * projection.elapsed_share, 1) +
+          '% of the yearly donations usually arrive by today, based on ' +
+          basis +
+          ').'
     );
   };
 
   var drawMonthlyBySourceChart = function (monthly, measure) {
+    var projection = monthly.projection;
     var categories = [];
     for (var i = 0; i < monthly.data.length; i++) {
       categories.push(monthly.data[i].month);
@@ -651,12 +750,46 @@ if (donationsForm !== null) {
         });
       }
     }
+    if (projection) {
+      series.unshift(
+        estimateSeries(
+          'Estimated',
+          monthly.data.length,
+          measure === 'amount'
+            ? projection.remaining
+            : projection.remaining_count
+        )
+      );
+    }
     columnChart('monthly-donations-chart', categories, series, {
       xAxisTitle: 'Month',
       yAxisTitle: measure === 'amount' ? 'Amount (€)' : 'Number of donations',
       stacked: true,
-      tooltip: measure === 'amount' ? euroTooltip : countTooltip,
+      tooltip: makeTooltip(
+        measure === 'amount'
+          ? formatEuros
+          : function (value) {
+              return formatNumber(value, value % 1 ? 1 : 0);
+            }
+      ),
     });
+    setProjectionText(
+      'monthly-donations-projection',
+      projection &&
+        'Estimated total for ' +
+          projection.label +
+          ': ' +
+          formatEuros(projection.projected_total) +
+          ' from about ' +
+          formatNumber(projection.projected_count) +
+          ' donations (' +
+          formatNumber(100 * projection.elapsed_share, 1) +
+          (projection.method === 'past_distribution'
+            ? "% of a month's donations usually arrive by this point of the month, based on the last " +
+              projection.past_periods_used +
+              ' months).'
+            : '% of the month has passed).')
+    );
   };
 
   var updateSummary = function (sectionId, section) {
@@ -727,6 +860,83 @@ if (donationsForm !== null) {
           ')'
       );
     }
+
+    // Recurrent donors
+    var recurrent = period.recurrent;
+    setText(
+      'recurrent-donations',
+      formatPercentage(recurrent.donations, period.count) +
+        ' (' +
+        formatNumber(recurrent.donations) +
+        ' donations, ' +
+        formatEuros(recurrent.amount) +
+        ', ' +
+        formatPercentage(recurrent.amount, period.amount) +
+        ' of the amount)'
+    );
+    setText(
+      'recurrent-donors-count',
+      formatNumber(recurrent.donors) +
+        ' of ' +
+        formatNumber(period.unique_donors) +
+        ' donors (' +
+        formatPercentage(recurrent.donors, period.unique_donors) +
+        ')'
+    );
+    setText(
+      'recurrent-amount',
+      'average ' +
+        formatEuros(recurrent.average_amount) +
+        ', median ' +
+        formatEuros(recurrent.median_amount)
+    );
+    setText(
+      'recurrent-other-amount',
+      formatEuros(recurrent.non_recurrent_average_amount)
+    );
+    setText(
+      'recurrent-interval',
+      recurrent.series
+        ? 'median ' +
+            formatNumber(recurrent.median_interval_days) +
+            ' days, average ' +
+            formatNumber(recurrent.average_interval_days) +
+            ' days'
+        : '–'
+    );
+    setText(
+      'recurrent-series-donations',
+      formatNumber(recurrent.average_series_donations, 1) + ' on average'
+    );
+    setText(
+      'recurrent-series-amount',
+      formatEuros(recurrent.average_series_amount) + ' on average'
+    );
+    setText(
+      'recurrent-stopped',
+      formatNumber(recurrent.stopped_series) +
+        ' of ' +
+        formatNumber(recurrent.series) +
+        ' (' +
+        formatPercentage(recurrent.stopped_series, recurrent.series) +
+        ')'
+    );
+    setText('recurrent-min-donations', recurrent.min_donations);
+    setText(
+      'recurrent-tolerance',
+      formatNumber(100 * recurrent.interval_tolerance)
+    );
+    var cadenceRows = [];
+    for (i = 0; i < recurrent.by_cadence.length; i++) {
+      var cadence = recurrent.by_cadence[i];
+      cadenceRows.push([
+        cadence.label,
+        formatNumber(cadence.donors),
+        formatNumber(cadence.donations),
+        formatEuros(cadence.amount),
+      ]);
+    }
+    fillTable('recurrent-cadence-table', cadenceRows);
 
     // Amount distribution
     var bucketLabels = [];
@@ -843,7 +1053,7 @@ if (donationsForm !== null) {
     errorElement.style.display = 'none';
     $.get(donationsForm.dataset.url, params, function (d) {
       updateSummary('daily-donations', d.daily);
-      drawAmountChart('daily-donations-chart', d.daily.data, 'day', 'Day');
+      drawDailyChart(d.daily);
       updateSummary('monthly-donations', d.monthly);
       monthlyData = d.monthly;
       drawMonthlyBySourceChart(monthlyData, selectedMonthlyMeasure());
@@ -854,12 +1064,7 @@ if (donationsForm !== null) {
           total += d.yearly.data[i].amount;
         }
         setText('yearly-donations-total', formatEuros(total));
-        drawAmountChart(
-          'yearly-donations-chart',
-          d.yearly.data,
-          'year',
-          'Year'
-        );
+        drawYearlyChart(d.yearly);
       }
     }).fail(function (xhr) {
       var message = 'Could not load donations data';

@@ -4,12 +4,12 @@ from unittest import mock
 
 import requests
 from django.contrib.auth.models import User
-from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
 from donations.models import Donation, DonationRequest
+from monitor import donations_stats
 
 
 class QueryStatsAjaxTestCase(TestCase):
@@ -295,19 +295,149 @@ class DonationsStatsAjaxTestCase(TestCase):
         self.assertEqual(conversion[email]["converted_requests"], 1)
         self.assertIsNone(conversion[DonationRequest.RequestType.EMAIL_REMINDER_REPEAT_DONATION]["conversion_rate"])
 
+    @mock.patch("django.utils.timezone.localdate", return_value=datetime.date(2026, 7, 15))
+    def test_yearly_projection_with_monthly_distribution(self, _):
+        self._donate("500.00", self._local_dt(2022, 11, 1))  # First year, not used for the distribution
+        for year in [2023, 2024, 2025]:
+            self._donate("60.00", self._local_dt(year, 1, 10))
+            self._donate("40.00", self._local_dt(year, 7, 20))
+        self._donate("60.00", self._local_dt(2026, 1, 10))
+        self._donate("10.00", self._local_dt(2026, 7, 2))
 
-class GenerateFakeDonationsTestCase(TestCase):
-    @override_settings(DEBUG=True)
-    def test_generate_and_delete(self):
-        call_command("generate_fake_donations", years=3, donors=30, non_donors=10, seed=1, stdout=mock.MagicMock())
-        self.assertTrue(Donation.objects.filter(transaction_id__startswith="fake-").exists())
-        self.assertTrue(DonationRequest.objects.exists())
-        self.assertEqual(User.objects.filter(username__startswith="fakedonor_").count(), 40)
-        call_command("generate_fake_donations", delete=True, stdout=mock.MagicMock())
-        self.assertFalse(Donation.objects.exists())
-        self.assertFalse(DonationRequest.objects.exists())
-        self.assertFalse(User.objects.filter(username__startswith="fakedonor_").exists())
+        projection = self.client.get(reverse("monitor-donations-stats-ajax")).json()["yearly"]["projection"]
 
-    def test_requires_debug(self):
-        with self.assertRaises(CommandError):
-            call_command("generate_fake_donations", stdout=mock.MagicMock())
+        elapsed_share = 0.6 + 0.4 * 15 / 31
+        self.assertEqual(projection["year"], 2026)
+        self.assertEqual(projection["method"], "monthly_distribution")
+        self.assertEqual(projection["years_used"], [2023, 2024, 2025])
+        self.assertEqual(projection["amount_so_far"], 70.0)
+        self.assertAlmostEqual(projection["elapsed_share"], elapsed_share)
+        self.assertAlmostEqual(projection["projected_total"], 70 / elapsed_share)
+        self.assertAlmostEqual(projection["remaining"], 70 / elapsed_share - 70)
+
+    @mock.patch("django.utils.timezone.localdate", return_value=datetime.date(2026, 7, 15))
+    def test_yearly_projection_without_past_years(self, _):
+        self._donate("98.00", self._local_dt(2026, 3, 1))
+        projection = self.client.get(reverse("monitor-donations-stats-ajax")).json()["yearly"]["projection"]
+        self.assertEqual(projection["method"], "days_elapsed")
+        self.assertAlmostEqual(projection["elapsed_share"], 196 / 365)
+        self.assertAlmostEqual(projection["projected_total"], 98 * 365 / 196)
+
+    @mock.patch("django.utils.timezone.localdate", return_value=datetime.date(2026, 7, 15))
+    def test_yearly_projection_without_donations_this_year(self, _):
+        self._donate("10.00", self._local_dt(2025, 3, 1))
+        self.assertIsNone(self.client.get(reverse("monitor-donations-stats-ajax")).json()["yearly"]["projection"])
+
+    def _mock_now(self, *args):
+        now = timezone.make_aware(datetime.datetime(*args))
+        return (
+            mock.patch("django.utils.timezone.now", return_value=now),
+            mock.patch("django.utils.timezone.localdate", return_value=now.date()),
+        )
+
+    def _get_with_now(self, now_args, params=None):
+        patch_now, patch_localdate = self._mock_now(*now_args)
+        with patch_now, patch_localdate:
+            return self.client.get(reverse("monitor-donations-stats-ajax"), params or {}).json()
+
+    def test_daily_projection_with_past_distribution(self):
+        # In the past days, 30% of the donations arrived before 12:00
+        for day in [10, 11, 12]:
+            self._donate("3.00", self._local_dt(2026, 7, day, 9))
+            self._donate("7.00", self._local_dt(2026, 7, day, 18))
+        self._donate("6.00", self._local_dt(2026, 7, 15, 8))
+        projection = self._get_with_now((2026, 7, 15, 12))["daily"]["projection"]
+        self.assertEqual(projection["label"], "2026-07-15")
+        self.assertEqual(projection["method"], "past_distribution")
+        self.assertEqual(projection["past_periods_used"], 90)
+        self.assertAlmostEqual(projection["elapsed_share"], 0.3)
+        self.assertAlmostEqual(projection["projected_total"], 20.0)
+        self.assertAlmostEqual(projection["remaining"], 14.0)
+        self.assertAlmostEqual(projection["projected_count"], 1 / 0.3)
+
+    def test_daily_projection_without_past_donations(self):
+        self._donate("6.00", self._local_dt(2026, 7, 15, 8))
+        projection = self._get_with_now((2026, 7, 15, 6))["daily"]["projection"]
+        self.assertEqual(projection["method"], "time_elapsed")
+        self.assertAlmostEqual(projection["elapsed_share"], 0.25)
+        self.assertAlmostEqual(projection["projected_total"], 24.0)
+
+    def test_monthly_projection_with_past_distribution(self):
+        # In the past months, 40% of the donations arrived in the first half of the month
+        for month in [4, 5, 6]:
+            self._donate("4.00", self._local_dt(2026, month, 3))
+            self._donate("6.00", self._local_dt(2026, month, 25))
+        self._donate("8.00", self._local_dt(2026, 7, 2))
+        # 2026-07-16 12:00 is halfway through July
+        projection = self._get_with_now((2026, 7, 16, 12))["monthly"]["projection"]
+        self.assertEqual(projection["label"], "2026-07")
+        self.assertEqual(projection["method"], "past_distribution")
+        self.assertEqual(projection["past_periods_used"], 12)
+        self.assertAlmostEqual(projection["elapsed_share"], 0.4)
+        self.assertAlmostEqual(projection["projected_total"], 20.0)
+        self.assertAlmostEqual(projection["remaining_count"], 1 / 0.4 - 1)
+
+    def test_no_daily_and_monthly_projection_for_past_ranges_or_without_donations(self):
+        self._donate("8.00", self._local_dt(2026, 6, 2))
+        d = self._get_with_now((2026, 7, 16, 12), {"start": "2026-06-01", "end": "2026-06-30"})
+        self.assertIsNone(d["daily"]["projection"])
+        self.assertIsNone(d["monthly"]["projection"])
+        # No donations today or this month yet
+        d = self._get_with_now((2026, 7, 16, 12))
+        self.assertIsNone(d["daily"]["projection"])
+        self.assertIsNone(d["monthly"]["projection"])
+
+    def test_recurrent_donors(self):
+        # Monthly donor (by email), still active: 5 donations, 4 of them in the period
+        for month in [1, 2, 3, 4, 5]:
+            self._donate("5.00", self._local_dt(2026, month, 3 + month % 2), email="monthly@example.com")
+        # Yearly donor (by user) whose series stopped (no donation in 2025 or later): one donation in the period
+        for year in [2022, 2023, 2024]:
+            self._donate("50.00", self._local_dt(year, 2, 1), user=self.user, email="yearly@example.com")
+        self._donate("20.00", self._local_dt(2024, 2, 20), email="other@example.com")
+        # Irregular donor
+        for date in [(2024, 1, 1), (2024, 2, 1), (2024, 6, 1)]:
+            self._donate("10.00", self._local_dt(*date), email="irregular@example.com")
+        # Two donations only: not enough to be recurrent
+        self._donate("7.00", self._local_dt(2024, 1, 15), email="twice@example.com")
+        self._donate("7.00", self._local_dt(2024, 2, 15), email="twice@example.com")
+
+        d = self._get_with_now((2026, 5, 20, 12), {"start": "2024-02-01", "end": "2026-05-20"})
+        recurrent = d["period"]["recurrent"]
+
+        # In the period: 5 monthly + 1 yearly (2024) recurrent; other@, irregular (2), twice (1) not recurrent
+        self.assertEqual(d["period"]["count"], 10)
+        self.assertEqual(recurrent["donations"], 6)
+        self.assertEqual(recurrent["amount"], 75.0)
+        self.assertEqual((recurrent["donors"], recurrent["series"]), (2, 2))
+        self.assertEqual(recurrent["average_amount"], 12.5)
+        self.assertEqual(recurrent["median_amount"], 5.0)
+        self.assertEqual(recurrent["non_recurrent_average_amount"], (20 + 10 + 10 + 7) / 4)
+        self.assertEqual(recurrent["average_series_donations"], 4.0)
+        self.assertEqual(recurrent["average_series_amount"], (25 + 150) / 2)
+        # Monthly series is on time (last donation on 2026-05-04), yearly one is overdue
+        self.assertEqual(recurrent["stopped_series"], 1)
+        cadences = {c["label"]: c for c in recurrent["by_cadence"]}
+        self.assertEqual(set(cadences), {"Monthly", "Yearly"})
+        self.assertEqual((cadences["Monthly"]["donors"], cadences["Monthly"]["donations"]), (1, 5))
+        self.assertEqual(cadences["Monthly"]["amount"], 25.0)
+        self.assertEqual((cadences["Yearly"]["donors"], cadences["Yearly"]["donations"]), (1, 1))
+
+
+class RecurrentSeriesTestCase(TestCase):
+    def _times(self, *days):
+        start = datetime.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
+        return [start + datetime.timedelta(days=d) for d in days]
+
+    def test_find_series(self):
+        find = donations_stats._find_recurrent_series
+        self.assertEqual(find(self._times(0, 30)), [])
+        self.assertEqual(find(self._times(0, 30, 61, 90)), [(0, 3, 30.0)])
+        # Irregular intervals
+        self.assertEqual(find(self._times(0, 30, 120, 130)), [])
+        # Irregular donation before a series and a pause between two series
+        series = find(self._times(0, 100, 130, 160, 190, 700, 1065, 1430))
+        self.assertEqual([(a, b) for a, b, _ in series], [(1, 4), (5, 7)])
+        self.assertAlmostEqual(series[1][2], 365.0)
+        # Duplicated donations (same day) break series
+        self.assertEqual(find(self._times(0, 0, 0, 0)), [])

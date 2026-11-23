@@ -231,6 +231,7 @@ class DonationTest(TestCase):
             self.assertEqual(mock_kargs["customer_email"], None)
             self.assertEqual(mock_kargs["payment_method_types"], ["card"])
             self.assertEqual(len(mock_kargs["line_items"]), 1)
+            self.assertEqual(mock_kargs["line_items"][0]["amount"], 510)
             self.assertIsNotNone(mock_kargs["success_url"])
             self.assertIsNotNone(mock_kargs["cancel_url"])
 
@@ -248,6 +249,14 @@ class DonationTest(TestCase):
             ret = self.client.post("/donations/donation-session-stripe/", data)
             response = ret.json()
             self.assertFalse("errors" in response)
+
+        with mock.patch("stripe.checkout.Session.create") as mock_create:
+            mock_create.return_value = session
+            # 19.99 * 100 is 1998.9999999999998 as float, stripe must get 1999 cents
+            data["amount"] = "19.99"
+            self.client.post("/donations/donation-session-stripe/", data)
+            _, mock_kargs = mock_create.call_args
+            self.assertEqual(mock_kargs["line_items"][0]["amount"], 1999)
 
         with mock.patch("stripe.checkout.Session.create") as mock_create:
             mock_create.return_value = session

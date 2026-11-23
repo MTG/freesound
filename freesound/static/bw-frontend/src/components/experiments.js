@@ -14,7 +14,7 @@ const firstFormError = responseText => {
     const errors = JSON.parse(responseText).errors || {};
     const firstField = Object.keys(errors)[0];
     return firstField ? errors[firstField][0].message : null;
-  } catch {
+  } catch (error) {
     return null;
   }
 };
@@ -349,13 +349,17 @@ const bindFeedbackBox = box => {
     fillPlayInputs();
     makePostRequest(
       `${box.dataset.submitUrl}?ajax=1`,
-      {
-        ...collectSharedInputs(box.dataset.experimentId),
-        before_category: beforeCategory,
-        ...collectNamedInputs(box),
-        experiment_id: box.dataset.experimentId,
-        [answerName]: chosenAnswer,
-      },
+      // Object.assign instead of object spread, which old browsers (e.g. Firefox 52) can't parse
+      Object.assign(
+        {},
+        collectSharedInputs(box.dataset.experimentId),
+        { before_category: beforeCategory },
+        collectNamedInputs(box),
+        {
+          experiment_id: box.dataset.experimentId,
+          [answerName]: chosenAnswer,
+        }
+      ),
       () => {
         answeredExperimentIds.add(box.dataset.experimentId);
         box.innerHTML = `${box.dataset.thanks || 'Thanks for your feedback!'}`;

@@ -215,6 +215,7 @@ def search_view_helper(request):
             num_results=results.non_grouped_number_of_results or results.num_found,
             query_time=results.q_time,
             ip=get_client_ip(request),
+            user_id=request.user.id if request.user.is_authenticated else None,
         )
 
         # If the requested page is beyond the last page of a non-empty result set, the search

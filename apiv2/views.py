@@ -279,6 +279,8 @@ class Search(FreesoundAPIView):
             num_results=non_grouped_count or paginator.count,
             query_time=q_time,
             ip=self.end_user_ip,
+            # End user for OAuth2/session auth; token-authenticated requests have no end user.
+            user_id=self.user.id if self.user is not None and self.user.is_authenticated else None,
         )
 
         if note:

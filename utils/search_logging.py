@@ -60,7 +60,13 @@ class SearchArchiveHandler(logging.Handler):
 
 
 def archive_search(
-    *, source: str, params: Mapping[str, str], num_results: int, query_time: float | None, ip: str | None
+    *,
+    source: str,
+    params: Mapping[str, str],
+    num_results: int,
+    query_time: float | None,
+    ip: str | None,
+    user_id: int | None,
 ) -> None:
     """Archive allowlisted search parameters without propagating logging failures."""
     if not settings.SEARCH_ARCHIVE_ENABLED:
@@ -87,6 +93,7 @@ def archive_search(
                 "num_results": num_results,
                 "query_time_ms": query_time,
                 "ip": ip,
+                "user_id": user_id,
             }
         )
     except Exception:

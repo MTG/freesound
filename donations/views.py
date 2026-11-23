@@ -182,7 +182,7 @@ def donation_session_stripe(request):
                         "name": "Freesound donation",
                         "description": "Donation for freesound.org",
                         "images": ["https://freesound.org/media/images/logo.png"],
-                        "amount": int(amount * 100),
+                        "amount": round(amount * 100),
                         "currency": "eur",
                         "quantity": 1,
                     }

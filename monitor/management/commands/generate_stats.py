@@ -132,17 +132,6 @@ class Command(LoggingBaseCommand):
             active_users[i] = converted_weeks
         cache_persistent.set("active_users_stats", active_users, 60 * 60 * 24)
 
-        # Compute stats related with donations:
-        query_donations = (
-            donations.models.Donation.objects.filter(created__gt=time_span)
-            .extra({"day": "date(created)"})
-            .values("day")
-            .order_by()
-            .annotate(Sum("amount"))
-        )
-
-        cache_persistent.set("donations_stats", {"new_donations": list(query_donations)}, 60 * 60 * 24)
-
         # Compute stats related with Tags:
         time_span = timezone.now() - datetime.timedelta(weeks=2)
 

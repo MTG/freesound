@@ -14,6 +14,9 @@
                             <a class="nav-link {% if activePage == 'stats' %} active {% endif %}" href="{% url "monitor-stats" %}">Stats</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link {% if activePage == 'donations' %} active {% endif %}" href="{% url "monitor-donations" %}">Donations</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if activePage == 'moderation' %} active {% endif %}" href="{% url 'monitor-moderation' %}">Moderation</a>
                         </li>
                         <li class="nav-item">

@@ -74,13 +74,6 @@
 <div class='downloads'>
 </div>
 
-<h2 id="year-donations" class="v-spacing-top-5">Donations
-    <a class="headerlink" href="#year-donations" title="Permalink to this headline">¶</a>
-</h2>
-<h3>Donations in the last 12 months</h3>
-<div class='donations'>
-</div>
-
 <div style="display:inline-block">
     <h2 id="tags-stats" class="v-spacing-top-5">Tags
         <a class="headerlink" href="#tags-stats" title="Permalink to this headline">¶</a>
@@ -116,7 +109,6 @@
     var queriesDataUrl = '{% url 'monitor-queries-stats-ajax' %}';
     var tagsDataUrl = '{% url 'monitor-tags-stats-ajax' %}';
     var downloadsDataUrl = '{% url 'monitor-downloads-stats-ajax' %}';
-    var donationsDataUrl = '{% url 'monitor-donations-stats-ajax' %}';
     var soundsDataUrl = '{% url 'monitor-sounds-stats-ajax' %}';
     var usersDataUrl = '{% url 'monitor-users-stats-ajax' %}';
     var activeUsersDataUrl = '{% url 'monitor-active-users-stats-ajax' %}';

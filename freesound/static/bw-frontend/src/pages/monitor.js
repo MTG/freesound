@@ -144,92 +144,6 @@ function displayCharts(selectClass, data, options, exclude) {
   }
 }
 
-// Display histogram
-function displayHistogram(selectClass, data, options, exclude) {
-  var margin = { top: 20, right: 200, bottom: 30, left: 50 },
-    width = 700,
-    height = 260;
-  var svg = d3
-    .select(selectClass)
-    .append('svg')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom);
-  var g = svg
-    .append('g')
-    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
-  var tooltip = d3.select('body').append('div').attr('class', 'toolTip');
-  var formatCount = d3.format(',.0f');
-
-  var x = d3.scaleTime().rangeRound([0, width]);
-  x.domain(
-    d3.extent(data, function (d) {
-      return new Date(d[options.attrX]);
-    })
-  );
-  var formatDate = d3.timeFormat(options.timeFormat);
-
-  var y = d3.scaleLinear().rangeRound([height, 0]);
-
-  function getY(d) {
-    var total = 0;
-    for (var i = 0; i < d.length; i++) {
-      total += parseInt(d[i][options.attrY]);
-    }
-    return total;
-  }
-
-  var histogram = d3
-    .histogram()
-    .value(function (d) {
-      return new Date(d[options.attrX]);
-    })
-    .domain(x.domain())
-    .thresholds(x.ticks(options.tickEvery));
-
-  var bins = histogram(data);
-
-  y.domain([
-    0,
-    d3.max(bins, function (d) {
-      return getY(d);
-    }),
-  ]);
-
-  var bar = g
-    .selectAll('.bar')
-    .data(bins)
-    .enter()
-    .append('g')
-    .attr('class', 'bar')
-    .attr('transform', function (d) {
-      return 'translate(' + x(d.x0) + ',' + y(getY(d)) + ')';
-    });
-
-  bar
-    .append('rect')
-    .attr('x', 1)
-    .attr('width', x(bins[0].x1) - x(bins[0].x0) - 1)
-    .attr('height', function (d) {
-      return Math.max(0, height - y(getY(d)));
-    })
-    .on('mouseover', function (d) {
-      tooltip
-        .style('left', d3.event.pageX - 50 + 'px')
-        .style('top', d3.event.pageY - 70 + 'px')
-        .style('display', 'inline-block')
-        .html('Week: ' + formatDate(d.x0) + '<br><b>€' + getY(d) + '</b>');
-    })
-    .on('mouseout', function () {
-      tooltip.style('display', 'none');
-    });
-
-  g.append('g')
-    .attr('class', 'axis axis--x')
-    .attr('transform', 'translate(0,' + height + ')')
-    .call(d3.axisBottom(x).tickFormat(formatDate));
-}
-
 // Monitor stats page
 if (document.getElementById('global-stats') !== null) {
   $(document).ready(function () {
@@ -446,21 +360,6 @@ if (document.getElementById('global-stats') !== null) {
         },
       });
     });
-    $.get(donationsDataUrl, function (d) {
-      displayHistogram(
-        '.donations',
-        d.new_donations,
-        {
-          yText: 'Amount (€)',
-          attrX: 'day',
-          attrY: 'amount__sum',
-          timeFormat: '%d %b',
-          tickEvery: d3.timeWeek.every(1),
-          legendData: [{ color: 'crimson', name: 'donations' }],
-        },
-        {}
-      );
-    });
     $.get(activeUsersDataUrl, function (d) {
       var sound_downloads = [];
       for (var i = 0; i < d.sound_downloads.length; i++) {
@@ -584,6 +483,417 @@ if (document.getElementById('global-stats') !== null) {
         weightFactor: 100 / max,
       });
     });
+  });
+}
+
+// Monitor donations page
+var donationsForm = document.getElementById('donations-date-range');
+if (donationsForm !== null) {
+  var DONATIONS_COLOR = '#e11e47';
+  var SOURCE_COLORS = { p: '#003087', s: '#635bff', t: '#8c8c8c' };
+
+  var formatEuros = function (amount) {
+    if (amount === null || amount === undefined) {
+      return '–';
+    }
+    return (
+      '€' +
+      amount.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
+  };
+
+  var formatNumber = function (value, decimals) {
+    if (value === null || value === undefined) {
+      return '–';
+    }
+    return value.toLocaleString(undefined, {
+      minimumFractionDigits: decimals || 0,
+      maximumFractionDigits: decimals || 0,
+    });
+  };
+
+  var formatPercentage = function (part, total) {
+    if (!total) {
+      return '–';
+    }
+    return formatNumber((100 * part) / total, 1) + '%';
+  };
+
+  var setText = function (id, text) {
+    document.getElementById(id).textContent = text;
+  };
+
+  var makeRow = function (cells) {
+    var row = document.createElement('tr');
+    for (var i = 0; i < cells.length; i++) {
+      var cell = document.createElement('td');
+      cell.textContent = cells[i];
+      row.appendChild(cell);
+    }
+    return row;
+  };
+
+  var fillTable = function (id, rows) {
+    var body = document.getElementById(id);
+    body.innerHTML = '';
+    for (var i = 0; i < rows.length; i++) {
+      body.appendChild(makeRow(rows[i]));
+    }
+  };
+
+  var columnChart = function (containerId, categories, series, options) {
+    Highcharts.chart(document.getElementById(containerId), {
+      chart: { type: 'column' },
+      title: { text: '' },
+      legend: { enabled: series.length > 1 },
+      credits: { enabled: false },
+      xAxis: {
+        categories: categories,
+        title: { text: options.xAxisTitle },
+        // Rotate labels of long series. Short ones are only rotated by
+        // Highcharts if they overlap.
+        labels: { rotation: categories.length > 12 ? -45 : undefined },
+      },
+      yAxis: { min: 0, title: { text: options.yAxisTitle } },
+      plotOptions: { column: { stacking: options.stacked ? 'normal' : null } },
+      tooltip: {
+        shared: series.length > 1,
+        formatter: options.tooltip,
+      },
+      series: series,
+    });
+  };
+
+  // Tooltip helpers that work in Highcharts < 12 (`this` is a context object
+  // and `this.x` the category name) and >= 12 (`this` is the point and
+  // `this.x` the category index)
+  var tooltipPoints = function (context) {
+    var points = context.points || [context.point || context];
+    var result = [];
+    for (var i = 0; i < points.length; i++) {
+      result.push(points[i].point || points[i]);
+    }
+    return result;
+  };
+
+  var tooltipCategory = function (point) {
+    return point.category !== undefined ? point.category : point.x;
+  };
+
+  var euroTooltip = function () {
+    var points = tooltipPoints(this);
+    var text = tooltipCategory(points[0]);
+    for (var i = 0; i < points.length; i++) {
+      text +=
+        '<br>' +
+        (points.length > 1 ? points[i].series.name + ': ' : '') +
+        '<b>' +
+        formatEuros(points[i].y) +
+        '</b>';
+    }
+    return text;
+  };
+
+  var countTooltip = function () {
+    var points = tooltipPoints(this);
+    var text = tooltipCategory(points[0]);
+    for (var i = 0; i < points.length; i++) {
+      text +=
+        '<br>' +
+        (points.length > 1 ? points[i].series.name + ': ' : '') +
+        '<b>' +
+        formatNumber(points[i].y) +
+        '</b>';
+    }
+    return text;
+  };
+
+  var drawAmountChart = function (containerId, data, labelKey, xAxisTitle) {
+    var categories = [];
+    var amounts = [];
+    for (var i = 0; i < data.length; i++) {
+      categories.push(String(data[i][labelKey]));
+      amounts.push(data[i].amount);
+    }
+    columnChart(
+      containerId,
+      categories,
+      [{ name: 'Donations', data: amounts, color: DONATIONS_COLOR }],
+      {
+        xAxisTitle: xAxisTitle,
+        yAxisTitle: 'Amount (€)',
+        tooltip: euroTooltip,
+      }
+    );
+  };
+
+  var drawMonthlyBySourceChart = function (monthly, measure) {
+    var categories = [];
+    for (var i = 0; i < monthly.data.length; i++) {
+      categories.push(monthly.data[i].month);
+    }
+    var series = [];
+    for (var code in monthly.sources) {
+      if (Object.prototype.hasOwnProperty.call(monthly.sources, code)) {
+        var values = [];
+        for (var j = 0; j < monthly.data.length; j++) {
+          values.push(monthly.data[j].by_source[code][measure]);
+        }
+        series.push({
+          name:
+            monthly.sources[code].charAt(0).toUpperCase() +
+            monthly.sources[code].slice(1),
+          data: values,
+          color: SOURCE_COLORS[code],
+        });
+      }
+    }
+    columnChart('monthly-donations-chart', categories, series, {
+      xAxisTitle: 'Month',
+      yAxisTitle: measure === 'amount' ? 'Amount (€)' : 'Number of donations',
+      stacked: true,
+      tooltip: measure === 'amount' ? euroTooltip : countTooltip,
+    });
+  };
+
+  var updateSummary = function (sectionId, section) {
+    setText(sectionId + '-range', section.start + ' to ' + section.end);
+    setText(sectionId + '-total', formatEuros(section.amount));
+    setText(
+      sectionId + '-average',
+      formatEuros(
+        section.data.length ? section.amount / section.data.length : 0
+      )
+    );
+    setText(sectionId + '-count', formatNumber(section.count));
+    setText(sectionId + '-median', formatEuros(section.median_amount));
+  };
+
+  var updatePeriod = function (period) {
+    var i;
+    var ranges = document.getElementsByClassName('period-range');
+    for (i = 0; i < ranges.length; i++) {
+      ranges[i].textContent =
+        period.start +
+        ' to ' +
+        period.end +
+        ' · ' +
+        formatNumber(period.count) +
+        ' donations';
+    }
+
+    // Donors
+    setText('period-unique-donors', formatNumber(period.unique_donors));
+    var groups = [
+      ['period-first-time', period.first_time],
+      ['period-returning', period.returning],
+    ];
+    for (i = 0; i < groups.length; i++) {
+      setText(
+        groups[i][0],
+        formatPercentage(groups[i][1].count, period.count) +
+          ' (' +
+          formatNumber(groups[i][1].count) +
+          ' donations, ' +
+          formatPercentage(groups[i][1].amount, period.amount) +
+          ' of the amount)'
+      );
+    }
+    var days = period.returning.median_days_since_previous;
+    setText(
+      'period-days-since-previous',
+      days === null ? '–' : formatNumber(days) + ' days'
+    );
+
+    // Uploaders
+    var uploaderGroups = ['uploaders', 'non-uploaders', 'no-account'];
+    for (i = 0; i < uploaderGroups.length; i++) {
+      var group = period.uploaders[uploaderGroups[i].replace('-', '_')];
+      setText(
+        'period-' + uploaderGroups[i] + '-count',
+        formatNumber(group.count) +
+          ' (' +
+          formatPercentage(group.count, period.count) +
+          ')'
+      );
+      setText(
+        'period-' + uploaderGroups[i] + '-amount',
+        formatEuros(group.amount) +
+          ' (' +
+          formatPercentage(group.amount, period.amount) +
+          ')'
+      );
+    }
+
+    // Amount distribution
+    var bucketLabels = [];
+    var bucketCounts = [];
+    for (i = 0; i < period.amount_distribution.length; i++) {
+      bucketLabels.push(period.amount_distribution[i].label);
+      bucketCounts.push(period.amount_distribution[i].count);
+    }
+    columnChart(
+      'amount-distribution-chart',
+      bucketLabels,
+      [
+        {
+          name: 'Donations',
+          data: bucketCounts,
+          color: DONATIONS_COLOR,
+        },
+      ],
+      {
+        xAxisTitle: 'Donation amount',
+        yAxisTitle: 'Number of donations',
+        tooltip: function () {
+          var point = tooltipPoints(this)[0];
+          var bucket = period.amount_distribution[point.index];
+          return (
+            tooltipCategory(point) +
+            '<br><b>' +
+            formatNumber(bucket.count) +
+            ' donations</b> (' +
+            formatPercentage(bucket.count, period.count) +
+            ')<br>' +
+            formatEuros(bucket.amount) +
+            ' in total'
+          );
+        },
+      }
+    );
+
+    // Donation requests
+    document.getElementById('requests-data-incomplete').style.display =
+      period.requests_data_incomplete ? '' : 'none';
+    var before = period.requests_before_donation;
+    setText(
+      'requests-before-included',
+      formatNumber(before.donations_included) +
+        ' of ' +
+        formatNumber(before.donations_total)
+    );
+    var rows = [];
+    for (i = 0; i < before.by_type.length; i++) {
+      var t = before.by_type[i];
+      rows.push([
+        t.label,
+        formatNumber(t.donations_with_requests) +
+          ' (' +
+          formatPercentage(
+            t.donations_with_requests,
+            before.donations_included
+          ) +
+          ')',
+        formatNumber(t.average_requests, 1),
+      ]);
+    }
+    fillTable('requests-before-table', rows);
+
+    var conversionDays = document.getElementsByClassName(
+      'request-conversion-days'
+    );
+    for (i = 0; i < conversionDays.length; i++) {
+      conversionDays[i].textContent = period.request_conversion_days;
+    }
+    document.getElementById('request-conversion-incomplete').style.display =
+      period.request_conversion_incomplete ? '' : 'none';
+    rows = [];
+    for (i = 0; i < period.request_conversion.length; i++) {
+      var c = period.request_conversion[i];
+      rows.push([
+        c.label,
+        formatNumber(c.requests),
+        formatNumber(c.converted_requests) +
+          ' (' +
+          formatPercentage(c.converted_requests, c.requests) +
+          ')',
+        formatNumber(c.users),
+        formatNumber(c.converted_users) +
+          ' (' +
+          formatPercentage(c.converted_users, c.users) +
+          ')',
+      ]);
+    }
+    fillTable('request-conversion-table', rows);
+  };
+
+  var errorElement = document.getElementById('donations-error');
+  var startInput = document.getElementById('donations-start');
+  var endInput = document.getElementById('donations-end');
+  var monthlyData = null;
+
+  var selectedMonthlyMeasure = function () {
+    var checked = document.querySelector(
+      'input[name="monthly-donations-measure"]:checked'
+    );
+    return checked ? checked.value : 'amount';
+  };
+
+  var loadDonations = function (includeYearly) {
+    var params = {};
+    if (startInput.value) {
+      params.start = startInput.value;
+    }
+    if (endInput.value) {
+      params.end = endInput.value;
+    }
+    errorElement.style.display = 'none';
+    $.get(donationsForm.dataset.url, params, function (d) {
+      updateSummary('daily-donations', d.daily);
+      drawAmountChart('daily-donations-chart', d.daily.data, 'day', 'Day');
+      updateSummary('monthly-donations', d.monthly);
+      monthlyData = d.monthly;
+      drawMonthlyBySourceChart(monthlyData, selectedMonthlyMeasure());
+      updatePeriod(d.period);
+      if (includeYearly) {
+        var total = 0;
+        for (var i = 0; i < d.yearly.data.length; i++) {
+          total += d.yearly.data[i].amount;
+        }
+        setText('yearly-donations-total', formatEuros(total));
+        drawAmountChart(
+          'yearly-donations-chart',
+          d.yearly.data,
+          'year',
+          'Year'
+        );
+      }
+    }).fail(function (xhr) {
+      var message = 'Could not load donations data';
+      if (xhr.responseJSON && xhr.responseJSON.error) {
+        message += ': ' + xhr.responseJSON.error;
+      }
+      errorElement.textContent = message;
+      errorElement.style.display = '';
+    });
+  };
+
+  var measureInputs = document.querySelectorAll(
+    'input[name="monthly-donations-measure"]'
+  );
+  for (var m = 0; m < measureInputs.length; m++) {
+    measureInputs[m].addEventListener('change', function () {
+      if (monthlyData !== null) {
+        drawMonthlyBySourceChart(monthlyData, selectedMonthlyMeasure());
+      }
+    });
+  }
+  donationsForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+    loadDonations(false);
+  });
+  document
+    .getElementById('donations-reset')
+    .addEventListener('click', function () {
+      startInput.value = '';
+      endInput.value = '';
+      loadDonations(false);
+    });
+  $(document).ready(function () {
+    loadDonations(true);
   });
 }
 

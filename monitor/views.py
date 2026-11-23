@@ -35,6 +35,7 @@ from prometheus_client import Counter as PrometheusCounter
 
 import tickets
 from freesound.celery import get_queues_task_counts
+from monitor import donations_stats
 from sounds.models import Sound, SoundAnalysis, SoundSimilarityVector
 from tickets import TICKET_STATUS_CLOSED
 from utils.search import SearchEngineException, get_search_engine
@@ -219,6 +220,13 @@ def monitor_stats(request):
 
 @login_required
 @user_passes_test(user_is_staff, login_url="/")
+def monitor_donations(request):
+    tvars = {"activePage": "donations"}
+    return render(request, "monitor/donations.html", tvars)
+
+
+@login_required
+@user_passes_test(user_is_staff, login_url="/")
 def moderators_stats(request):
     return HttpResponseRedirect(reverse("monitor-moderation"))
 
@@ -280,11 +288,51 @@ def downloads_stats_ajax(request):
     return JsonResponse(downloads_stats or {})
 
 
+def _parse_date_param(value):
+    if not value:
+        return None
+    try:
+        return datetime.date.fromisoformat(value)
+    except ValueError:
+        raise ValueError(f"Invalid date: {value}")
+
+
 @login_required
 @user_passes_test(user_is_staff, login_url="/")
 def donations_stats_ajax(request):
-    donations_stats = caches["persistent"].get("donations_stats")
-    return JsonResponse(donations_stats or {})
+    """Donation statistics for the Donations panel.
+
+    The optional `start` and `end` GET parameters (YYYY-MM-DD, both inclusive) set the date range used for the daily
+    data, the monthly data and the period statistics. Without them, the daily data covers the last
+    donations_stats.DEFAULT_DAYS days, and the monthly data and period statistics the last
+    donations_stats.DEFAULT_MONTHS months (including the current ones). The yearly data always covers every year
+    since the first donation.
+    """
+    try:
+        start = _parse_date_param(request.GET.get("start"))
+        end = _parse_date_param(request.GET.get("end"))
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    today = timezone.localdate()
+    if start is None and end is None:
+        daily_start, daily_end = today - datetime.timedelta(days=donations_stats.DEFAULT_DAYS - 1), today
+        monthly_start, monthly_end = donations_stats.months_ago(today, donations_stats.DEFAULT_MONTHS - 1), today
+    else:
+        end = end or today
+        start = start or end - datetime.timedelta(days=donations_stats.DEFAULT_DAYS - 1)
+        if start > end:
+            return JsonResponse({"error": "start date must not be after end date"}, status=400)
+        daily_start, daily_end = monthly_start, monthly_end = start, end
+
+    return JsonResponse(
+        {
+            "daily": donations_stats.daily(daily_start, daily_end),
+            "monthly": donations_stats.monthly(monthly_start, monthly_end),
+            "yearly": donations_stats.yearly(),
+            "period": donations_stats.period(monthly_start, monthly_end),
+        }
+    )
 
 
 @login_required

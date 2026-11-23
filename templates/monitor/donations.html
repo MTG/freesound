@@ -1,0 +1,97 @@
+{% extends "monitor/base.html" %}
+
+{% load static %}
+
+{% block title %}Monitor - Donations{% endblock %}
+
+{% block main_content %}
+
+<h1>Donations</h1>
+
+<form id="donations-date-range" class="v-spacing-top-4 v-spacing-2" data-url="{% url 'monitor-donations-stats-ajax' %}">
+    <label for="donations-start">From</label>
+    <input type="date" id="donations-start" name="start">
+    <label for="donations-end">To</label>
+    <input type="date" id="donations-end" name="end">
+    <button type="submit" class="btn-primary">Update</button>
+    <button type="button" id="donations-reset" class="btn-secondary">Reset to defaults</button>
+    <p class="text-grey v-spacing-top-1">The date range applies to every section except the yearly one. By default, the daily section shows the last 30 days, and the monthly section and the sections below it the last 18 months.</p>
+    <p id="donations-error" class="text-red" style="display:none"></p>
+</form>
+
+<h2 id="daily-donations" class="v-spacing-top-5">Daily donations
+    <a class="headerlink" href="#daily-donations" title="Permalink to this headline">¶</a>
+</h2>
+<p><span id="daily-donations-range"></span> &middot; Total: <b id="daily-donations-total"></b> &middot; Average per day: <b id="daily-donations-average"></b><br>Number of donations: <b id="daily-donations-count"></b> &middot; Median donation: <b id="daily-donations-median"></b></p>
+<div id="daily-donations-chart"></div>
+
+<h2 id="monthly-donations" class="v-spacing-top-5">Monthly donations
+    <a class="headerlink" href="#monthly-donations" title="Permalink to this headline">¶</a>
+</h2>
+<p><span id="monthly-donations-range"></span> &middot; Total: <b id="monthly-donations-total"></b> &middot; Average per month: <b id="monthly-donations-average"></b><br>Number of donations: <b id="monthly-donations-count"></b> &middot; Median donation: <b id="monthly-donations-median"></b></p>
+<p>Show by source:
+    <label><input type="radio" name="monthly-donations-measure" value="amount" checked> amount</label>
+    <label><input type="radio" name="monthly-donations-measure" value="count"> number of donations</label>
+</p>
+<div id="monthly-donations-chart"></div>
+
+<h2 id="period-donors" class="v-spacing-top-5">Donors
+    <a class="headerlink" href="#period-donors" title="Permalink to this headline">¶</a>
+</h2>
+<p class="period-range"></p>
+<table class="donations-table">
+    <tr><td>Unique donors</td><td id="period-unique-donors"></td></tr>
+    <tr><td>Donations by first-time donors</td><td id="period-first-time"></td></tr>
+    <tr><td>Donations by returning donors</td><td id="period-returning"></td></tr>
+    <tr><td>Median time since a returning donor's previous donation</td><td id="period-days-since-previous"></td></tr>
+</table>
+<p class="text-grey">A donation is from a returning donor if the same donor donated at any time before it, not only in the selected period. Donors are matched by user account or, for donations without an account, by email.</p>
+
+<h3 class="v-spacing-top-3">Uploaders and non-uploaders</h3>
+<table class="donations-table">
+    <tr><th></th><th>Donations</th><th>Amount</th></tr>
+    <tr><td>Uploaders</td><td id="period-uploaders-count"></td><td id="period-uploaders-amount"></td></tr>
+    <tr><td>Non-uploaders</td><td id="period-non-uploaders-count"></td><td id="period-non-uploaders-amount"></td></tr>
+    <tr><td>Donations without an account</td><td id="period-no-account-count"></td><td id="period-no-account-amount"></td></tr>
+</table>
+<p class="text-grey">Uploader means the user has uploaded sounds by now, not necessarily at the time of the donation.</p>
+
+<h2 id="amount-distribution" class="v-spacing-top-5">Donation amounts
+    <a class="headerlink" href="#amount-distribution" title="Permalink to this headline">¶</a>
+</h2>
+<p class="period-range"></p>
+<div id="amount-distribution-chart"></div>
+
+<h2 id="donation-requests" class="v-spacing-top-5">Donation requests
+    <a class="headerlink" href="#donation-requests" title="Permalink to this headline">¶</a>
+</h2>
+<p class="period-range"></p>
+<p id="requests-data-incomplete" class="text-red" style="display:none">Donation requests older than 2 years are archived and removed from the database, so the numbers below are too low for older dates.</p>
+
+<h3 class="v-spacing-top-3">Requests before a donation</h3>
+<p>Based on <b id="requests-before-included"></b> donations made by logged-in users. For each donation, counts the requests the user got since their previous donation.</p>
+<table class="donations-table">
+    <thead><tr><th>Request type</th><th>Donations with at least one request</th><th>Average requests (when at least one)</th></tr></thead>
+    <tbody id="requests-before-table"></tbody>
+</table>
+
+<h3 class="v-spacing-top-3">Request conversion</h3>
+<p>Requests made in the period followed by a donation of the same user within <span class="request-conversion-days"></span> days.</p>
+<p id="request-conversion-incomplete" class="text-grey" style="display:none">The period includes the last <span class="request-conversion-days"></span> days, so some recent requests may still convert.</p>
+<table class="donations-table">
+    <thead><tr><th>Request type</th><th>Requests</th><th>Followed by a donation</th><th>Users</th><th>Users who donated</th></tr></thead>
+    <tbody id="request-conversion-table"></tbody>
+</table>
+
+<h2 id="yearly-donations" class="v-spacing-top-5">Yearly donations
+    <a class="headerlink" href="#yearly-donations" title="Permalink to this headline">¶</a>
+</h2>
+<p>All years since the first donation &middot; Total: <b id="yearly-donations-total"></b></p>
+<div id="yearly-donations-chart"></div>
+
+<style>
+    .donations-table td, .donations-table th { padding: 4px 16px 4px 0; vertical-align: top; }
+    .donations-table th { text-align: left; }
+</style>
+
+{% endblock %}
